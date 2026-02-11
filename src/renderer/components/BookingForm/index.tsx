@@ -600,7 +600,7 @@ const BookingFormDialog: React.FC<BookingFormDialogProps> = ({
                       <RoomSelect
                         value={roomId !== undefined ? roomId : formData.roomId}
                         onChange={handleRoomChange}
-                        disabled={submitting}
+                        disabled={submitting || roomId !== undefined}
                         placeholder="Select a room"
                         includeTypeFilter={true}
                         includeAvailabilityFilter={true}
