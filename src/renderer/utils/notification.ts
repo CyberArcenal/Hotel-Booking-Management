@@ -13,7 +13,6 @@ interface ApiErrorResponse {
   statusText?: string;
   data?: any;
 }
-
 interface ApiError extends Error {
   response?: ApiErrorResponse;
 }
@@ -33,33 +32,32 @@ class NotificationManager {
   }
 
   private initContainers(): void {
-    // Remove existing containers if they exist
     if (this.toastContainer) this.toastContainer.remove();
     if (this.bannerContainer) this.bannerContainer.remove();
     if (this.loadingOverlay) this.loadingOverlay.remove();
 
-    // Create toast container (bottom center for mobile)
+    // Toast container (bottom center) – hotel dark theme
     this.toastContainer = document.createElement("div");
     this.toastContainer.id = "toast-container";
     this.toastContainer.className =
       "fixed bottom-4 left-0 right-0 z-[9999] px-4 flex flex-col items-center space-y-3 pointer-events-none";
     document.body.appendChild(this.toastContainer);
 
-    // Create banner container (below navigation)
+    // Banner container (below navigation)
     this.bannerContainer = document.createElement("div");
     this.bannerContainer.id = "banner-container";
     this.bannerContainer.className = "fixed top-16 left-0 right-0 z-[9998]";
     document.body.appendChild(this.bannerContainer);
 
-    // Create loading overlay
+    // Loading overlay – dark with gold spinner
     this.loadingOverlay = document.createElement("div");
     this.loadingOverlay.id = "loading-overlay";
     this.loadingOverlay.className =
-      "fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center hidden";
+      "fixed inset-0 bg-black/80 z-[9999] flex items-center justify-center hidden";
     this.loadingOverlay.innerHTML = `
-      <div class="bg-white rounded-xl p-6 w-64 text-center shadow-2xl border border-gray-200">
+      <div class="bg-[#1a1a1a] rounded-xl p-6 w-64 text-center shadow-2xl border border-[#d4af37] border-opacity-50">
         <div class="spinner mx-auto mb-4"></div>
-        <p class="text-gray-700 font-medium">Processing request...</p>
+        <p class="text-[#f5f5f5] font-medium">Processing request...</p>
       </div>
     `;
     document.body.appendChild(this.loadingOverlay);
@@ -68,65 +66,60 @@ class NotificationManager {
   private getIcon(type: NotificationType): string {
     const icons = {
       success: `
-        <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <svg class="h-6 w-6 text-[#d4af37]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       `,
       error: `
-        <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <svg class="h-6 w-6 text-[#ff4c4c]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       `,
       warning: `
-        <svg class="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <svg class="h-6 w-6 text-[#f0c420]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
         </svg>
       `,
       info: `
-        <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <svg class="h-6 w-6 text-[#d4af37]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
           <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
         </svg>
       `,
       critical: `
-        <svg class="h-6 w-6 text-red-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <svg class="h-6 w-6 text-[#ff4c4c]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
           <path stroke-linecap="round" stroke-linejoin="round" d="M10.29 3.86L1.82 18a1 1 0 00.86 1.5h18.64a1 1 0 00.86-1.5L13.71 3.86a1 1 0 00-1.72 0z"/>
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01"/>
         </svg>
       `,
     };
-
     return icons[type] || icons.info;
   }
 
   private getToastClasses(type: NotificationType): string {
     const baseClasses = `
       w-full max-w-md rounded-lg shadow-lg p-4 flex items-start pointer-events-auto
-      bg-white border-l-4 animate-slideInBottom
+      bg-[#1a1a1a] border-l-4 animate-slideInBottom
     `;
-
     const typeClasses = {
-      success: "border-green-500",
-      error: "border-red-500",
-      warning: "border-amber-500",
-      info: "border-blue-500",
-      critical: "border-red-700",
+      success: "border-[#d4af37]",
+      error:   "border-[#ff4c4c]",
+      warning: "border-[#f0c420]",
+      info:    "border-[#d4af37]",
+      critical:"border-[#ff4c4c]",
     };
-
     return `${baseClasses} ${typeClasses[type]}`;
   }
 
   private getBannerClasses(type: NotificationType): string {
     const baseClasses =
       "w-full py-3 px-4 shadow-md border-b-2 animate-slideInTop";
-
     const typeClasses = {
-      success: "bg-green-50 border-green-500 text-green-800",
-      error: "bg-red-50 border-red-500 text-red-800",
-      warning: "bg-amber-50 border-amber-500 text-amber-800",
-      info: "bg-blue-50 border-blue-500 text-emerald-800",
-      critical: "bg-red-100 border-red-700 text-red-900",
+      success: "bg-[#1a1a1a] border-[#d4af37] text-[#f5f5f5]",
+      error:   "bg-[#1a1a1a] border-[#ff4c4c] text-[#f5f5f5]",
+      warning: "bg-[#1a1a1a] border-[#f0c420] text-[#f5f5f5]",
+      info:    "bg-[#1a1a1a] border-[#d4af37] text-[#f5f5f5]",
+      critical:"bg-[#1a1a1a] border-[#ff4c4c] text-[#f5f5f5]",
     };
-
     return `${baseClasses} ${typeClasses[type]}`;
   }
 
@@ -154,9 +147,9 @@ class NotificationManager {
         ${this.getIcon(type)}
       </div>
       <div class="flex-1">
-        <p class="text-sm font-medium text-gray-900">${message}</p>
+        <p class="text-sm font-medium text-[#f5f5f5]">${message}</p>
       </div>
-      <button class="text-gray-400 hover:text-gray-600 ml-2 transition-colors duration-200 flex-shrink-0">
+      <button class="text-[#999999] hover:text-[#d4af37] ml-2 transition-colors duration-200 flex-shrink-0">
         <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
         </svg>
@@ -165,20 +158,13 @@ class NotificationManager {
 
     this.toastContainer?.appendChild(toast);
 
-    // Add close button handler
     const closeBtn = toast.querySelector("button");
     closeBtn?.addEventListener("click", () => this.removeToast(toast));
 
-    // Auto-close if enabled
-    if (
-      defaultOptions.autoClose &&
-      defaultOptions.duration &&
-      defaultOptions.duration > 0
-    ) {
+    if (defaultOptions.autoClose && defaultOptions.duration && defaultOptions.duration > 0) {
       setTimeout(() => this.removeToast(toast), defaultOptions.duration);
     }
 
-    // Swipe close if enabled
     if (defaultOptions.swipeClose) {
       this.addSwipeClose(toast);
     }
@@ -191,44 +177,31 @@ class NotificationManager {
       toastElement.classList.remove("animate-slideInBottom");
       toastElement.classList.add("animate-slideOutBottom");
       setTimeout(() => {
-        if (toastElement.parentNode) {
-          toastElement.parentNode.removeChild(toastElement);
-        }
+        if (toastElement.parentNode) toastElement.parentNode.removeChild(toastElement);
       }, 300);
     }
   }
 
   private addSwipeClose(toast: HTMLElement): void {
-    let startX = 0;
-    let currentX = 0;
-    let isDragging = false;
-
+    let startX = 0, currentX = 0, isDragging = false;
     const onTouchStart = (e: TouchEvent) => {
       startX = e.touches[0].clientX;
       isDragging = true;
       toast.style.transition = "none";
     };
-
     const onTouchMove = (e: TouchEvent) => {
       if (!isDragging) return;
       currentX = e.touches[0].clientX;
       const diff = currentX - startX;
-      if (diff > 0) {
-        toast.style.transform = `translateX(${diff}px)`;
-      }
+      if (diff > 0) toast.style.transform = `translateX(${diff}px)`;
     };
-
     const onTouchEnd = () => {
       isDragging = false;
       toast.style.transition = "transform 0.3s ease";
       const diff = currentX - startX;
-      if (diff > toast.offsetWidth / 2) {
-        this.removeToast(toast);
-      } else {
-        toast.style.transform = "translateX(0)";
-      }
+      if (diff > toast.offsetWidth / 2) this.removeToast(toast);
+      else toast.style.transform = "translateX(0)";
     };
-
     toast.addEventListener("touchstart", onTouchStart);
     toast.addEventListener("touchmove", onTouchMove);
     toast.addEventListener("touchend", onTouchEnd);
@@ -249,12 +222,11 @@ class NotificationManager {
     type: NotificationType = "info",
     options: NotificationOptions = {}
   ): HTMLElement {
-    // Remove existing banner if any
     const existingBanner = this.bannerContainer?.querySelector(".banner");
     if (existingBanner) existingBanner.remove();
 
     const defaultOptions: NotificationOptions = {
-      duration: 0, // 0 means don't auto-close
+      duration: 0,
       autoClose: false,
       showClose: true,
       ...options,
@@ -266,11 +238,11 @@ class NotificationManager {
     banner.setAttribute("aria-live", "assertive");
 
     const closeButton = defaultOptions.showClose
-      ? `<button class="text-current hover:opacity-70 ml-2 transition-opacity duration-200 flex-shrink-0">
-            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-            </svg>
-        </button>`
+      ? `<button class="text-[#999999] hover:text-[#d4af37] ml-2 transition-colors duration-200 flex-shrink-0">
+           <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+             <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+           </svg>
+         </button>`
       : "";
 
     banner.innerHTML = `
@@ -287,18 +259,12 @@ class NotificationManager {
 
     this.bannerContainer?.appendChild(banner);
 
-    // Add close handler if close button exists
     if (defaultOptions.showClose) {
       const closeBtn = banner.querySelector("button");
       closeBtn?.addEventListener("click", () => this.removeBanner(banner));
     }
 
-    // Auto-close if duration is set
-    if (
-      defaultOptions.autoClose &&
-      defaultOptions.duration &&
-      defaultOptions.duration > 0
-    ) {
+    if (defaultOptions.autoClose && defaultOptions.duration && defaultOptions.duration > 0) {
       setTimeout(() => this.removeBanner(banner), defaultOptions.duration);
     }
 
@@ -310,236 +276,127 @@ class NotificationManager {
       bannerElement.classList.remove("animate-slideInTop");
       bannerElement.classList.add("animate-slideOutTop");
       setTimeout(() => {
-        if (bannerElement.parentNode) {
-          bannerElement.parentNode.removeChild(bannerElement);
-        }
+        if (bannerElement.parentNode) bannerElement.parentNode.removeChild(bannerElement);
       }, 300);
     }
   }
 }
 
-// Singleton instance
 const notificationManager = new NotificationManager();
 
-// Add global styles for animations and inventory app theme
+// Inject global animations and hotel theme colours
 const style = document.createElement("style");
 style.textContent = `
   @keyframes slideInBottom {
     from { transform: translateY(100%); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+    to   { transform: translateY(0); opacity: 1; }
   }
-  
   @keyframes slideOutBottom {
     from { transform: translateY(0); opacity: 1; }
-    to { transform: translateY(100%); opacity: 0; }
+    to   { transform: translateY(100%); opacity: 0; }
   }
-  
   @keyframes slideInTop {
     from { transform: translateY(-100%); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+    to   { transform: translateY(0); opacity: 1; }
   }
-  
   @keyframes slideOutTop {
     from { transform: translateY(0); opacity: 1; }
-    to { transform: translateY(-100%); opacity: 0; }
+    to   { transform: translateY(-100%); opacity: 0; }
   }
-  
-  .animate-slideInBottom {
-    animation: slideInBottom 0.3s forwards;
-  }
-  
-  .animate-slideOutBottom {
-    animation: slideOutBottom 0.3s forwards;
-  }
-  
-  .animate-slideInTop {
-    animation: slideInTop 0.3s forwards;
-  }
-  
-  .animate-slideOutTop {
-    animation: slideOutTop 0.3s forwards;
-  }
-  
+  .animate-slideInBottom { animation: slideInBottom 0.3s forwards; }
+  .animate-slideOutBottom { animation: slideOutBottom 0.3s forwards; }
+  .animate-slideInTop { animation: slideInTop 0.3s forwards; }
+  .animate-slideOutTop { animation: slideOutTop 0.3s forwards; }
+
   .spinner {
     width: 24px;
     height: 24px;
-    border: 3px solid #e5e7eb;
+    border: 3px solid #333333;
     border-radius: 50%;
-    border-top: 3px solid #0E9D7C;
+    border-top: 3px solid #d4af37;
     animation: spin 1s linear infinite;
     margin: 0 auto;
   }
-  
   @keyframes spin {
-    0% { transform: rotate(0deg); }
+    0%   { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
   }
 
-  /* Inventory App Color Scheme */
-  .text-green-600 { color: #0E9D7C; }
-  .text-red-600 { color: #ef4444; }
-  .text-amber-600 { color: #f59e0b; }
-  .text-blue-600 { color: #3b82f6; }
-  .text-red-700 { color: #dc2626; }
-
-  .bg-green-50 { background-color: #f0fdf4; }
-  .bg-red-50 { background-color: #fef2f2; }
-  .bg-amber-50 { background-color: #fffbeb; }
-  .bg-blue-50 { background-color: #eff6ff; }
-  .bg-red-100 { background-color: #fee2e2; }
-
-  .border-green-500 { border-color: #0E9D7C; }
-  .border-red-500 { border-color: #ef4444; }
-  .border-amber-500 { border-color: #f59e0b; }
-  .border-blue-500 { border-color: #3b82f6; }
-  .border-red-700 { border-color: #dc2626; }
-
-  .text-green-800 { color: #166534; }
-  .text-red-800 { color: #991b1b; }
-  .text-amber-800 { color: #92400e; }
-  .text-emerald-800 { color: #1e40af; }
-  .text-red-900 { color: #7f1d1d; }
+  /* Hotel theme colour utilities – used by injected elements */
+  .text-\\[\\#d4af37\\] { color: #d4af37; }
+  .text-\\[\\#ff4c4c\\] { color: #ff4c4c; }
+  .text-\\[\\#f0c420\\] { color: #f0c420; }
+  .text-\\[\\#f5f5f5\\] { color: #f5f5f5; }
+  .text-\\[\\#999999\\] { color: #999999; }
+  .bg-\\[\\#1a1a1a\\] { background-color: #1a1a1a; }
+  .border-\\[\\#d4af37\\] { border-color: #d4af37; }
+  .border-\\[\\#ff4c4c\\] { border-color: #ff4c4c; }
+  .border-\\[\\#f0c420\\] { border-color: #f0c420; }
 `;
 document.head.appendChild(style);
 
-// Export functions
+// --- Export API ---
 export const showToast = (
   message: string,
   type: NotificationType = "info",
   options: NotificationOptions = {}
-): HTMLElement => {
-  return notificationManager.showToast(message, type, options);
-};
+): HTMLElement => notificationManager.showToast(message, type, options);
 
-export const showSuccess = (
-  message: string,
-  options?: NotificationOptions
-): HTMLElement => showToast(message, "success", options);
+export const showSuccess = (message: string, options?: NotificationOptions): HTMLElement =>
+  showToast(message, "success", options);
+export const showError = (message: string, options?: NotificationOptions): HTMLElement =>
+  showToast(message, "error", options);
+export const showWarning = (message: string, options?: NotificationOptions): HTMLElement =>
+  showToast(message, "warning", options);
+export const showInfo = (message: string, options?: NotificationOptions): HTMLElement =>
+  showToast(message, "info", options);
+export const showCritical = (message: string, options?: NotificationOptions): HTMLElement =>
+  showToast(message, "critical", options);
 
-export const showError = (
-  message: string,
-  options?: NotificationOptions
-): HTMLElement => showToast(message, "error", options);
-
-export const showWarning = (
-  message: string,
-  options?: NotificationOptions
-): HTMLElement => showToast(message, "warning", options);
-
-export const showInfo = (
-  message: string,
-  options?: NotificationOptions
-): HTMLElement => showToast(message, "info", options);
-
-export const showCritical = (
-  message: string,
-  options?: NotificationOptions
-): HTMLElement => showToast(message, "critical", options);
-
-export const showLoading = (message?: string): void => {
-  notificationManager.showLoading(message);
-};
-
-export const hideLoading = (): void => {
-  notificationManager.hideLoading();
-};
+export const showLoading = (message?: string): void => notificationManager.showLoading(message);
+export const hideLoading = (): void => notificationManager.hideLoading();
 
 export const showBanner = (
   message: string,
   type: NotificationType = "info",
   options: NotificationOptions = {}
-): HTMLElement => {
-  return notificationManager.createBanner(message, type, options);
-};
+): HTMLElement => notificationManager.createBanner(message, type, options);
+export const showCriticalBanner = (message: string, options?: NotificationOptions): HTMLElement =>
+  showBanner(message, "critical", options);
 
-export const showCriticalBanner = (
-  message: string,
-  options?: NotificationOptions
-): HTMLElement => showBanner(message, "critical", options);
-
-/**
- * Extracts error message from backend response
- */
+// --- API error handling (unchanged logic, only colour removed) ---
 export const extractErrorMessage = (error: ApiError): string => {
-  // Handle network errors
-  if (!error.response) {
-    return "Network error. Please check your connection.";
-  }
-
+  if (!error.response) return "Network error. Please check your connection.";
   const response = error.response;
   const data = response.data;
-
-  // Handle string responses
-  if (typeof data === "string") {
-    return data;
-  }
-
-  // Handle array responses
-  if (Array.isArray(data)) {
-    return data
-      .map((item) =>
-        typeof item === "string" ? item : item.string || JSON.stringify(item)
-      )
-      .join(". ");
-  }
-
-  // Handle object responses
+  if (typeof data === "string") return data;
+  if (Array.isArray(data))
+    return data.map((item) => (typeof item === "string" ? item : item.string || JSON.stringify(item))).join(". ");
   if (typeof data === "object" && data !== null) {
-    // Common fields
-    if (data.detail)
-      return typeof data.detail === "string"
-        ? data.detail
-        : JSON.stringify(data.detail);
+    if (data.detail) return typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail);
     if (data.error) {
       const err = data.error;
-      return typeof err === "string"
-        ? err
-        : Array.isArray(err)
-          ? err.map((e) => e.string || e).join(". ")
-          : JSON.stringify(err);
+      return typeof err === "string" ? err : Array.isArray(err) ? err.map((e) => e.string || e).join(". ") : JSON.stringify(err);
     }
     if (data.message) return data.message;
-    if (data.errors && Array.isArray(data.errors))
-      return data.errors.join(". ");
-
-    // General validation errors
+    if (data.errors && Array.isArray(data.errors)) return data.errors.join(". ");
     const messages: string[] = [];
     Object.values(data).forEach((value) => {
       if (Array.isArray(value)) {
         value.forEach((item) => {
-          if (typeof item === "object" && item !== null && "string" in item) {
-            messages.push(item.string);
-          } else if (typeof item === "string") {
-            messages.push(item);
-          } else {
-            messages.push(JSON.stringify(item));
-          }
+          if (typeof item === "object" && item !== null && "string" in item) messages.push(item.string);
+          else if (typeof item === "string") messages.push(item);
+          else messages.push(JSON.stringify(item));
         });
-      } else if (typeof value === "string") {
-        messages.push(value);
-      } else if (
-        typeof value === "object" &&
-        value !== null &&
-        "string" in value
-      ) {
-        messages.push((value as any).string);
-      } else {
-        messages.push(JSON.stringify(value));
-      }
+      } else if (typeof value === "string") messages.push(value);
+      else if (typeof value === "object" && value !== null && "string" in value) messages.push((value as any).string);
+      else messages.push(JSON.stringify(value));
     });
-
-    if (messages.length > 0) {
-      return messages.join(". ");
-    }
+    if (messages.length > 0) return messages.join(". ");
   }
-
-  // Fallback
   return response.statusText || `Request failed with status ${response.status}`;
 };
 
-/**
- * Shows appropriate toast based on API response error
- */
 export const showApiError = (
   error: unknown,
   fallback: string = "",
@@ -547,105 +404,42 @@ export const showApiError = (
 ): void => {
   let message = "An unexpected error occurred";
   let status: number | undefined;
-
-  // Handle different error formats
   if (typeof error === "object" && error !== null) {
     const err = error as Record<string, any>;
-
-    // Axios-style error with response object
     if (err.response) {
       status = err.response.status;
       message = extractErrorMessage(err as ApiError);
-    }
-    // Django REST Framework-style error
-    else if (err.status) {
+    } else if (err.status) {
       status = err.status;
-      if (err.data) {
-        message = extractErrorMessage({
-          response: { data: err.data, status: err.status },
-        } as ApiError);
-      } else {
-        message = err.message || fallback;
-      }
-    }
-    // Simple error object with message
-    else if (err.message) {
-      message = err.message;
-    }
-    // Direct API response data
-    else if (err.detail || err.error || err.message) {
-      message = extractErrorMessage({ response: { data: error } } as ApiError);
-    }
-  }
-  // String errors
-  else if (typeof error === "string") {
-    message = error;
-  }
+      if (err.data) message = extractErrorMessage({ response: { data: err.data, status: err.status } } as ApiError);
+      else message = err.message || fallback;
+    } else if (err.message) message = err.message;
+    else if (err.detail || err.error || err.message) message = extractErrorMessage({ response: { data: error } } as ApiError);
+  } else if (typeof error === "string") message = error;
 
-  // Determine error type based on status code
   let type: NotificationType = "error";
-  if (status === 401) type = "critical";
-  if (status === 403) type = "critical";
-  if (status === 404) type = "warning";
-  if (status && status >= 500) type = "critical";
+  if (status === 401 || status === 403 || (status && status >= 500)) type = "critical";
+  else if (status === 404) type = "warning";
 
-  showToast(message, type, {
-    duration: 7000,
-    autoClose: true,
-    ...options,
-  });
+  showToast(message, type, { duration: 7000, autoClose: true, ...options });
 };
 
-// Convenience notification functions for inventory app
-export const inventoryNotifications = {
-  // Product-related notifications
-  productCreated: (productName: string) =>
-    showSuccess(`Product "${productName}" created successfully`),
-  productUpdated: (productName: string) =>
-    showSuccess(`Product "${productName}" updated successfully`),
-  productDeleted: (productName: string) =>
-    showSuccess(`Product "${productName}" deleted successfully`),
-  lowStockWarning: (productName: string, quantity: number) =>
-    showWarning(
-      `Low stock alert: "${productName}" has only ${quantity} units left`
-    ),
-  outOfStock: (productName: string) =>
-    showError(`Out of stock: "${productName}" is no longer available`),
-
-  // Order-related notifications
-  orderCreated: (orderId: string) =>
-    showSuccess(`Order #${orderId} created successfully`),
-  orderUpdated: (orderId: string) =>
-    showSuccess(`Order #${orderId} updated successfully`),
-  orderCompleted: (orderId: string) =>
-    showSuccess(`Order #${orderId} marked as completed`),
-
-  // Purchase-related notifications
-  purchaseCreated: (purchaseId: string) =>
-    showSuccess(`Purchase order #${purchaseId} created successfully`),
-  purchaseReceived: (purchaseId: string) =>
-    showSuccess(`Purchase order #${purchaseId} received and stock updated`),
-
-  // System notifications
-  dataExported: (format: string) =>
-    showSuccess(`${format.toUpperCase()} export completed successfully`),
-  backupCreated: () => showSuccess("Database backup created successfully"),
-  settingsUpdated: () => showSuccess("Settings updated successfully"),
+// --- Convenience functions for hotel booking management ---
+export const hotelNotifications = {
+  // Room notifications
+  roomCreated: (roomName: string) => showSuccess(`Room "${roomName}" created successfully`),
+  roomUpdated: (roomName: string) => showSuccess(`Room "${roomName}" updated successfully`),
+  roomDeleted: (roomName: string) => showSuccess(`Room "${roomName}" deleted successfully`),
+  // Booking notifications
+  bookingCreated: (bookingId: string) => showSuccess(`Booking #${bookingId} confirmed`),
+  bookingCancelled: (bookingId: string) => showSuccess(`Booking #${bookingId} cancelled`),
+  bookingCompleted: (bookingId: string) => showSuccess(`Booking #${bookingId} completed`),
+  // Availability
+  noRoomsAvailable: () => showWarning("No rooms available for selected dates"),
+  checkInReminder: (guestName: string) => showInfo(`${guestName} checks in today`),
+  checkOutReminder: (guestName: string) => showInfo(`${guestName} checks out today`),
+  // System
+  dataExported: (format: string) => showSuccess(`${format.toUpperCase()} export completed`),
+  backupCreated: () => showSuccess("Backup created successfully"),
+  settingsUpdated: () => showSuccess("Settings saved"),
 };
-
-// // Product operations
-// inventoryNotifications.productCreated("iPhone 15 Pro");
-// inventoryNotifications.lowStockWarning("Samsung Tablet", 5);
-// inventoryNotifications.outOfStock("Wireless Mouse");
-
-// // Order operations
-// inventoryNotifications.orderCreated("ORD-001");
-// inventoryNotifications.orderCompleted("ORD-001");
-
-// // System operations
-// inventoryNotifications.dataExported("CSV");
-// inventoryNotifications.backupCreated();
-
-// // Traditional notifications still available
-// showSuccess("Operation completed successfully");
-// showError("Something went wrong");
