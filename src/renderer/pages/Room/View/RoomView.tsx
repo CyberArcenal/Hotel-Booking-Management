@@ -1,0 +1,1 @@
+// RoomView.tsx placeholder

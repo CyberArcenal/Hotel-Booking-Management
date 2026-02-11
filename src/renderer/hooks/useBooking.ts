@@ -1,0 +1,1 @@
+// useBooking.ts placeholder

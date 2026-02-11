@@ -1,0 +1,1 @@
+// roomService.ts placeholder

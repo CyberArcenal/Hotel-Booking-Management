@@ -1,0 +1,1 @@
+// BookingTable.tsx placeholder

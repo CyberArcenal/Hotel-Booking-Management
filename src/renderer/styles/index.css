@@ -1,0 +1,72 @@
+/* HR BOOKING MANAGEMENT THEME */
+@import "tailwindcss";
+
+:root {
+  /* Primary Color Palette - Elegant & Premium */
+  --primary-color: #d4af37; /* Gold */
+  --primary-hover: #b8860b; /* Darker Gold */
+  --secondary-color: #000000; /* Black */
+  --accent-color: #ffffff; /* White */
+
+  /* Background Colors */
+  --background-color: #121212; /* Deep Black */
+  --sidebar-bg: #1a1a1a;
+  --sidebar-border: #333333;
+  --sidebar-text: #f5f5f5;
+  --header-bg: #000000;
+
+  /* Text Colors */
+  --text-primary: #f5f5f5;
+  --text-secondary: #cccccc;
+  --text-tertiary: #999999;
+
+  /* Card Backgrounds */
+  --card-bg: #1a1a1a;
+  --card-secondary-bg: #2a2a2a;
+  --card-hover-bg: #333333;
+
+  /* Border Colors */
+  --border-color: #d4af37;
+  --border-light: #e6c85f;
+
+  /* Status Colors for Booking */
+  --status-booked: #d4af37;
+  --status-confirmed: #d4af37;
+  --status-pending: #f0c420;
+  --status-cancelled: #ff4c4c;
+  --status-completed: #ffffff;
+  --status-available: #4ade80;
+  --status-conflict: #ff6b6b;
+
+  /* Room/Resource Status */
+  --status-occupied: #ff4c4c;
+  --status-available-room: #4ade80;
+  --status-maintenance: #f0c420;
+
+  /* Button Colors */
+  --btn-primary-bg: var(--primary-color);
+  --btn-primary-hover: var(--primary-hover);
+  --btn-primary-text: var(--accent-color);
+
+  --btn-confirm-bg: #4ade80;
+  --btn-confirm-hover: #22c55e;
+  --btn-confirm-text: #000000;
+
+  --btn-cancel-bg: #ff4c4c;
+  --btn-cancel-hover: #dc2626;
+  --btn-cancel-text: #ffffff;
+
+  /* Calendar Specific */
+  --calendar-bg: var(--card-bg);
+  --calendar-header-bg: var(--card-secondary-bg);
+  --calendar-today-bg: rgba(212, 175, 55, 0.2);
+  --calendar-selected-bg: var(--primary-color);
+  --calendar-hover-bg: rgba(212, 175, 55, 0.1);
+  --calendar-border: var(--border-color);
+
+  /* Notification Colors */
+  --notification-upcoming: rgba(212, 175, 55, 0.1);
+  --notification-reminder: rgba(255, 255, 255, 0.1);
+  --notification-conflict: rgba(255, 76, 76, 0.1);
+  --notification-confirmation: rgba(212, 175, 55, 0.1);
+}

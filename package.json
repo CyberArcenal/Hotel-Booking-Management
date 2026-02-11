@@ -1,0 +1,73 @@
+{
+  "name": "hotel-booking-management",
+  "private": true,
+  "version": "0.0.0",
+  "main": "src/main/index.js",
+  "build": {
+    "appId": "com.CyberArcenal.hotelbooking.app",
+    "productName": "HotelBookingManagement Lite",
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "icon": "build/icon.ico",
+      "target": "nsis"
+    },
+    "mac": {
+      "icon": "build/icon.icns"
+    },
+    "linux": {
+      "icon": "build/icon.png"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "CyberArcenal",
+        "repo": "Hotel-Booking-Management"
+      }
+    ]
+  },
+  "scripts": {
+    "build:main": "tsc -p tsconfig.main.json",
+    "lint": "eslint . --ext .ts,.tsx",
+    "vite": "vite",
+    "preview": "vite preview",
+    "electron": "electron ./src/main/index.js",
+    "electron:dev": "electron ./src/main/index.js",
+    "electron:build": "electron-builder",
+    "migration:generate": "npx typeorm migration:generate src/migrations/InitSchema -d src/main/db/datasource.js --outputJs",
+    "migration:run": "npx typeorm migration:run -d src/main/db/datasource.js",
+    "migration:revert": "npx typeorm migration:revert -d src/main/db/datasource.js",
+    "dev": "cross-env NODE_ENV=development concurrently \"vite\" \"tsc -w -p tsconfig.main.json\" \"electron ./src/main/index.js\"",
+    "build": "vite build && tsc -p tsconfig.main.json && electron-builder",
+    "postinstall": "electron-rebuild",
+    "rebuild": "electron-rebuild -f -w sqlite3",
+    "seed": "node src/seeders/seedData.js"
+  },
+  "dependencies": {
+    "electron": "^39.2.7",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.12.0",
+    "reflect-metadata": "^0.2.2",
+    "sqlite3": "^5.0.2",
+    "typeorm": "^0.3.28"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@tailwindcss/vite": "^4.1.18",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.1",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.46.4",
+    "vite": "^7.2.4"
+  }
+}

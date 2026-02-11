@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Booking Management</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+            color: #f5f5f5;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Gold accent overlay */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .splash-container {
+            width: 500px;
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px;
+            background: rgba(26, 26, 26, 0.95);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5),
+                        0 0 100px rgba(212, 175, 55, 0.1) inset;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Corner decorations */
+        .splash-container::before,
+        .splash-container::after {
+            content: '';
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 2px solid var(--primary-color, #d4af37);
+            opacity: 0.5;
+        }
+
+        .splash-container::before {
+            top: 20px;
+            left: 20px;
+            border-right: 0;
+            border-bottom: 0;
+        }
+
+        .splash-container::after {
+            bottom: 20px;
+            right: 20px;
+            border-left: 0;
+            border-top: 0;
+        }
+
+        /* Logo area */
+        .logo-container {
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .logo-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            color: #000;
+            box-shadow: 0 10px 20px rgba(212, 175, 55, 0.3),
+                        0 0 40px rgba(212, 175, 55, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logo-icon::before {
+            content: '🏨';
+            position: relative;
+            z-index: 2;
+        }
+
+        .logo-icon::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent 30%,
+                rgba(255, 255, 255, 0.1) 50%,
+                transparent 70%
+            );
+            animation: shine 3s infinite;
+        }
+
+        .app-name {
+            font-size: 32px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+            background: linear-gradient(45deg, #d4af37, #f5f5f5, #d4af37);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            background-size: 200% auto;
+            animation: gradient 3s ease infinite;
+        }
+
+        .app-tagline {
+            font-size: 14px;
+            color: #999;
+            letter-spacing: 1px;
+            font-weight: 300;
+        }
+
+        /* Loading section */
+        .loading-section {
+            width: 100%;
+            margin: 40px 0 20px;
+        }
+
+        .loading-text {
+            font-size: 14px;
+            color: #d4af37;
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+            opacity: 0.9;
+        }
+
+        .loading-bar {
+            width: 100%;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .loading-progress {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #d4af37, #f5f5f5);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+            animation: loading 2s ease-in-out infinite;
+        }
+
+        /* Status messages */
+        .status-container {
+            min-height: 60px;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .status-message {
+            font-size: 12px;
+            color: #999;
+            padding: 8px 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+        }
+
+        .status-message.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .status-message.success {
+            color: #d4af37;
+            background: rgba(212, 175, 55, 0.1);
+        }
+
+        .status-message.error {
+            color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+        }
+
+        /* Version info */
+        .version-info {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-size: 11px;
+            color: #666;
+            letter-spacing: 1px;
+        }
+
+        /* Animations */
+        @keyframes loading {
+            0% {
+                width: 0%;
+                left: 0;
+            }
+            50% {
+                width: 100%;
+                left: 0;
+            }
+            100% {
+                width: 0%;
+                left: 100%;
+            }
+        }
+
+        @keyframes shine {
+            0% {
+                transform: translateX(-100%) translateY(-100%) rotate(45deg);
+            }
+            100% {
+                transform: translateX(100%) translateY(100%) rotate(45deg);
+            }
+        }
+
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        /* Progress indicators */
+        .progress-steps {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .step {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .step.active {
+            background: #d4af37;
+            transform: scale(1.2);
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+        }
+
+        /* Floating particles */
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #d4af37;
+            border-radius: 50%;
+            opacity: 0.3;
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+    
+    <div class="splash-container">
+        <div class="logo-container">
+            <div class="logo-icon"></div>
+            <h1 class="app-name">HotelBookingManagement</h1>
+            <p class="app-tagline">Simple offline reservations made easy</p>
+        </div>
+
+        <div class="loading-section">
+            <div class="loading-text">INITIALIZING APPLICATION</div>
+            <div class="loading-bar">
+                <div class="loading-progress"></div>
+            </div>
+            
+            <div class="progress-steps">
+                <div class="step" id="step-database"></div>
+                <div class="step" id="step-modules"></div>
+                <div class="step" id="step-ui"></div>
+                <div class="step" id="step-ready"></div>
+            </div>
+        </div>
+
+        <div class="status-container">
+            <div class="status-message" id="status-message">
+                Starting up...
+            </div>
+        </div>
+
+        <div class="version-info" id="version-info">
+            v0.0.0
+        </div>
+    </div>
+
+    <script>
+        // Create floating particles
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = 30;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                // Random position
+                particle.style.left = `${Math.random() * 100}%`;
+                particle.style.top = `${Math.random() * 100}%`;
+                
+                // Random size
+                const size = 0.5 + Math.random() * 2;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                
+                // Random opacity
+                particle.style.opacity = 0.1 + Math.random() * 0.2;
+                
+                // Random animation
+                const duration = 3 + Math.random() * 5;
+                const delay = Math.random() * 5;
+                particle.style.animation = `float ${duration}s ${delay}s infinite ease-in-out`;
+                
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        // Update status message
+        function updateStatus(message, type = '') {
+            const statusEl = document.getElementById('status-message');
+            statusEl.textContent = message;
+            statusEl.className = 'status-message';
+            
+            setTimeout(() => {
+                statusEl.classList.add('visible');
+                if (type) {
+                    statusEl.classList.add(type);
+                }
+            }, 10);
+        }
+
+        // Update progress steps
+        function updateProgressStep(stepIndex) {
+            const steps = document.querySelectorAll('.step');
+            steps.forEach((step, index) => {
+                if (index <= stepIndex) {
+                    step.classList.add('active');
+                } else {
+                    step.classList.remove('active');
+                }
+            });
+        }
+
+        // Listen for IPC messages from main process
+        window.electronAPI.onMigrationStatus((event, data) => {
+            if (data.status === 'running') {
+                updateStatus(`Updating database... (${data.pending} pending migrations)`, '');
+                updateProgressStep(0);
+            } else if (data.status === 'completed') {
+                updateStatus(`Database updated successfully (${data.applied} applied)`, 'success');
+                updateProgressStep(0);
+            }
+        });
+
+        // Simulate startup sequence (will be replaced with actual IPC events)
+        function simulateStartup() {
+            const steps = [
+                { delay: 500, message: 'Loading database...', step: 0 },
+                { delay: 1500, message: 'Initializing modules...', step: 1 },
+                { delay: 2500, message: 'Loading UI components...', step: 2 },
+                { delay: 3500, message: 'Application ready!', step: 3, type: 'success' }
+            ];
+
+            steps.forEach(step => {
+                setTimeout(() => {
+                    updateStatus(step.message, step.type || '');
+                    updateProgressStep(step.step);
+                }, step.delay);
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            createParticles();
+            simulateStartup();
+            
+            // Set version from query params or default
+            const urlParams = new URLSearchParams(window.location.search);
+            const version = urlParams.get('version') || '0.0.0';
+            document.getElementById('version-info').textContent = `v${version}`;
+        });
+
+        // Add floating animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes float {
+                0%, 100% {
+                    transform: translateY(0) translateX(0);
+                }
+                25% {
+                    transform: translateY(-20px) translateX(10px);
+                }
+                50% {
+                    transform: translateY(-10px) translateX(-10px);
+                }
+                75% {
+                    transform: translateY(-30px) translateX(5px);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

@@ -1,0 +1,1 @@
+// BookingView.tsx placeholder

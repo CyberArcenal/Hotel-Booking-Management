@@ -1,0 +1,1 @@
+// RoomTable.tsx placeholder

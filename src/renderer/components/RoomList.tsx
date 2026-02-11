@@ -1,0 +1,1 @@
+// RoomList.tsx placeholder
