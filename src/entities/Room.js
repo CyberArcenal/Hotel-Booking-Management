@@ -7,43 +7,56 @@ const Room = new EntitySchema({
     id: {
       primary: true,
       type: "int",
-      generated: true
+      generated: true,
     },
     roomNumber: {
       type: "varchar",
-      unique: true  // ✅ ADD THIS: Para walang duplicate room numbers
+      unique: true, // ✅ ADD THIS: Para walang duplicate room numbers
     },
     type: {
-      type: "varchar"
+      type: "varchar",
+      enum: [
+        "standard",
+        "single",
+        "double",
+        "twin",
+        "suite",
+        "deluxe",
+        "family",
+        "studio",
+        "executive",
+      ],
     },
     capacity: {
-      type: "int"
+      type: "int",
     },
     pricePerNight: {
-      type: "float",  // ✅ CHANGE: decimal → float (SQLite compatible)
+      type: "float", // ✅ CHANGE: decimal → float (SQLite compatible)
       precision: 10,
-      scale: 2
+      scale: 2,
     },
     isAvailable: {
       type: "boolean",
-      default: true
+      default: true,
     },
-    amenities: {  // ✅ ADD THIS: Para sa features ng room
+    amenities: {
+      // ✅ ADD THIS: Para sa features ng room
       type: "text",
-      nullable: true
+      nullable: true,
     },
-    createdAt: {  // ✅ ADD THIS: For auditing
+    createdAt: {
+      // ✅ ADD THIS: For auditing
       type: "datetime",
-      createDate: true
-    }
+      createDate: true,
+    },
   },
   relations: {
     bookings: {
       target: "Booking",
       type: "one-to-many",
-      inverseSide: "room"
-    }
-  }
+      inverseSide: "room",
+    },
+  },
 });
 
 module.exports = { Room };

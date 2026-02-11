@@ -1,1 +1,0 @@
-// BookingSummary.tsx placeholder

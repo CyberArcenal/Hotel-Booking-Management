@@ -52,11 +52,18 @@ Built with **Electron + React/TypeScript** and **TypeORM ORM**. Focused on simpl
 
 ## 📦 Installation
 ```bash
-git clone https://github.com/CyberArcenal/hotel-booking-management
-cd hotel-booking-management
+git clone https://github.com/CyberArcenal/Hotel-Booking-Management
+cd Hotel-Booking-Management
 npm install
 npm run dev
 ```
+
+## 📸 Screenshots
+Here are sample displays of the system
+
+![Screenshot 3](https://github.com/CyberArcenal/Hotel-Booking-Management/blob/main/screenshots/1.png?raw=true)
+![Screenshot 2](https://github.com/CyberArcenal/Hotel-Booking-Management/blob/main/screenshots/2.png?raw=true)
+![Screenshot 1](https://github.com/CyberArcenal/Hotel-Booking-Management/blob/main/screenshots/3.png?raw=true)
 
 ---
 

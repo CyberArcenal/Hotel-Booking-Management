@@ -9,6 +9,8 @@ const { AuditLog } = require("../../entities/AuditLog");
 const { Booking } = require("../../entities/Booking");
 const { Guest } = require("../../entities/Guest");
 const { Room } = require("../../entities/Room");
+const { SystemSetting } = require("../../entities/systemSettings");
+const NotificationLog = require("../../entities/NotificationLog");
 
 // Import EntitySchema constants
 
@@ -18,7 +20,9 @@ const entities = [
     AuditLog,
     Booking,
     Guest,
-    Room
+    Room,
+    SystemSetting,
+    NotificationLog
 ];
 
 /**

@@ -4,7 +4,7 @@ const { Booking } = require('../entities/Booking');
 const { Room } = require('../entities/Room');
 const { Guest } = require('../entities/Guest');
 const auditLogger = require('../utils/auditLogger');
-const roomService = require('./RoomService');
+const roomService = require('./Room');
 const { validateBookingData, calculateTotalPrice } = require('../utils/bookingUtils');
 
 class BookingService {

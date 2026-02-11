@@ -450,7 +450,7 @@ class GuestService {
         guestsWithBookings,
         repeatGuests,
         newGuestsThisMonth,
-        repeatRate: totalGuests > 0 ? (repeatGuests / totalGuents * 100).toFixed(2) : 0,
+        repeatRate: totalGuests > 0 ? (repeatGuests / totalGuests * 100).toFixed(2) : 0,
         nationalities,
         bookingFrequency: {
           average: avgBookingsPerGuest.toFixed(2),

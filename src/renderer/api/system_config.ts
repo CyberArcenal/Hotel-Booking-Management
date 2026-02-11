@@ -27,9 +27,10 @@ export interface FrontendSystemInfo {
 // 📊 Setting Types
 export const SettingType = {
   GENERAL: "general",
-  DATA_REPORTS: "data_reports",
-  AUDIT_SECURITY: "audit_security",
-  USER_SECURITY: "user_security",
+  BOOKING: "booking",
+  ROOM: "room",
+  NOTIFICATION: "notification",
+  SYSTEM: "system",
 } as const;
 
 export type SettingType = (typeof SettingType)[keyof typeof SettingType];
@@ -50,46 +51,14 @@ export interface GroupedSettingsData {
   settings: SystemSettingData[];
   grouped_settings: {
     general: GeneralSettings;
-    users_roles: UsersRolesSettings;
-    booking_rules: BookingRulesSettings;
-    notifications: NotificationsSettings;
-    data_reports: DataReportsSettings;
-    integrations: IntegrationsSettings;
-    audit_security: AuditSecuritySettings;
-    user_security: UserSecuritySettings;
+    booking: BookingSettings;
+    room: RoomSettings;
+    notification: NotificationSettings;
+    system: SystemSettings;
   };
   system_info: SystemInfoData;
 }
-// 8. USER SECURITY SETTINGS
-export interface UserSecuritySettings {
-  // Account lockout
-  max_login_attempts?: number;
-  lockout_duration_minutes?: number;
 
-  // Password policy
-  password_min_length?: number;
-  password_expiry_days?: number;
-  password_require_uppercase?: boolean;
-  password_require_lowercase?: boolean;
-  password_require_numbers?: boolean;
-  password_require_symbols?: boolean;
-  password_history_size?: number;
-
-  // Two-factor authentication
-  enable_two_factor_auth?: boolean;
-  require_two_factor_auth?: boolean;
-  two_factor_methods?: string[]; // email, sms, authenticator
-
-  // Session security
-  session_timeout_minutes?: number;
-  allow_multiple_sessions?: boolean;
-  session_encryption_enabled?: boolean;
-
-  // Account lifecycle
-  auto_delete_inactive_users_days?: number;
-  require_email_verification?: boolean;
-  require_approval_for_new_users?: boolean;
-}
 export interface SystemInfoData {
   version: string;
   name: string;
@@ -102,240 +71,55 @@ export interface SystemInfoData {
 
 // 1. GENERAL SETTINGS
 export interface GeneralSettings {
-  company_name?: string;
-  default_timezone?: string;
-  working_hours_start?: string;
-  working_hours_end?: string;
-  holidays?: string[];
-  date_format?: string;
-  time_format?: string;
   currency?: string;
   language?: string;
-  auto_logout_minutes?: number;
-  maintenance_mode?: boolean;
-  system_version?: string;
-  cache_timeout?: number;
+  timezone?: string;
 }
 
-// 2. USERS & ROLES SETTINGS
-export interface UsersRolesSettings {
-  // Role definitions
-  roles?: string[]; // Admin, HR, Employee, Manager, etc.
-
-  // Permission groups
-  permissions?: {
-    [role: string]: string[];
-  };
-
-  // Password policy
-  password_min_length?: number;
-  password_expiry_days?: number;
-  password_require_uppercase?: boolean;
-  password_require_lowercase?: boolean;
-  password_require_numbers?: boolean;
-  password_require_symbols?: boolean;
-  password_history_size?: number;
-  max_login_attempts?: number;
-  lockout_duration_minutes?: number;
-
-  // User management
-  allow_user_registration?: boolean;
-  require_email_verification?: boolean;
-  require_approval_for_new_users?: boolean;
-  default_user_role?: string;
-
-  // Session management
-  session_timeout_minutes?: number;
-  allow_multiple_sessions?: boolean;
-}
-
-// 3. BOOKING RULES SETTINGS
-export interface BookingRulesSettings {
-  // Appointment settings
-  default_appointment_duration?: number; // minutes
-  min_appointment_duration?: number;
-  max_appointment_duration?: number;
-
-  // Buffer times
-  buffer_time_before_appointments?: number; // minutes
-  buffer_time_after_appointments?: number;
-
-  // Scheduling limits
-  max_concurrent_bookings?: number;
-  max_daily_appointments_per_employee?: number;
-  max_weekly_appointments_per_employee?: number;
-  max_future_days_booking?: number;
-  min_advance_booking_hours?: number;
-
-  // Assignment rules
-  allow_double_booking_employees?: boolean;
-  allow_double_booking_rooms?: boolean;
-  auto_assign_employees?: boolean;
+// 2. BOOKING SETTINGS
+export interface BookingSettings {
+  default_checkin_time?: string; // e.g. "14:00"
+  default_checkout_time?: string; // e.g. "12:00"
+  cancellation_window_hours?: number;
   auto_assign_rooms?: boolean;
-
-  // Cancellation rules
-  cancellation_deadline_hours?: number;
-  allow_online_cancellations?: boolean;
-  no_show_penalty?: string; // 'none', 'warning', 'restrict_booking'
-
-  // Confirmation rules
-  require_confirmation?: boolean;
-  auto_confirm_after_hours?: number;
+  default_booking_status?: "pending" | "confirmed";
 }
 
-// 4. NOTIFICATIONS SETTINGS
-export interface NotificationsSettings {
-  // Email settings
-  email_enabled?: boolean;
-  email_smtp_host?: string;
-  email_smtp_port?: number;
-  email_smtp_username?: string;
-  email_smtp_password?: string;
-  email_from_address?: string;
-  email_from_name?: string;
-  email_use_ssl?: boolean;
-  email_use_tls?: boolean;
-  sendgrid_api_key?: string;
-
-  // SMS settings (if applicable)
-  sms_enabled?: boolean;
-  sms_provider?: string;
-  sms_api_key?: string;
-  sms_sender_id?: string;
-
-  // Notification templates
-  templates?: {
-    appointment_confirmation?: NotificationTemplate;
-    appointment_reminder?: NotificationTemplate;
-    appointment_cancellation?: NotificationTemplate;
-    password_reset?: NotificationTemplate;
-    user_welcome?: NotificationTemplate;
-    daily_summary?: NotificationTemplate;
-  };
-
-  // Reminder settings
-  reminders_enabled?: boolean;
-  reminder_times?: number[]; // hours before appointment
-  send_same_day_reminder?: boolean;
-  send_day_before_reminder?: boolean;
-  send_week_before_reminder?: boolean;
-
-  // Real-time notifications
-  push_notifications_enabled?: boolean;
-  browser_notifications_enabled?: boolean;
+// 3. ROOM SETTINGS
+export interface RoomSettings {
+  max_occupancy_per_type?: Record<string, number>; // { "single": 2, "suite": 4 }
+  maintenance_mode?: boolean;
+  default_pricing_rules?: Record<string, number>; // { "single": 100, "suite": 250 }
 }
 
-export interface NotificationTemplate {
-  subject?: string;
-  body?: string;
-  enabled?: boolean;
-  variables?: string[];
+// 4. NOTIFICATION SETTINGS
+export interface NotificationSettings {
+  enable_email_alerts?: boolean;
+  enable_sms_alerts?: boolean;
+  admin_alerts?: boolean;
+  reminder_interval_hours?: number;
+
+  smtp_host?: string;
+  smtp_port?: number;
+  smtp_username?: string;    // usually the email address
+  smtp_password?: string;
+  smtp_use_ssl?: boolean;
+  smtp_from_email?: string;  // sender email (if different from username)
+  smtp_from_name?: string;   // sender name
+
+
+   // ✨ NEW: SMS Integration (Twilio)
+  twilio_account_sid?: string;
+  twilio_auth_token?: string;
+  twilio_phone_number?: string;      // Twilio phone number (sender)
+  twilio_messaging_service_sid?: string; // optional Messaging Service SID
 }
 
-// 5. DATA & REPORTS SETTINGS
-export interface DataReportsSettings {
-  // Export formats
-  export_formats?: string[]; // CSV, Excel, PDF
-  default_export_format?: string;
-
-  // Auto-export schedule
-  auto_export_enabled?: boolean;
-  auto_export_schedule?: string; // daily, weekly, monthly
-  auto_export_day?: string; // Monday, Tuesday, etc.
-  auto_export_time?: string; // HH:MM
-  auto_export_keep_days?: number;
-
-  // Report types
-  available_reports?: string[];
-
-  // Data retention
-  data_retention_days?: number;
-  auto_archive_old_data?: boolean;
-  archive_after_days?: number;
-
-  // Backup settings
-  auto_backup_enabled?: boolean;
-  backup_schedule?: string;
-  backup_location?: string;
-  max_backup_files?: number;
-
-  // Privacy settings
-  anonymize_old_data?: boolean;
-  anonymize_after_days?: number;
-}
-
-// 6. INTEGRATIONS SETTINGS
-export interface IntegrationsSettings {
-  // Calendar integrations
-  google_calendar_enabled?: boolean;
-  google_client_id?: string;
-  google_client_secret?: string;
-  google_calendar_id?: string;
-
-  outlook_calendar_enabled?: boolean;
-  outlook_client_id?: string;
-  outlook_client_secret?: string;
-
-  // Calendar sync settings
-  sync_direction?: string; // 'both', 'to_calendar', 'from_calendar'
-  sync_interval_minutes?: number;
-
-  // Payroll integration
-  payroll_integration_enabled?: boolean;
-  payroll_api_key?: string;
-  payroll_api_url?: string;
-  payroll_sync_frequency?: string;
-
-  // Webhooks
-  webhooks_enabled?: boolean;
-  webhooks?: WebhookSetting[];
-
-  // API settings
-  api_enabled?: boolean;
-  api_rate_limit?: number;
-  api_key_expiry_days?: number;
-}
-
-export interface WebhookSetting {
-  url: string;
-  events: string[];
-  enabled: boolean;
-  secret?: string;
-}
-
-// 7. AUDIT & SECURITY SETTINGS
-export interface AuditSecuritySettings {
-  // Audit logging
-  audit_log_enabled?: boolean;
-  log_retention_days?: number;
-  log_events?: string[]; // login, logout, create, update, delete, etc.
-
-  // Security settings
-  enable_two_factor_auth?: boolean;
-  require_two_factor_auth?: boolean;
-  two_factor_methods?: string[]; // email, sms, authenticator
-
-  // IP restrictions
-  ip_whitelist?: string[];
-  ip_blacklist?: string[];
-
-  // Rate limiting
-  rate_limit_enabled?: boolean;
-  rate_limit_requests?: number;
-  rate_limit_period?: number; // seconds
-
-  // Backup settings
-  backup_frequency?: string;
-  backup_encryption_enabled?: boolean;
-  backup_encryption_key?: string;
-
-  // Session security
-  session_encryption_enabled?: boolean;
-  force_https?: boolean;
-
-  // Compliance
-  gdpr_compliance_enabled?: boolean;
-  auto_delete_inactive_users_days?: number;
+// 5. SYSTEM SETTINGS
+export interface SystemSettings {
+  debug_mode?: boolean;
+  environment?: "production" | "development";
+  audit_trail_enabled?: boolean;
 }
 
 // 📊 API Responses
@@ -461,7 +245,7 @@ class SystemConfigAPI {
         return response;
       }
       throw new Error(
-        response.message || "Failed to fetch system configuration"
+        response.message || "Failed to fetch system configuration",
       );
     } catch (error: any) {
       throw new Error(error.message || "Failed to fetch system configuration");
@@ -472,7 +256,7 @@ class SystemConfigAPI {
    * Update multiple settings by category
    */
   async updateGroupedConfig(
-    configData: UpdateCategorySettingsData
+    configData: UpdateCategorySettingsData,
   ): Promise<SystemConfigResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.systemConfig) {
@@ -481,14 +265,14 @@ class SystemConfigAPI {
 
       const response = await window.backendAPI.systemConfig({
         method: "updateGroupedConfig",
-        params: JSON.stringify(configData),
+        params: { configData }, // ✅ now params.configData is defined
       });
 
       if (response.status) {
         return response;
       }
       throw new Error(
-        response.message || "Failed to update system configuration"
+        response.message || "Failed to update system configuration",
       );
     } catch (error: any) {
       throw new Error(error.message || "Failed to update system configuration");
@@ -569,7 +353,7 @@ class SystemConfigAPI {
    */
   async getSettingByKey(
     key: string,
-    settingType?: SettingType
+    settingType?: SettingType,
   ): Promise<SettingResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.systemConfig) {
@@ -594,7 +378,7 @@ class SystemConfigAPI {
    * Create a new setting
    */
   async createSetting(
-    settingData: CreateSettingData
+    settingData: CreateSettingData,
   ): Promise<SettingResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.systemConfig) {
@@ -620,7 +404,7 @@ class SystemConfigAPI {
    */
   async updateSetting(
     id: number,
-    settingData: UpdateSettingData
+    settingData: UpdateSettingData,
   ): Promise<SettingResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.systemConfig) {
@@ -692,7 +476,7 @@ class SystemConfigAPI {
    */
   async getValueByKey(
     key: string,
-    defaultValue?: any
+    defaultValue?: any,
   ): Promise<SettingResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.systemConfig) {
@@ -719,7 +503,7 @@ class SystemConfigAPI {
   async setValueByKey(
     key: string,
     value: any,
-    options?: Partial<SetValueByKeyData>
+    options?: Partial<SetValueByKeyData>,
   ): Promise<SettingResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.systemConfig) {
@@ -744,7 +528,7 @@ class SystemConfigAPI {
    * Bulk update multiple settings
    */
   async bulkUpdate(
-    settingsData: BulkUpdateData["settingsData"]
+    settingsData: BulkUpdateData["settingsData"],
   ): Promise<BulkOperationResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.systemConfig) {
@@ -829,176 +613,13 @@ class SystemConfigAPI {
     }
   }
 
-    async getUserSecuritySettings(): Promise<UserSecuritySettings> {
-    try {
-      const config = await this.getGroupedConfig();
-      if (config.data?.grouped_settings?.user_security) {
-        return config.data.grouped_settings.user_security;
-      }
-      return {};
-    } catch (error) {
-      console.error("Error getting general settings:", error);
-      return {};
-    }
-  }
-
-  /**
-   * Get users and roles settings
-   */
-  async getUsersRolesSettings(): Promise<UsersRolesSettings> {
-    try {
-      const config = await this.getGroupedConfig();
-      if (config.data?.grouped_settings?.users_roles) {
-        return config.data.grouped_settings.users_roles;
-      }
-      return {};
-    } catch (error) {
-      console.error("Error getting users & roles settings:", error);
-      return {};
-    }
-  }
-
-  /**
-   * Get booking rules settings
-   */
-  async getBookingRulesSettings(): Promise<BookingRulesSettings> {
-    try {
-      const config = await this.getGroupedConfig();
-      if (config.data?.grouped_settings?.booking_rules) {
-        return config.data.grouped_settings.booking_rules;
-      }
-      return {};
-    } catch (error) {
-      console.error("Error getting booking rules settings:", error);
-      return {};
-    }
-  }
-
-  /**
-   * Get notifications settings
-   */
-  async getNotificationsSettings(): Promise<NotificationsSettings> {
-    try {
-      const config = await this.getGroupedConfig();
-      if (config.data?.grouped_settings?.notifications) {
-        return config.data.grouped_settings.notifications;
-      }
-      return {};
-    } catch (error) {
-      console.error("Error getting notifications settings:", error);
-      return {};
-    }
-  }
-
-  /**
-   * Get data and reports settings
-   */
-  async getDataReportsSettings(): Promise<DataReportsSettings> {
-    try {
-      const config = await this.getGroupedConfig();
-      if (config.data?.grouped_settings?.data_reports) {
-        return config.data.grouped_settings.data_reports;
-      }
-      return {};
-    } catch (error) {
-      console.error("Error getting data & reports settings:", error);
-      return {};
-    }
-  }
-
-  /**
-   * Get integrations settings
-   */
-  async getIntegrationsSettings(): Promise<IntegrationsSettings> {
-    try {
-      const config = await this.getGroupedConfig();
-      if (config.data?.grouped_settings?.integrations) {
-        return config.data.grouped_settings.integrations;
-      }
-      return {};
-    } catch (error) {
-      console.error("Error getting integrations settings:", error);
-      return {};
-    }
-  }
-
-  /**
-   * Get audit and security settings
-   */
-  async getAuditSecuritySettings(): Promise<AuditSecuritySettings> {
-    try {
-      const config = await this.getGroupedConfig();
-      if (config.data?.grouped_settings?.audit_security) {
-        return config.data.grouped_settings.audit_security;
-      }
-      return {};
-    } catch (error) {
-      console.error("Error getting audit & security settings:", error);
-      return {};
-    }
-  }
-
   /**
    * Update general settings
    */
   async updateGeneralSettings(
-    settings: Partial<GeneralSettings>
+    settings: Partial<GeneralSettings>,
   ): Promise<SystemConfigResponse> {
     return this.updateCategorySettings("general", settings);
-  }
-
-  /**
-   * Update users and roles settings
-   */
-  async updateUsersRolesSettings(
-    settings: Partial<UsersRolesSettings>
-  ): Promise<SystemConfigResponse> {
-    return this.updateCategorySettings("users_roles", settings);
-  }
-
-  /**
-   * Update booking rules settings
-   */
-  async updateBookingRulesSettings(
-    settings: Partial<BookingRulesSettings>
-  ): Promise<SystemConfigResponse> {
-    return this.updateCategorySettings("booking_rules", settings);
-  }
-
-  /**
-   * Update notifications settings
-   */
-  async updateNotificationsSettings(
-    settings: Partial<NotificationsSettings>
-  ): Promise<SystemConfigResponse> {
-    return this.updateCategorySettings("notifications", settings);
-  }
-
-  /**
-   * Update data and reports settings
-   */
-  async updateDataReportsSettings(
-    settings: Partial<DataReportsSettings>
-  ): Promise<SystemConfigResponse> {
-    return this.updateCategorySettings("data_reports", settings);
-  }
-
-  /**
-   * Update integrations settings
-   */
-  async updateIntegrationsSettings(
-    settings: Partial<IntegrationsSettings>
-  ): Promise<SystemConfigResponse> {
-    return this.updateCategorySettings("integrations", settings);
-  }
-
-  /**
-   * Update audit and security settings
-   */
-  async updateAuditSecuritySettings(
-    settings: Partial<AuditSecuritySettings>
-  ): Promise<SystemConfigResponse> {
-    return this.updateCategorySettings("audit_security", settings);
   }
 
   /**
@@ -1006,7 +627,7 @@ class SystemConfigAPI {
    */
   async updateCategorySettings(
     category: string,
-    settings: Record<string, any>
+    settings: Record<string, any>,
   ): Promise<SystemConfigResponse> {
     const configData = {
       [category]: settings,
@@ -1043,7 +664,7 @@ class SystemConfigAPI {
   async getSetting(
     category: string,
     key: string,
-    defaultValue?: any
+    defaultValue?: any,
   ): Promise<any> {
     try {
       const fullKey = `${category}.${key}`;
@@ -1062,7 +683,7 @@ class SystemConfigAPI {
     category: string,
     key: string,
     value: any,
-    description?: string
+    description?: string,
   ): Promise<SettingResponse> {
     const options = {
       setting_type: category as SettingType,
@@ -1078,7 +699,7 @@ class SystemConfigAPI {
    */
   async settingExists(
     key: string,
-    settingType?: SettingType
+    settingType?: SettingType,
   ): Promise<boolean> {
     try {
       const response = await this.getSettingByKey(key, settingType);
@@ -1094,7 +715,7 @@ class SystemConfigAPI {
   async getBooleanSetting(
     category: string,
     key: string,
-    defaultValue: boolean = false
+    defaultValue: boolean = false,
   ): Promise<boolean> {
     try {
       const value = await this.getSetting(category, key, defaultValue);
@@ -1120,7 +741,7 @@ class SystemConfigAPI {
   async getNumberSetting(
     category: string,
     key: string,
-    defaultValue: number = 0
+    defaultValue: number = 0,
   ): Promise<number> {
     try {
       const value = await this.getSetting(category, key, defaultValue);
@@ -1138,7 +759,7 @@ class SystemConfigAPI {
   async getStringSetting(
     category: string,
     key: string,
-    defaultValue: string = ""
+    defaultValue: string = "",
   ): Promise<string> {
     try {
       const value = await this.getSetting(category, key, defaultValue);
@@ -1155,7 +776,7 @@ class SystemConfigAPI {
   async getArraySetting(
     category: string,
     key: string,
-    defaultValue: any[] = []
+    defaultValue: any[] = [],
   ): Promise<any[]> {
     try {
       const value = await this.getSetting(category, key, defaultValue);
@@ -1182,7 +803,7 @@ class SystemConfigAPI {
   async getObjectSetting(
     category: string,
     key: string,
-    defaultValue: object = {}
+    defaultValue: object = {},
   ): Promise<object> {
     try {
       const value = await this.getSetting(category, key, defaultValue);
@@ -1220,7 +841,7 @@ class SystemConfigAPI {
       const defaultSettings = [
         {
           key: "company_name",
-          value: "POS Management",
+          value: "Hotel Booking Management System",
           setting_type: SettingType.GENERAL,
           description: "Company name",
         },
@@ -1235,7 +856,7 @@ class SystemConfigAPI {
       for (const setting of defaultSettings) {
         const exists = await this.settingExists(
           setting.key,
-          setting.setting_type
+          setting.setting_type,
         );
         if (!exists) {
           await this.createSetting({
@@ -1273,7 +894,7 @@ class SystemConfigAPI {
    * Import settings from JSON file
    */
   async importSettingsFromFile(
-    jsonData: string
+    jsonData: string,
   ): Promise<SystemConfigResponse> {
     try {
       const configData = JSON.parse(jsonData);
@@ -1372,12 +993,12 @@ class SystemConfigAPI {
           (s) =>
             s.setting_type === required.category &&
             s.key === required.key &&
-            !s.is_deleted
+            !s.is_deleted,
         );
 
         if (!exists) {
           warnings.push(
-            `Missing setting: ${required.category}.${required.key}`
+            `Missing setting: ${required.category}.${required.key}`,
           );
         }
       }
@@ -1385,7 +1006,7 @@ class SystemConfigAPI {
       // Validate email settings if email is enabled
       const emailEnabled = await this.getBooleanSetting(
         "notifications",
-        "email_enabled"
+        "email_enabled",
       );
       if (emailEnabled) {
         const emailSettings = [
@@ -1397,7 +1018,7 @@ class SystemConfigAPI {
           const value = await this.getStringSetting("notifications", setting);
           if (!value) {
             warnings.push(
-              `Email setting ${setting} is empty but email is enabled`
+              `Email setting ${setting} is empty but email is enabled`,
             );
           }
         }
@@ -1418,9 +1039,9 @@ class SystemConfigAPI {
     }
   }
 
-    async getPublicSystemSettings(): Promise<PublicSystemSettings> {
+  async getPublicSystemSettings(): Promise<PublicSystemSettings> {
     try {
-  if (!window.backendAPI || !window.backendAPI.systemConfig) {
+      if (!window.backendAPI || !window.backendAPI.systemConfig) {
         throw new Error("Electron API not available");
       }
 
@@ -1438,13 +1059,13 @@ class SystemConfigAPI {
     }
   }
 
-    async getSystemInfoForFrontend(): Promise<{
+  async getSystemInfoForFrontend(): Promise<{
     system_info: FrontendSystemInfo;
     public_settings: any;
     cache_timestamp: string;
   }> {
     try {
-  if (!window.backendAPI || !window.backendAPI.systemConfig) {
+      if (!window.backendAPI || !window.backendAPI.systemConfig) {
         throw new Error("Electron API not available");
       }
 
@@ -1461,7 +1082,6 @@ class SystemConfigAPI {
       throw new Error(error.message || "Failed to fetch system info");
     }
   }
-
 }
 
 const systemConfigAPI = new SystemConfigAPI();

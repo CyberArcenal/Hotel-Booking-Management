@@ -9,6 +9,7 @@ export interface Guest {
   fullName: string;
   email: string;
   phone: string;
+  nationality: string;
   address?: string | null;
   idNumber?: string | null;
   createdAt: string; // ISO date
@@ -452,6 +453,7 @@ class GuestAPI {
       phone: string;
       address?: string;
       idNumber?: string;
+      nationality?: string;
     },
     user = "system",
   ): Promise<GuestResponse> {
@@ -483,6 +485,7 @@ class GuestAPI {
       phone: string;
       address: string;
       idNumber: string;
+      nationality: string;
     }>,
     user = "system",
   ): Promise<GuestResponse> {

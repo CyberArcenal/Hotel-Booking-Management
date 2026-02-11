@@ -1,5 +1,3 @@
-
-
 const bookingService = require("../../../../services/booking");
 
 /**
@@ -22,22 +20,23 @@ module.exports = async (params) => {
     const bookings = await bookingService.findAll(params);
     return {
       status: true,
-      message: 'Bookings retrieved successfully',
+      message: "Bookings retrieved successfully",
       data: bookings,
-      ...(params.page && params.limit && {
-        pagination: {
-          page: params.page,
-          limit: params.limit,
-          // totalCount not returned by findAll; can be added if needed
-        }
-      })
+      ...(params.page &&
+        params.limit && {
+          pagination: {
+            page: params.page,
+            limit: params.limit,
+            // totalCount not returned by findAll; can be added if needed
+          },
+        }),
     };
   } catch (error) {
-    console.error('[get/all.ipc] Error:', error.message);
+    console.error("[get/all.ipc] Error:", error.message);
     return {
       status: false,
-      message: error.message || 'Failed to retrieve bookings',
-      data: []
+      message: error.message || "Failed to retrieve bookings",
+      data: [],
     };
   }
 };

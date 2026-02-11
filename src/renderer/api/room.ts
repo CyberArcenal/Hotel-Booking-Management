@@ -6,7 +6,7 @@
 export interface Room {
   id: number;
   roomNumber: string;
-  type: string;
+  type: "standard" | "single" | "double" | "twin" | "suite" | "deluxe" | "family" | "studio" | "executive";
   capacity: number;
   pricePerNight: number;
   isAvailable: boolean;
@@ -33,6 +33,7 @@ export interface Booking {
 // ----------------------------------------------------------------------
 
 export interface GetAllRoomsParams {
+  search?: string;
   type?: string;
   minCapacity?: number;
   maxPrice?: number;

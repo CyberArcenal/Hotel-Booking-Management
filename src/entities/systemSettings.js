@@ -3,6 +3,10 @@ const { EntitySchema } = require("typeorm");
 
 const SettingType = {
   GENERAL: "general",
+  BOOKING: "booking",
+  ROOM: "room",
+  NOTIFICATION: "notification",
+  SYSTEM: "system",
 };
 
 const SystemSetting = new EntitySchema({
