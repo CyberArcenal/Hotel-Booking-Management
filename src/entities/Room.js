@@ -15,6 +15,7 @@ const Room = new EntitySchema({
     },
     type: {
       type: "varchar",
+      default: "standard",
       enum: [
         "standard",
         "single",
@@ -34,6 +35,11 @@ const Room = new EntitySchema({
       type: "float", // ✅ CHANGE: decimal → float (SQLite compatible)
       precision: 10,
       scale: 2,
+    },
+    status: {
+      type: "varchar",
+      default: "available",
+      enum: ["available", "occupied", "maintenance"],
     },
     isAvailable: {
       type: "boolean",

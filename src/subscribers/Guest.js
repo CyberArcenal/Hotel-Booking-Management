@@ -2,6 +2,9 @@ const { EntitySubscriberInterface } = require("typeorm");
 const { Guest } = require("../entities/Guest");
 
 class GuestSubscriber {
+  constructor() {
+    console.log("✅ GuestSubscriber loaded and registered");
+  }
   listenTo() {
     return Guest;
   }
@@ -19,4 +22,4 @@ class GuestSubscriber {
   }
 }
 
-module.exports = GuestSubscriber;
+module.exports =  GuestSubscriber ;

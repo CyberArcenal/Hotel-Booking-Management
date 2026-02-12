@@ -127,7 +127,7 @@ export const BookingViewDialog: React.FC<BookingViewDialogProps> = ({
                 <div className="space-y-6">
                   <GuestInfoCard guest={booking.guest} />
                   <PriceSummaryCard
-                    pricePerNight={booking.room.pricePerNight}
+                    pricePerNight={booking.room?.pricePerNight}
                     nights={nights}
                     totalPrice={totalPrice}
                   />

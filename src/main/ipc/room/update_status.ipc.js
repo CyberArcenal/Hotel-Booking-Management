@@ -1,30 +1,33 @@
 const roomService = require('../../../services/Room');
 
 /**
- * Update the general status of a room (alias for setRoomAvailability).
+ * Update the room status using the exact enum value.
+ * Allowed values: "available", "occupied", "maintenance".
+ *
  * @param {Object} params
  * @param {number|string} params.id - Room ID.
- * @param {boolean} params.isAvailable - New availability status.
+ * @param {string} params.status - New status (available/occupied/maintenance).
  * @param {string} [params.user] - Username performing the action.
  * @param {import('typeorm').QueryRunner} [queryRunner] - Optional transaction runner.
  * @returns {Promise<{status: boolean, message: string, data: import('../../../../entities/Room').Room | null}>}
  */
 module.exports = async function updateRoomStatus(params, queryRunner) {
   try {
-    const { id, isAvailable, user = 'system' } = params;
+    const { id, status, user = 'system' } = params;
     const roomId = Number(id);
     if (isNaN(roomId) || roomId <= 0) {
       throw new Error('Valid room ID is required');
     }
-    if (typeof isAvailable !== 'boolean') {
-      throw new Error('isAvailable must be a boolean');
+    if (!status || typeof status !== 'string') {
+      throw new Error('status must be a string (available/occupied/maintenance)');
     }
 
     await roomService.getRepository();
-    const updated = await roomService.setAvailability(roomId, isAvailable, user);
+    const updated = await roomService.update(roomId, { status }, user);
+
     return {
       status: true,
-      message: `Room status updated to ${isAvailable ? 'available' : 'unavailable'}`,
+      message: `Room status updated to "${status}"`,
       data: updated,
     };
   } catch (error) {

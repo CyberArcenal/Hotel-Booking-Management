@@ -9,6 +9,7 @@ const roomService = require('../../../../services/Room');
  * @param {number} [params.minCapacity] - Minimum guest capacity.
  * @param {number} [params.maxPrice] - Maximum price per night.
  * @param {boolean} [params.availableOnly] - Show only available rooms.
+ * @param {string} [params.status] - Filter by room status (available/occupied/maintenance).
  * @param {string} [params.sortBy] - Field to sort by (e.g., 'roomNumber', 'pricePerNight').
  * @param {string} [params.sortOrder] - Sort order: 'ASC' or 'DESC' (default 'ASC').
  * @returns {Promise<{status: boolean, message: string, data: import('../../../../entities/Room').Room[] | null}>}

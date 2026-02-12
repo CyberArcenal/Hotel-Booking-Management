@@ -3,6 +3,7 @@ export {};
 declare global {
   interface Window {
     backendAPI: {
+      notification: (payload: any) => Promise<any>;
       auditlog: (payload: any) => Promise<any>;
       booking: (payload: any) => Promise<any>;
       room: (payload: any) => Promise<any>;

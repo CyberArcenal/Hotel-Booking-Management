@@ -1,5 +1,4 @@
 // src/renderer/components/Room/View/RoomViewDialog.tsx
-
 import React from 'react';
 import { X, AlertCircle } from 'lucide-react';
 import { useRoomView } from './hooks/useRoomView';
@@ -13,7 +12,7 @@ interface RoomViewDialogProps {
   id: number;
   isOpen: boolean;
   onClose: () => void;
-  showBookings?: boolean; // whether to display recent bookings
+  showBookings?: boolean;
 }
 
 export const RoomViewDialog: React.FC<RoomViewDialogProps> = ({
@@ -28,7 +27,6 @@ export const RoomViewDialog: React.FC<RoomViewDialogProps> = ({
   });
 
   if (!isOpen) return null;
-  console.log('RoomViewDialog render', { id, room, loading, error });
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
@@ -48,10 +46,7 @@ export const RoomViewDialog: React.FC<RoomViewDialogProps> = ({
           }}
         >
           <div className="flex items-center gap-3">
-            <h3
-              className="text-base font-semibold"
-              style={{ color: 'var(--text-primary)' }}
-            >
+            <h3 className="text-base font-semibold text-[var(--text-primary)]">
               Room Details
             </h3>
             {room && (
@@ -94,7 +89,6 @@ export const RoomViewDialog: React.FC<RoomViewDialogProps> = ({
 
           {room && !loading && !error && (
             <div className="space-y-6">
-              {/* Room Info + Price (side by side on larger screens) */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="md:col-span-2">
                   <RoomInfoCard room={room} />
@@ -104,10 +98,8 @@ export const RoomViewDialog: React.FC<RoomViewDialogProps> = ({
                 </div>
               </div>
 
-              {/* Amenities */}
               <AmenitiesCard amenities={room.amenities} />
 
-              {/* Recent Bookings */}
               {showBookings && (
                 <RecentBookingsCard
                   bookings={recentBookings}

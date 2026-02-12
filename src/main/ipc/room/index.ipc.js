@@ -3,12 +3,11 @@
 const { ipcMain } = require("electron");
 const { logger } = require("../../../utils/logger");
 const { AppDataSource } = require("../../db/datasource");
-const {AuditLog} = require("../../../entities/AuditLog");
+const { AuditLog } = require("../../../entities/AuditLog");
 const { withErrorHandling } = require("../../../middlewares/errorHandler");
 
 class RoomHandler {
   constructor() {
-    // Initialize all handlers
     this.initializeHandlers();
   }
 
@@ -22,13 +21,14 @@ class RoomHandler {
     this.getActiveRooms = this.importHandler("./get/active.ipc");
     this.getRoomStats = this.importHandler("./get/stats.ipc");
     this.searchRooms = this.importHandler("./search.ipc");
+    this.listRooms = this.importHandler("./list.ipc"); // newly implemented
 
     // ✏️ WRITE OPERATION HANDLERS
     this.createRoom = this.importHandler("./create.ipc");
     this.updateRoom = this.importHandler("./update.ipc");
     this.deleteRoom = this.importHandler("./delete.ipc");
-    this.updateRoomStatus = this.importHandler("./update_status.ipc");
-    this.setRoomAvailability = this.importHandler("./set_availability.ipc");
+    this.updateRoomStatus = this.importHandler("./update_status.ipc"); // now accepts status enum
+    this.setRoomAvailability = this.importHandler("./set_availability.ipc"); // boolean toggle
 
     // 📊 STATISTICS HANDLERS
     this.getRoomOccupancy = this.importHandler("./get_occupancy.ipc");
@@ -46,16 +46,11 @@ class RoomHandler {
    */
   importHandler(path) {
     try {
-      // Adjust path to be relative to current file
       const fullPath = require.resolve(`./${path}`, { paths: [__dirname] });
       return require(fullPath);
     } catch (error) {
-      console.warn(
-        `[RoomHandler] Failed to load handler: ${path}`,
-        // @ts-ignore
-        error.message,
-      );
-      // Return a fallback handler
+      // @ts-ignore
+      console.warn(`[RoomHandler] Failed to load handler: ${path}`, error.message);
       return async () => ({
         status: false,
         message: `Handler not implemented: ${path}`,
@@ -65,112 +60,64 @@ class RoomHandler {
   }
 
   /** @param {Electron.IpcMainInvokeEvent} event @param {{ method: any; params: {}; }} payload */
+  // @ts-ignore
   async handleRequest(event, payload) {
     try {
       const method = payload.method;
       const params = payload.params || {};
-
-      // @ts-ignore
       const enrichedParams = { ...params };
 
-      // Log the request
       if (logger) {
         // @ts-ignore
-        logger.info(`RoomHandler: ${method}`, { params});
+        logger.info(`RoomHandler: ${method}`, { params });
       }
 
-      // ROUTE REQUESTS
       switch (method) {
-        // 📋 READ-ONLY OPERATIONS
+        // 📋 READ-ONLY
         case "getAllRooms":
           return await this.getAllRooms(enrichedParams);
-
         case "getRoomById":
           return await this.getRoomById(enrichedParams);
-
         case "getRoomByNumber":
           return await this.getRoomByNumber(enrichedParams);
-
         case "getAvailableRooms":
           return await this.getAvailableRooms(enrichedParams);
-
         case "getRoomSummary":
           return await this.getRoomSummary(enrichedParams);
-
         case "getActiveRooms":
           return await this.getActiveRooms(enrichedParams);
-
         case "getRoomStats":
           return await this.getRoomStats(enrichedParams);
-
         case "searchRooms":
           return await this.searchRooms(enrichedParams);
+        case "listRooms":
+          return await this.listRooms(enrichedParams);
 
-        // ✏️ WRITE OPERATIONS
+        // ✏️ WRITE
         case "createRoom":
-          return await this.handleWithTransaction(
-            this.createRoom,
-            // @ts-ignore
-            enrichedParams,
-          );
-
+          return await this.handleWithTransaction(this.createRoom, enrichedParams);
         case "updateRoom":
-          return await this.handleWithTransaction(
-            this.updateRoom,
-            // @ts-ignore
-            enrichedParams,
-          );
-
+          return await this.handleWithTransaction(this.updateRoom, enrichedParams);
         case "deleteRoom":
-          return await this.handleWithTransaction(
-            this.deleteRoom,
-            // @ts-ignore
-            enrichedParams,
-          );
-
+          return await this.handleWithTransaction(this.deleteRoom, enrichedParams);
         case "updateRoomStatus":
-          return await this.handleWithTransaction(
-            this.updateRoomStatus,
-            // @ts-ignore
-            enrichedParams,
-          );
-
+          return await this.handleWithTransaction(this.updateRoomStatus, enrichedParams);
         case "setRoomAvailability":
-          return await this.handleWithTransaction(
-            this.setRoomAvailability,
-            // @ts-ignore
-            enrichedParams,
-          );
+          return await this.handleWithTransaction(this.setRoomAvailability, enrichedParams);
 
-        // 📊 STATISTICS OPERATIONS
+        // 📊 STATISTICS
         case "getRoomOccupancy":
           return await this.getRoomOccupancy(enrichedParams);
-
         case "getRoomTypeDistribution":
           return await this.getRoomTypeDistribution(enrichedParams);
 
-        // 🔄 BATCH OPERATIONS
+        // 🔄 BATCH
         case "bulkCreateRooms":
-          return await this.handleWithTransaction(
-            this.bulkCreateRooms,
-            // @ts-ignore
-            enrichedParams,
-          );
-
+          return await this.handleWithTransaction(this.bulkCreateRooms, enrichedParams);
         case "bulkUpdateRooms":
-          return await this.handleWithTransaction(
-            this.bulkUpdateRooms,
-            // @ts-ignore
-            enrichedParams,
-          );
-
+          return await this.handleWithTransaction(this.bulkUpdateRooms, enrichedParams);
         case "importRoomsFromCSV":
-          return await this.handleWithTransaction(
-            this.importRoomsFromCSV,
-            // @ts-ignore
-            enrichedParams,
-          );
-
+          return await this.handleWithTransaction(this.importRoomsFromCSV, enrichedParams);
         case "exportRoomsToCSV":
           return await this.exportRoomsToCSV(enrichedParams);
 
@@ -183,10 +130,8 @@ class RoomHandler {
       }
     } catch (error) {
       console.error("RoomHandler error:", error);
-      if (logger) {
-        // @ts-ignore
-        logger.error("RoomHandler error:", error);
-      }
+      // @ts-ignore
+      if (logger) logger.error("RoomHandler error:", error);
       return {
         status: false,
         // @ts-ignore
@@ -199,7 +144,7 @@ class RoomHandler {
   /**
    * Wrap critical operations in a database transaction
    * @param {(arg0: any, arg1: import("typeorm").QueryRunner) => any} handler
-   * @param {{ userId: any; }} params
+   * @param {Object} params
    */
   async handleWithTransaction(handler, params) {
     const queryRunner = AppDataSource.createQueryRunner();
@@ -208,13 +153,11 @@ class RoomHandler {
 
     try {
       const result = await handler(params, queryRunner);
-
       if (result.status) {
         await queryRunner.commitTransaction();
       } else {
         await queryRunner.rollbackTransaction();
       }
-
       return result;
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -225,50 +168,40 @@ class RoomHandler {
   }
 
   /**
-   * @param {any} user_id
-   * @param {any} action
-   * @param {any} description
+   * @param {string|number} userId
+   * @param {string} action
+   * @param {number} entityId
+   * @param {import('typeorm').QueryRunner} [qr]
    */
-  async logActivity(user_id, action, description, qr = null) {
+  // @ts-ignore
+  async logActivity(userId, action, entityId, qr = null) {
     try {
-      let activityRepo;
+      const repo = qr
+        ? qr.manager.getRepository(AuditLog)
+        : AppDataSource.getRepository(AuditLog);
 
-      if (qr) {
-        // @ts-ignore
-        activityRepo = qr.manager.getRepository(AuditLog);
-      } else {
-        activityRepo = AppDataSource.getRepository(AuditLog);
-      }
-
-      const activity = activityRepo.create({
-        user: user_id,
+      const log = repo.create({
+        user: String(userId),
         action,
-        description,
         entity: "Room",
+        entityId: entityId || null,
         timestamp: new Date(),
       });
 
-      await activityRepo.save(activity);
+      await repo.save(log);
     } catch (error) {
       console.warn("Failed to log room activity:", error);
-      if (logger) {
-        // @ts-ignore
-        logger.warn("Failed to log room activity:", error);
-      }
+      // @ts-ignore
+      if (logger) logger.warn("Failed to log room activity:", error);
     }
   }
 }
 
-// Register IPC handler
 const roomHandler = new RoomHandler();
-
 ipcMain.handle(
   "room",
-  withErrorHandling(
-    // @ts-ignore
-    roomHandler.handleRequest.bind(roomHandler),
-    "IPC:room",
-  ),
+  // @ts-ignore
+  withErrorHandling(roomHandler.handleRequest.bind(roomHandler), "IPC:room")
 );
 
 module.exports = { RoomHandler, roomHandler };

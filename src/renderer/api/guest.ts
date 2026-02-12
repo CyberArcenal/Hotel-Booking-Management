@@ -289,7 +289,7 @@ class GuestAPI {
   }
 
   /**
-   * Get guests with active bookings (currently checked-in or confirmed)
+   * Get guests with active bookings (currently checked_in or confirmed)
    * @param page - Page number (default 1)
    * @param limit - Items per page (default 20)
    */

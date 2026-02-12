@@ -1,14 +1,13 @@
 // src/renderer/hooks/room/useRoomView.ts
-
-import { useState, useEffect } from "react";
-import type { Room } from "../../../../../api/room";
-import roomAPI from "../../../../../api/room";
-import bookingAPI, { type Booking } from "../../../../../api/booking";
+import { useState, useEffect, useCallback, useRef } from 'react';
+import type { Room } from '../../../../../api/room';
+import roomAPI from '../../../../../api/room';
+import bookingAPI, { type Booking } from '../../../../../api/booking';
 
 interface UseRoomViewProps {
   id: number;
-  includeBookings?: boolean; // whether to fetch recent bookings
-  bookingsLimit?: number; // number of recent bookings (default 5)
+  includeBookings?: boolean;
+  bookingsLimit?: number;
   onError?: (error: string) => void;
 }
 
@@ -18,6 +17,7 @@ interface UseRoomViewReturn {
   error: string | null;
   recentBookings: Booking[];
   bookingsLoading: boolean;
+  bookingsError: string | null;
   refetch: () => Promise<void>;
 }
 
@@ -32,64 +32,98 @@ export const useRoomView = ({
   const [error, setError] = useState<string | null>(null);
   const [recentBookings, setRecentBookings] = useState<Booking[]>([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
+  const [bookingsError, setBookingsError] = useState<string | null>(null);
 
-  const fetchRoom = async () => {
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  const fetchRoom = useCallback(async () => {
+    if (!id) return;
+
+    // Cancel previous request
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      setError(null);
       const response = await roomAPI.getById(id);
+      if (controller.signal.aborted) return;
+
       if (response.status && response.data) {
         setRoom(response.data);
       } else {
-        throw new Error(response.message || "Room not found");
+        throw new Error(response.message || 'Room not found');
       }
     } catch (err: any) {
-      const msg = err.message || "Failed to load room";
+      if (controller.signal.aborted) return;
+      const msg = err.message || 'Failed to load room';
       setError(msg);
       onError?.(msg);
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) {
+        setLoading(false);
+      }
     }
-  };
+  }, [id, onError]);
 
-  const fetchBookings = async () => {
-    if (!includeBookings || !id) return;
+  const fetchBookings = useCallback(async () => {
+    if (!includeBookings || !id || !room) return;
+
+    // Cancel previous bookings request
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    setBookingsLoading(true);
+    setBookingsError(null);
     try {
-      setBookingsLoading(true);
-      // Use the booking API to get bookings for this room
       const response = await bookingAPI.getByRoom(id);
-      if (response.status) {
-        const allBookings = response.data as Booking[];
-        // Sort by date descending and limit
-        const sorted = allBookings
-          .sort(
-            (a, b) =>
-              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-          )
+      if (controller.signal.aborted) return;
+
+      if (response.status && Array.isArray(response.data)) {
+        // Sort by createdAt (newest first) and limit
+        const sorted = (response.data as Booking[])
+          .sort((a, b) => {
+            const dateA = new Date(a.createdAt).getTime();
+            const dateB = new Date(b.createdAt).getTime();
+            return dateB - dateA;
+          })
           .slice(0, bookingsLimit);
         setRecentBookings(sorted);
+      } else {
+        throw new Error(response.message || 'Failed to fetch bookings');
       }
-    } catch (err) {
-      console.error("Failed to fetch room bookings:", err);
+    } catch (err: any) {
+      if (controller.signal.aborted) return;
+      console.error('Failed to fetch room bookings:', err);
+      setBookingsError(err.message || 'Could not load bookings');
     } finally {
-      setBookingsLoading(false);
+      if (!controller.signal.aborted) {
+        setBookingsLoading(false);
+      }
     }
-  };
+  }, [id, room, includeBookings, bookingsLimit]);
 
+  // Fetch room when ID changes
   useEffect(() => {
     fetchRoom();
-  }, [id]);
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, [fetchRoom]);
 
+  // Fetch bookings when room is loaded
   useEffect(() => {
     if (room) {
       fetchBookings();
     }
-  }, [room, includeBookings, bookingsLimit]);
+  }, [room, fetchBookings]);
 
-  const refetch = async () => {
+  const refetch = useCallback(async () => {
     await fetchRoom();
     await fetchBookings();
-  };
+  }, [fetchRoom, fetchBookings]);
 
   return {
     room,
@@ -97,6 +131,7 @@ export const useRoomView = ({
     error,
     recentBookings,
     bookingsLoading,
+    bookingsError,
     refetch,
   };
 };

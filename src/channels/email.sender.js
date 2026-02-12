@@ -7,7 +7,7 @@ const PQueue = require("p-queue").default;
 
 const NotificationLog = require("../entities/NotificationLog");
 const { logger } = require("../utils/logger");
-const { AppDataSource } = require("../main/db/dataSource");
+const { AppDataSource } = require("../main/db/datasource");
 
 class EmailSender {
   constructor() {

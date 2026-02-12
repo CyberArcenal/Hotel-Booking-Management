@@ -9,8 +9,9 @@ import BookingQuickStats from "./components/BookingQuickStats";
 import Pagination from "../../components/Shared/Pagination";
 import bookingAPI, { type Booking } from "../../api/booking";
 import BookingFormDialog from "../../components/BookingForm";
-import { dialogs } from "../../utils/dialogs";
+import { dialogs, showPrompt } from "../../utils/dialogs";
 import { BookingViewDialog } from "./Dialogs/View";
+import { showApiError, showError } from "../../utils/notification";
 
 const BookingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -58,13 +59,13 @@ const BookingPage: React.FC = () => {
       // Gamitin ang exportCSV method mula sa bookingAPI
       const result = await bookingAPI.exportCSV("", filters, "admin");
       if (result.status && result.data?.filePath) {
-        alert(`Exported to ${result.data.filePath}`);
+        showError(`Exported to ${result.data.filePath}`);
       } else {
-        alert("Export failed");
+        showError("Export failed");
       }
     } catch (err) {
       console.error(err);
-      alert("Export failed");
+      showError("Export failed");
     }
   };
 
@@ -85,7 +86,7 @@ const BookingPage: React.FC = () => {
         await bookingAPI.cancel(id, "Cancelled by user", "admin");
         refetch();
       } catch (err) {
-        alert("Failed to cancel booking");
+        showError("Failed to cancel booking");
       }
     }
   };
@@ -97,7 +98,7 @@ const BookingPage: React.FC = () => {
       await bookingAPI.checkIn(id, "admin");
       refetch();
     } catch (err) {
-      alert("Failed to check in booking");
+      showError("Failed to check in booking");
     }
   };
 
@@ -107,7 +108,7 @@ const BookingPage: React.FC = () => {
       await dialogs.success("Booking checked out successfully");
       refetch();
     } catch (err) {
-      alert("Failed to check out booking");
+      showError("Failed to check out booking");
     }
   };
 
@@ -117,19 +118,25 @@ const BookingPage: React.FC = () => {
       await dialogs.success("Booking marked as paid");
       refetch();
     } catch (err) {
-      alert("Failed to mark booking as paid");
+      // console.log(err)
+      showApiError(err);
     }
   };
 
-    const handleMarkAsFailed = async (id: number) => {
+  const handleMarkAsFailed = async (id: number) => {
     try {
-      const reason = prompt("Enter reason for marking as failed:");
-      if (!reason) return;
+      const reason = await showPrompt(
+        {
+          title: "Mark Booking as Failed",
+          message: "Enter reason for marking booking as failed:",
+        }
+      );
+      if (!reason) return; // user cancelled or entered empty string
       await bookingAPI.markAsFailed(id, reason);
       await dialogs.success("Booking marked as failed");
       refetch();
     } catch (err) {
-      alert("Failed to mark booking as failed");
+      showApiError(err);
     }
   };
 
@@ -140,7 +147,7 @@ const BookingPage: React.FC = () => {
         await dialogs.success("Booking deleted successfully");
         refetch();
       } catch (err) {
-        alert("Failed to delete booking");
+        showError("Failed to delete booking");
       }
     }
   };

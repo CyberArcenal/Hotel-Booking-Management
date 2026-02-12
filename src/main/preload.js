@@ -2,6 +2,7 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("backendAPI", {
+  notification: (payload) => ipcRenderer.invoke("notification", payload),
   auditlog: (payload) => ipcRenderer.invoke("auditlog", payload),
   booking: (payload) => ipcRenderer.invoke("booking", payload),
   room: (payload) => ipcRenderer.invoke("room", payload),

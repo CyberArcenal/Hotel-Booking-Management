@@ -289,28 +289,28 @@ async function initializeDatabase() {
           });
         }
 
-        const migrationResult =
-          await migrationManager.runMigrationsWithBackup();
+        // const migrationResult =
+        //   await migrationManager.runMigrationsWithBackup();
 
         // @ts-ignore
-        if (migrationResult.success) {
-          log(LogLevel.SUCCESS, "Database migrations applied successfully");
+        // if (migrationResult.success) {
+        //   log(LogLevel.SUCCESS, "Database migrations applied successfully");
 
-          if (splashWindow && !splashWindow.isDestroyed()) {
-            splashWindow.webContents.send("migration:status", {
-              status: "completed",
-              // @ts-ignore
-              applied: migrationResult.appliedCount,
-              message: "Database updated successfully",
-            });
-          }
-        } else {
-          throw new MigrationError(
-            "Migration failed",
-            // @ts-ignore
-            migrationStatus.pendingMigrations,
-          );
-        }
+        //   if (splashWindow && !splashWindow.isDestroyed()) {
+        //     splashWindow.webContents.send("migration:status", {
+        //       status: "completed",
+        //       // @ts-ignore
+        //       applied: migrationResult.appliedCount,
+        //       message: "Database updated successfully",
+        //     });
+        //   }
+        // } else {
+        //   throw new MigrationError(
+        //     "Migration failed",
+        //     // @ts-ignore
+        //     migrationStatus.pendingMigrations,
+        //   );
+        // }
       } else {
         log(LogLevel.INFO, "Database is up to date");
       }
@@ -433,7 +433,7 @@ async function createSplashWindow() {
       alwaysOnTop: true,
       center: true,
       resizable: false,
-      movable: false,
+      movable: true,
       skipTaskbar: true,
       show: false,
       webPreferences: {
@@ -595,11 +595,19 @@ async function createMainWindow() {
     const appUrl = await getAppUrl();
     log(LogLevel.INFO, `Loading URL: ${appUrl}`);
 
-    await mainWindow.loadURL(appUrl);
-
-    // Open DevTools in development
-    if (APP_CONFIG.isDev) {
-      mainWindow.webContents.openDevTools({ mode: "right" });
+   try {
+      if (!APP_CONFIG.isDev) {
+        await mainWindow.loadURL(appUrl);
+      } else {
+        await mainWindow.loadURL(appUrl);
+        mainWindow.webContents.openDevTools({ mode: "detach" });
+      }
+      log("SUCCESS", "Main window loaded successfully");
+    } catch (error) {
+      const errorMessage = APP_CONFIG.isDev
+        ? "Dev server not running. Run 'npm run dev' first."
+        : "Production build not found or corrupted.";
+      throw new Error(errorMessage);
     }
 
     return mainWindow;
@@ -847,7 +855,8 @@ function registerIpcHandlers() {
       "./ipc/windows_control.ipc.js",
       "./ipc/booking/index.ipc.js",
       "./ipc/guest/index.ipc.js",
-      "./ipc/room/index.ipc.js"
+      "./ipc/room/index.ipc.js",
+      "./ipc/notification_log/index.ipc.js",
     ];
 
     ipcModules.forEach((modulePath) => {

@@ -13,24 +13,27 @@ const bookingService = require("../../../services/Booking");
  */
 module.exports = async (params) => {
   try {
-    const { id, reason } = params;
+    const { id, reason = null } = params;
     if (!id) throw new Error("Booking ID is required");
 
+    // @ts-ignore
     const updated = await bookingService.markAsPaid(id, reason);
 
     return {
-      paymentStatus: true,
+      // @ts-ignore
+      status: true,
       message: `Booking marked as paid`,
 
       data: updated,
     };
   } catch (error) {
     // @ts-ignore
-    console.error("[update_paymentStatus.ipc] Error:", error.message);
+    console.error("[mark_as_paid.ipc] Error:", error.message);
     return {
-      paymentStatus: false,
       // @ts-ignore
-      message: error.message || "Failed to update booking paymentStatus",
+      status: false,
+      // @ts-ignore
+      message: error.message || "Failed to mark booking as paid",
       data: null,
     };
   }

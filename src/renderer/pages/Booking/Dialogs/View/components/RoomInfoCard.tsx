@@ -20,7 +20,7 @@ export const RoomInfoCard: React.FC<Props> = ({ room }) => {
       <div className="space-y-2">
         <div className="flex justify-between items-center">
           <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-            Room #{room.roomNumber}
+            Room #{room?.roomNumber || '—'}
           </span>
           <span
             className="text-xs px-2 py-0.5 rounded-full capitalize"
@@ -29,24 +29,24 @@ export const RoomInfoCard: React.FC<Props> = ({ room }) => {
               color: 'var(--primary-color)',
             }}
           >
-            {room.type}
+            {room?.type || 'Unknown'}
           </span>
         </div>
         <div className="grid grid-cols-2 gap-2 text-sm">
           <div className="flex items-center gap-1">
             <CapacityIcon className="w-3.5 h-3.5" style={{ color: 'var(--text-tertiary)' }} />
-            <span style={{ color: 'var(--text-primary)' }}>Capacity: {room.capacity}</span>
+            <span style={{ color: 'var(--text-primary)' }}>Capacity: {room?.capacity}</span>
           </div>
           <div className="flex items-center gap-1">
             <Tag className="w-3.5 h-3.5" style={{ color: 'var(--text-tertiary)' }} />
-            <span style={{ color: 'var(--primary-color)' }}>₱{room.pricePerNight}/night</span>
+            <span style={{ color: 'var(--primary-color)' }}>₱{room?.pricePerNight}/night</span>
           </div>
         </div>
-        {room.amenities && (
+        {room?.amenities && (
           <div className="flex items-start gap-1">
             <Sparkles className="w-3.5 h-3.5 mt-0.5" style={{ color: 'var(--text-tertiary)' }} />
             <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-              {room.amenities}
+              {room?.amenities}
             </span>
           </div>
         )}

@@ -3,13 +3,27 @@
 // 📦 Types & Interfaces (based on backend Room entity and IPC responses)
 // ----------------------------------------------------------------------
 
+import type { Guest } from "./booking";
+
 export interface Room {
   id: number;
   roomNumber: string;
-  type: "standard" | "single" | "double" | "twin" | "suite" | "deluxe" | "family" | "studio" | "executive";
+  type:
+    | "standard"
+    | "single"
+    | "double"
+    | "twin"
+    | "suite"
+    | "deluxe"
+    | "family"
+    | "studio"
+    | "executive";
   capacity: number;
   pricePerNight: number;
+  /** @deprecated Use `status` instead – kept for backward compatibility */
   isAvailable: boolean;
+  /** Current room status: available, occupied, maintenance */
+  status: "available" | "occupied" | "maintenance";
   amenities: string | null;
   createdAt: string; // ISO date string
   bookings?: Booking[]; // optional relation
@@ -26,20 +40,29 @@ export interface Booking {
   createdAt: string;
   roomId: number;
   guestId: number;
+  guest: Guest;
 }
 
 // ----------------------------------------------------------------------
 // 📨 Request parameter interfaces
 // ----------------------------------------------------------------------
 
+// src/renderer/api/room.ts
+
 export interface GetAllRoomsParams {
   search?: string;
   type?: string;
   minCapacity?: number;
   maxPrice?: number;
-  availableOnly?: boolean;
+  /** @deprecated Use `status: 'available'` instead */
+  availableOnly?: boolean;   // kept for backward compatibility, but avoid using
+  /** Filter by exact room status */
+  status?: "available" | "occupied" | "maintenance";
   sortBy?: string;
   sortOrder?: "ASC" | "DESC";
+  // optional pagination if your backend supports it
+  limit?: number;
+  offset?: number;
 }
 
 export interface GetAvailableRoomsParams {
@@ -56,14 +79,29 @@ export interface SearchRoomsParams {
   query: string;
 }
 
+/**
+ * Data for creating a new room.
+ * - Use `status` to set the initial status (defaults to "available").
+ * - `isAvailable` is derived from `status`; avoid using it directly.
+ */
 export interface CreateRoomParams {
-  roomData: Omit<Room, "id" | "createdAt" | "bookings">;
+  roomData: Omit<Room, "id" | "createdAt" | "bookings" | "isAvailable"> & {
+    status?: "available" | "occupied" | "maintenance";
+    /** @deprecated Use `status` instead – will be converted automatically */
+    isAvailable?: boolean;
+  };
   user?: string;
 }
 
 export interface UpdateRoomParams {
   id: number;
-  updates: Partial<Omit<Room, "id" | "createdAt" | "bookings">>;
+  updates: Partial<
+    Omit<Room, "id" | "createdAt" | "bookings" | "isAvailable"> & {
+      status?: "available" | "occupied" | "maintenance";
+      /** @deprecated Use `status` instead – will be converted automatically */
+      isAvailable?: boolean;
+    }
+  >;
   user?: string;
 }
 
@@ -72,23 +110,48 @@ export interface DeleteRoomParams {
   user?: string;
 }
 
+/**
+ * Set room availability using a boolean flag.
+ * This toggles `isAvailable` and automatically sets `status` to
+ * "available" (true) or "occupied" (false).
+ */
 export interface SetRoomAvailabilityParams {
   id: number;
   isAvailable: boolean;
   user?: string;
 }
 
-// (updateRoomStatus uses the same shape as SetRoomAvailabilityParams)
+/**
+ * Update the room status using the exact enum value.
+ * Allowed values: "available", "occupied", "maintenance".
+ */
+export interface UpdateRoomStatusParams {
+  id: number;
+  status: "available" | "occupied" | "maintenance";
+  user?: string;
+}
 
 export interface BulkCreateRoomsParams {
-  rooms: Array<Omit<Room, "id" | "createdAt" | "bookings">>;
+  rooms: Array<
+    Omit<Room, "id" | "createdAt" | "bookings" | "isAvailable"> & {
+      status?: "available" | "occupied" | "maintenance";
+      /** @deprecated Use `status` instead – will be converted automatically */
+      isAvailable?: boolean;
+    }
+  >;
   user?: string;
 }
 
 export interface BulkUpdateRoomsParams {
   updates: Array<{
     id: number;
-    updates: Partial<Omit<Room, "id" | "createdAt" | "bookings">>;
+    updates: Partial<
+      Omit<Room, "id" | "createdAt" | "bookings" | "isAvailable"> & {
+        status?: "available" | "occupied" | "maintenance";
+        /** @deprecated Use `status` instead – will be converted automatically */
+        isAvailable?: boolean;
+      }
+    >;
   }>;
   user?: string;
 }
@@ -503,8 +566,11 @@ class RoomAPI {
   }
 
   /**
-   * Update the availability status of a room.
-   * @param params - Room ID, new availability, and optional username.
+   * Set room availability using a boolean flag.
+   * This toggles `isAvailable` and automatically sets `status` to
+   * "available" (true) or "occupied" (false).
+   *
+   * @param params - Room ID, new availability flag, optional username.
    */
   async setAvailability(
     params: SetRoomAvailabilityParams,
@@ -529,11 +595,29 @@ class RoomAPI {
   }
 
   /**
-   * Alias for setAvailability – updates room status.
-   * @param params - Room ID, isAvailable, optional username.
+   * Update the room status using the exact enum value.
+   * Allowed values: "available", "occupied", "maintenance".
+   *
+   * @param params - Room ID, new status, optional username.
    */
-  async updateStatus(params: SetRoomAvailabilityParams): Promise<RoomResponse> {
-    return this.setAvailability(params);
+  async updateStatus(params: UpdateRoomStatusParams): Promise<RoomResponse> {
+    try {
+      if (!window.backendAPI?.room) {
+        throw new Error("Electron API (room) not available");
+      }
+
+      const response = await window.backendAPI.room({
+        method: "updateRoomStatus",
+        params,
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to update room status");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to update room status");
+    }
   }
 
   // --------------------------------------------------------------------
@@ -656,8 +740,7 @@ class RoomAPI {
    */
   async hasRooms(): Promise<boolean> {
     try {
-      const response = await this.getAll({ limit: 1 } as any); // limit not natively supported, but we can use pagination? For now just get one.
-      // Since getAll returns all rooms, we can check if array length > 0.
+      const response = await this.getAll({ limit: 1 } as any);
       return response.data ? response.data.length > 0 : false;
     } catch (error) {
       console.error("Error checking rooms existence:", error);

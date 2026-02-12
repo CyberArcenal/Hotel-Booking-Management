@@ -42,13 +42,16 @@
     "build": "vite build && tsc -p tsconfig.main.json && electron-builder",
     "postinstall": "electron-rebuild",
     "rebuild": "electron-rebuild -f -w sqlite3",
-    "seed": "node src/seeders/seedData.js"
+    "seed": "node src/seeders/seedData.js",
+    "seed:clear": "node src/seeders/seedData.js --clear-only",
+    "seed:rooms": "node src/seeders/seedData.js --skip-guests --skip-bookings --skip-audit-logs --skip-system-settings"
   },
   "dependencies": {
     "csv-parse": "^6.1.0",
     "decimal.js": "^10.6.0",
     "electron": "^39.2.7",
     "lucide-react": "^0.563.0",
+    "nodemailer": "^8.0.1",
     "p-queue": "^9.1.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

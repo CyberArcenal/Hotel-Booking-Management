@@ -2,6 +2,9 @@ const { EntitySubscriberInterface } = require("typeorm");
 const { Booking } = require("../entities/Booking");
 
 class BookingSubscriber {
+  constructor() {
+    console.log("✅ BookingSubscriber loaded and registered");
+  }
   listenTo() {
     return Booking;
   }
@@ -17,6 +20,8 @@ class BookingSubscriber {
   afterRemove(event) {
     console.log("Booking cancelled:", event.entityId);
   }
+
+  
 }
 
-module.exports = BookingSubscriber;
+module.exports =  BookingSubscriber ;

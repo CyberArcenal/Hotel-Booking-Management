@@ -37,31 +37,32 @@ function resolveSubscribers(subscribersConfig) {
   const resolved = [];
 
   for (const item of subscribersConfig) {
-    if (!item) continue;
-
-    // If item contains glob chars, keep as-is for TypeORM to resolve
-    if (typeof item === "string" && (item.includes("*") || item.includes("?"))) {
-      resolved.push(item);
-      continue;
-    }
-
-    // If it's a string path and file exists, require it
     if (typeof item === "string") {
+      // Glob pattern (e.g. *.js)
+      if (item.includes("*") || item.includes("?")) {
+        resolved.push(item);
+        continue;
+      }
+
+      // String path → require it
       try {
-        const abs = path.isAbsolute(item) ? item : path.resolve(process.cwd(), item);
-        if (fs.existsSync(abs)) {
-          const required = require(abs);
-          if (required) resolved.push(required);
-          continue;
+        const mod = require(item);
+        if (mod.default) {
+          resolved.push(mod.default);
+        } else if (typeof mod === "function") {
+          resolved.push(mod);
+        } else {
+          // { ClassName: class } pattern
+          const cls = Object.values(mod).find(v => typeof v === "function");
+          if (cls) resolved.push(cls);
         }
       } catch (err) {
         // @ts-ignore
-        console.warn("[PayTrack][DataSource] Could not require subscriber path:", item, err.message);
+        console.error("[PayTrack][DataSource] Failed to load subscriber:", item, err.message);
       }
-    }
-
-    // If it's already a function/class/object, push directly
-    if (typeof item === "function" || typeof item === "object") {
+    } 
+    // Already a class or object
+    else if (typeof item === "function" || (typeof item === "object" && item !== null)) {
       resolved.push(item);
     }
   }
@@ -69,12 +70,18 @@ function resolveSubscribers(subscribersConfig) {
   return resolved;
 }
 
+// @ts-ignore
 const subscribers = resolveSubscribers(config.subscribers);
-
+console.log("=== REGISTERED SUBSCRIBERS ===");
+subscribers.forEach((sub) => {
+  const name =
+    sub.name || (sub.constructor && sub.constructor.name) || "Unknown";
+  console.log(`→ ${name} LOADED`);
+});
 const dataSourceOptions = {
   ...config,
   entities,
-  subscribers,
+  subscribers: subscribers,
   migrations: Array.isArray(config.migrations) ? config.migrations : [config.migrations]
 };
 

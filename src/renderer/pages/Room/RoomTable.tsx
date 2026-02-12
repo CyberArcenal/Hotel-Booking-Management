@@ -1,3 +1,4 @@
+// src/pages/Room/RoomPage.tsx
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Filter, Plus } from "lucide-react";
@@ -12,6 +13,7 @@ import BookingFormDialog from "../../components/BookingForm";
 import type { Booking } from "../../api/booking";
 import { dialogs } from "../../utils/dialogs";
 import { RoomViewDialog } from "./Dialogs/View";
+import roomAPI from "../../api/room";
 
 const RoomPage: React.FC = () => {
   const navigate = useNavigate();
@@ -28,17 +30,13 @@ const RoomPage: React.FC = () => {
   } = useRooms();
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-
-  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(12); // 12 cards per row (3-4 columns)
-
+  const [pageSize, setPageSize] = useState(12);
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
   const [isBookingFormDialogOpen, setIsBookingFormDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
 
-  // Reset to page 1 when filters or search changes
   const handleFilterChange = (newFilters: any) => {
     setFilters(newFilters);
     setCurrentPage(1);
@@ -54,10 +52,9 @@ const RoomPage: React.FC = () => {
     setCurrentPage(1);
   };
 
-  // Paginate rooms
   const paginatedRooms = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    return rooms.slice(startIndex, startIndex + pageSize);
+    const start = (currentPage - 1) * pageSize;
+    return rooms.slice(start, start + pageSize);
   }, [rooms, currentPage, pageSize]);
 
   const totalRooms = rooms.length;
@@ -66,35 +63,73 @@ const RoomPage: React.FC = () => {
     setSelectedRoom(rooms.find((r) => r.id === id) || null);
     setIsViewDialogOpen(true);
   };
+
   const handleEdit = (id: number) => {
     setSelectedRoom(rooms.find((r) => r.id === id) || null);
     setIsFormDialogOpen(true);
   };
-  const handleBook = async (id: number) => {
+
+  const handleBook = (id: number) => {
     setSelectedRoom(rooms.find((r) => r.id === id) || null);
     setIsBookingFormDialogOpen(true);
+  };
+
+  // ✅ Updated: use updateStatus instead of setAvailability
+  const handleMarkMaintenance = async (id: number) => {
+    try {
+      await roomAPI.updateStatus({ id, status: "maintenance" });
+      refetch();
+    } catch (error) {
+      console.error("Failed to mark as maintenance:", error);
+    }
+  };
+
+  const handleMarkAvailable = async (id: number) => {
+    try {
+      await roomAPI.updateStatus({ id, status: "available" });
+      refetch();
+    } catch (error) {
+      console.error("Failed to mark as available:", error);
+    }
+  };
+
+  const handleDeleteRoom = async (id: number) => {
+    if (
+      await dialogs.confirm({
+        title: "Delete room?",
+        message: "This action cannot be undone.",
+      })
+    ) {
+      try {
+        await roomAPI.delete({ id });
+        refetch();
+      } catch (error) {
+        console.error("Failed to delete room:", error);
+      }
+    }
   };
 
   return (
     <div className="min-h-screen bg-[var(--background-color)]">
       <main className="container mx-auto px-4 py-6 md:px-6">
-        {/* Header with title and actions */}
+        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-[var(--text-primary)]">
-              Rooms
-            </h2>
+            <h2 className="text-2xl font-bold text-[var(--text-primary)]">Rooms</h2>
             <p className="text-[var(--text-secondary)] mt-1">
               {totalRooms} room{totalRooms !== 1 ? "s" : ""} available
             </p>
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setIsFormDialogOpen(true)}
+              onClick={() => {
+                setSelectedRoom(null);
+                setIsFormDialogOpen(true);
+              }}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg
                          bg-[var(--card-secondary-bg)] hover:bg-[var(--card-hover-bg)]
                          text-[var(--text-primary)] border border-[var(--border-color)]/20
-                         hover:border-[var(--border-color)]/40 transition-all duration-200"
+                         hover:border-[var(--border-color)]/40 transition-all"
             >
               <Plus className="w-4 h-4" />
               Create Room
@@ -104,7 +139,7 @@ const RoomPage: React.FC = () => {
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg
                          bg-[var(--card-secondary-bg)] hover:bg-[var(--card-hover-bg)]
                          text-[var(--text-primary)] border border-[var(--border-color)]/20
-                         hover:border-[var(--border-color)]/40 transition-all duration-200"
+                         hover:border-[var(--border-color)]/40 transition-all"
             >
               <Filter className="w-4 h-4" />
               Filters
@@ -112,7 +147,7 @@ const RoomPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Search bar */}
+        {/* Search */}
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
           <RoomSearch value={searchQuery} onChange={handleSearchChange} />
           {searchQuery && (
@@ -148,6 +183,9 @@ const RoomPage: React.FC = () => {
             onViewRoom={handleView}
             onEditRoom={handleEdit}
             onBookRoom={handleBook}
+            onMarkMaintenance={handleMarkMaintenance}
+            onMarkAvailable={handleMarkAvailable}
+            onDeleteRoom={handleDeleteRoom}
             isLoading={loading}
           />
         </div>
@@ -161,37 +199,41 @@ const RoomPage: React.FC = () => {
             onPageChange={setCurrentPage}
             onPageSizeChange={setPageSize}
             pageSizeOptions={[12, 24, 48, 96]}
-            showPageSize={true}
+            showPageSize
           />
         )}
       </main>
+
+      {/* Dialogs */}
       {isFormDialogOpen && (
         <RoomFormDialog
-          id={selectedRoom ? selectedRoom.id : undefined}
-          mode={"add"}
-          onClose={function (): void {
+          id={selectedRoom?.id}
+          mode={selectedRoom ? "edit" : "add"}
+          onClose={() => {
             setIsFormDialogOpen(false);
             setSelectedRoom(null);
           }}
-          onSuccess={function (room: Room): void {
+          onSuccess={() => {
             setIsFormDialogOpen(false);
             setSelectedRoom(null);
             refetch();
           }}
         />
       )}
+
       {isBookingFormDialogOpen && selectedRoom && (
         <BookingFormDialog
-          mode={"add"}
+          mode="add"
           roomId={selectedRoom.id}
-          onClose={function (): void {
+          onClose={() => {
             setIsBookingFormDialogOpen(false);
+            setSelectedRoom(null);
           }}
           onSuccess={async (booking: Booking) => {
             setIsBookingFormDialogOpen(false);
             await dialogs.success(
-              `Booking created successfully!`,
-              `Room ${selectedRoom.roomNumber} has been booked.`,
+              "Booking created successfully!",
+              `Room ${selectedRoom.roomNumber} has been booked.`
             );
             refetch();
           }}
@@ -200,13 +242,13 @@ const RoomPage: React.FC = () => {
 
       {isViewDialogOpen && selectedRoom && (
         <RoomViewDialog
-          id={selectedRoom.id!}
+          id={selectedRoom.id}
           isOpen={isViewDialogOpen}
           onClose={() => {
             setIsViewDialogOpen(false);
             setSelectedRoom(null);
           }}
-          showBookings={true} // optional, defaults to true
+          showBookings
         />
       )}
     </div>

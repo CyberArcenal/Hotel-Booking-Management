@@ -7,62 +7,61 @@ const Booking = new EntitySchema({
     id: {
       primary: true,
       type: "int",
-      generated: true
+      generated: true,
     },
     checkInDate: {
-      type: "date"
+      type: "date",
     },
     checkOutDate: {
-      type: "date"
+      type: "date",
     },
-    numberOfGuests: {  // ✅ ADD THIS: Important for capacity check
+    numberOfGuests: {
+      // ✅ ADD THIS: Important for capacity check
       type: "int",
-      default: 1
+      default: 1,
     },
     totalPrice: {
-      type: "float",  // ✅ CHANGE: decimal → float
+      type: "float", // ✅ CHANGE: decimal → float
       precision: 10,
-      scale: 2
+      scale: 2,
     },
     status: {
       type: "varchar",
-      default: "confirmed",
-      enum: ["confirmed", "checked_in", "checked_out", "cancelled"]  // ✅ ADD THIS: For booking lifecycle
+      default: "pending",
+      enum: ["pending", "confirmed", "checked_in", "checked_out", "cancelled"], // ✅ ADD THIS: For booking lifecycle
     },
     paymentStatus: {
       type: "varchar",
       default: "pending",
       enum: ["pending", "paid", "failed"],
     },
-    specialRequests: {  // ✅ ADD THIS: For guest preferences
+    specialRequests: {
+      // ✅ ADD THIS: For guest preferences
       type: "text",
-      nullable: true
+      nullable: true,
     },
-    createdAt: {  // ✅ ADD THIS: For audit trail
+    createdAt: {
+      // ✅ ADD THIS: For audit trail
       type: "datetime",
-      createDate: true
-    }
+      createDate: true,
+    },
   },
   relations: {
     room: {
       target: "Room",
       type: "many-to-one",
-      joinColumn: {
-        name: "roomId",
-        referencedColumnName: "id"
-      },
-      onDelete: "CASCADE"  // ✅ ADD THIS: Delete bookings when room is deleted
+      joinColumn: true,
+      inverseSide: "bookings",
+      onDelete: "CASCADE",
     },
     guest: {
       target: "Guest",
       type: "many-to-one",
-      joinColumn: {
-        name: "guestId",
-        referencedColumnName: "id"
-      },
-      onDelete: "CASCADE"  // ✅ ADD THIS: Delete bookings when guest is deleted
-    }
-  }
+      joinColumn: true,
+      inverseSide: "bookings",
+      onDelete: "CASCADE",
+    },
+  },
 });
 
 module.exports = { Booking };

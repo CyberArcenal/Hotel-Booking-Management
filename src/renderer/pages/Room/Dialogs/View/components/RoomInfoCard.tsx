@@ -1,5 +1,4 @@
 // src/renderer/components/Room/View/sections/RoomInfoCard.tsx
-
 import React from 'react';
 import { DoorOpen, Users, Calendar } from 'lucide-react';
 import type { Room } from '../../../../../api/room';
@@ -19,7 +18,8 @@ export const RoomInfoCard: React.FC<Props> = ({ room }) => {
             Room Information
           </h4>
         </div>
-        <RoomStatusBadge isAvailable={room.isAvailable} />
+        {/* ✅ Use the new status badge */}
+        <RoomStatusBadge status={room.status} />
       </div>
       <div className="space-y-2">
         <div className="flex justify-between items-center">

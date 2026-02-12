@@ -23,7 +23,18 @@ export interface AlertOptions {
   icon?: ConfirmIconType;
 }
 
-// --- Icon templates with hotel theme (gold on dark) ---
+// --- NEW: Prompt options ---
+export interface PromptOptions {
+  title?: string;
+  message?: string;
+  defaultValue?: string;
+  placeholder?: string;
+  confirmText?: string;
+  cancelText?: string;
+  icon?: ConfirmIconType;
+}
+
+// --- Icon templates (same as before) ---
 const IconTemplates = {
   question: `
     <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -52,13 +63,13 @@ const IconTemplates = {
   `,
 };
 
-// --- Hotel theme icon colors (dark backgrounds, gold/red/etc icons) ---
+// --- Hotel theme icon colors ---
 const IconColors: Record<ConfirmIconType, string> = {
-  question: "text-[#d4af37] bg-[#2a2a2a]",      // gold on dark grey
-  warning:  "text-[#f0c420] bg-[#2a2a2a]",      // warm yellow
-  danger:   "text-[#ff4c4c] bg-[#2a2a2a]",      // red
-  info:     "text-[#d4af37] bg-[#2a2a2a]",      // gold
-  success:  "text-[#d4af37] bg-[#2a2a2a]",      // gold
+  question: "text-[#d4af37] bg-[#2a2a2a]",
+  warning:  "text-[#f0c420] bg-[#2a2a2a]",
+  danger:   "text-[#ff4c4c] bg-[#2a2a2a]",
+  info:     "text-[#d4af37] bg-[#2a2a2a]",
+  success:  "text-[#d4af37] bg-[#2a2a2a]",
 };
 
 class DialogManager {
@@ -162,6 +173,27 @@ class DialogManager {
       .dialog-scrollbar::-webkit-scrollbar-thumb:hover {
         background: #d4af37;
       }
+
+      /* --- NEW: Prompt input styling (dark theme) --- */
+      .windows-input-dark {
+        display: block;
+        width: 100%;
+        border-radius: 0.375rem;
+        border: 1px solid #4d4d4d;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+        background-color: #2a2a2a;
+        color: #f5f5f5;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      }
+      .windows-input-dark:focus {
+        border-color: #d4af37;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.3);
+      }
+      .windows-input-dark::placeholder {
+        color: #999999;
+      }
     `;
     document.head.appendChild(styles);
   }
@@ -229,7 +261,13 @@ class DialogManager {
       .replace(/\[u\](.*?)\[\/u\]/gi, '<u>$1</u>');
   }
 
+  // --- Existing confirm ---
   public showConfirm(options: ConfirmOptions = {}): Promise<boolean> {
+    // ... (unchanged, keep existing code) ...
+    // For brevity, I'm not repeating the full implementation here.
+    // Assume the method remains as originally written.
+    // (We'll keep the original code exactly as it is.)
+    // --- Original showConfirm code ---
     this.createContainer();
     return new Promise((resolve) => {
       const {
@@ -342,7 +380,9 @@ class DialogManager {
     });
   }
 
+  // --- Existing alert ---
   public showAlert(options: AlertOptions): Promise<void> {
+    // ... (unchanged, keep existing code) ...
     this.createContainer();
     return new Promise((resolve) => {
       const {
@@ -420,6 +460,135 @@ class DialogManager {
     });
   }
 
+  // --- NEW: Prompt dialog ---
+  public showPrompt(options: PromptOptions = {}): Promise<string | null> {
+    this.createContainer();
+    return new Promise((resolve) => {
+      const {
+        title = "Input Required",
+        message = "Please enter a value:",
+        defaultValue = "",
+        placeholder = "",
+        confirmText = "OK",
+        cancelText = "Cancel",
+        icon = "question",
+      } = options;
+
+      const backdrop = this.createBackdrop();
+      const dialog = this.createDialogElement();
+      const formattedMessage = this.formatDialogMessage(message);
+      const inputId = `prompt-input-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+      dialog.innerHTML = `
+        <div class="p-5">
+          <div class="flex items-start gap-4 mb-4">
+            ${this.getIconMarkup(icon)}
+            <div class="flex-1 min-w-0">
+              <h3 class="windows-title text-lg font-semibold text-[#f5f5f5] mb-2">
+                ${title}
+              </h3>
+              <div class="windows-text text-sm text-[#cccccc] dialog-scrollbar max-h-32 overflow-y-auto">
+                ${formattedMessage}
+              </div>
+            </div>
+            <button type="button" class="close-btn flex-shrink-0 text-[#999999] hover:text-[#d4af37] transition-colors p-1 rounded hover:bg-[#333333]">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+          <div class="px-2">
+            <input
+              type="text"
+              id="${inputId}"
+              class="windows-input-dark w-full"
+              placeholder="${placeholder}"
+              value="${defaultValue.replace(/"/g, '&quot;')}"
+              autofocus
+            />
+          </div>
+        </div>
+        <div class="px-5 py-4 bg-[#0a0a0a] flex justify-end gap-2 border-t border-[#333333]">
+          <button type="button" class="
+            cancel-btn
+            windows-btn
+            px-4 py-2 text-sm font-medium
+            text-[#f5f5f5] bg-[#2a2a2a] hover:bg-[#3a3a3a]
+            rounded
+            border border-[#4d4d4d]
+          ">
+            ${cancelText}
+          </button>
+          <button type="button" class="
+            confirm-btn
+            windows-btn
+            px-4 py-2 text-sm font-medium
+            bg-[#d4af37] hover:bg-[#b8860b]
+            text-black
+            rounded
+            border border-transparent
+          ">
+            ${confirmText}
+          </button>
+        </div>
+      `;
+
+      this.container!.appendChild(backdrop);
+      this.container!.appendChild(dialog);
+      this.activeDialogs.add(dialog);
+
+      requestAnimationFrame(() => {
+        backdrop.classList.remove("backdrop-enter");
+        backdrop.classList.add("backdrop-enter-active");
+      });
+      setTimeout(() => this.animateIn(dialog), 50);
+
+      const inputElement = document.getElementById(inputId) as HTMLInputElement;
+
+      const cleanup = () => {
+        backdrop.classList.remove("backdrop-enter-active");
+        backdrop.classList.add("backdrop-exit-active");
+        this.animateOut(dialog, () => {
+          dialog.remove();
+          backdrop.remove();
+          this.activeDialogs.delete(dialog);
+          if (this.container && this.activeDialogs.size === 0) {
+            this.container.remove();
+            this.container = null;
+          }
+        });
+      };
+
+      const onConfirm = () => {
+        const value = inputElement?.value ?? null;
+        cleanup();
+        resolve(value);
+      };
+      const onCancel = () => {
+        cleanup();
+        resolve(null);
+      };
+
+      const onKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "Escape") onCancel();
+        else if (e.key === "Enter") onConfirm();
+      };
+
+      const confirmBtn = dialog.querySelector<HTMLButtonElement>(".confirm-btn")!;
+      const cancelBtn = dialog.querySelector<HTMLButtonElement>(".cancel-btn")!;
+      const closeBtn = dialog.querySelector<HTMLButtonElement>(".close-btn")!;
+
+      confirmBtn.addEventListener("click", onConfirm);
+      cancelBtn.addEventListener("click", onCancel);
+      closeBtn.addEventListener("click", onCancel);
+      backdrop.addEventListener("click", onCancel);
+      document.addEventListener("keydown", onKeyDown);
+
+      // Focus input field after animation
+      setTimeout(() => inputElement?.focus(), 200);
+    });
+  }
+
   public closeAllDialogs(): void {
     this.activeDialogs.forEach((dialog) => dialog.remove());
     this.activeDialogs.clear();
@@ -436,12 +605,17 @@ export const showConfirm = (options?: ConfirmOptions): Promise<boolean> =>
   dialogManager.showConfirm(options);
 export const showAlert = (options: AlertOptions): Promise<void> =>
   dialogManager.showAlert(options);
+// --- NEW: Export prompt ---
+export const showPrompt = (options?: PromptOptions): Promise<string | null> =>
+  dialogManager.showPrompt(options);
 export const closeAllDialogs = (): void => dialogManager.closeAllDialogs();
 
 export const dialogs = {
   confirm: showConfirm,
   alert: showAlert,
+  // prompt: showPrompt, // <-- NEW
   closeAll: closeAllDialogs,
+
   delete: (itemName?: string) =>
     showConfirm({
       title: "Delete Confirmation",
@@ -452,6 +626,7 @@ export const dialogs = {
       cancelText: "Cancel",
       icon: "danger",
     }),
+
   success: (message: string, title: string = "Success!") =>
     showAlert({ title, message, icon: "success" }),
   error: (message: string, title: string = "Error") =>
@@ -460,6 +635,17 @@ export const dialogs = {
     showAlert({ title, message, icon: "warning" }),
   info: (message: string, title: string = "Information") =>
     showAlert({ title, message, icon: "info" }),
+
+  // --- Convenience overload for simple prompt ---
+  prompt: (message: string, defaultValue: string = ""): Promise<string | null> =>
+    showPrompt({
+      title: "Input Required",
+      message,
+      defaultValue,
+      placeholder: "Type here...",
+      icon: "question",
+    }),
+
   windowsConfirm: (title: string, message: string) =>
     showConfirm({ title, message, confirmText: "Yes", cancelText: "No", icon: "question" }),
   windowsAlert: (title: string, message: string) =>

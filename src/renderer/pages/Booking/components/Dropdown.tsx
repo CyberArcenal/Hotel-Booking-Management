@@ -8,6 +8,7 @@ import {
   Trash2,
 } from "lucide-react";
 import type { Booking } from "../../../api/booking";
+import { dialogs } from "../../../utils/dialogs";
 
 interface BookingActionsDropdownProps {
   booking: Booking;
@@ -82,7 +83,7 @@ const BookingActionsDropdown: React.FC<BookingActionsDropdownProps> = ({
     };
   };
 
-  console.log("BookingActionsDropdown render", { booking, isOpen });
+  // console.log("BookingActionsDropdown render", { booking, isOpen });
 
   const isActive = ["confirmed", "checked_in"].includes(booking.status);
   const canCheckIn = booking.status === "confirmed";
@@ -110,8 +111,15 @@ const BookingActionsDropdown: React.FC<BookingActionsDropdownProps> = ({
           {/* Check In */}
           {canCheckIn && (
             <button
-              onClick={(e) => {
+              onClick={async (e) => {
                 e.stopPropagation();
+                if (
+                  !(await dialogs.confirm({
+                    title: "Confirm Check In",
+                    message: "Are you sure you want to check in this booking?",
+                  }))
+                )
+                  return;
                 handleAction(() => onCheckIn(booking.id));
               }}
               className="w-full flex items-center gap-3 px-4 py-2 text-sm 
@@ -126,8 +134,15 @@ const BookingActionsDropdown: React.FC<BookingActionsDropdownProps> = ({
           {/* Check Out */}
           {canCheckOut && (
             <button
-              onClick={(e) => {
+              onClick={async (e) => {
                 e.stopPropagation();
+                if (
+                  !(await dialogs.confirm({
+                    title: "Confirm Check Out",
+                    message: "Are you sure you want to check out this booking?",
+                  }))
+                )
+                  return;
                 handleAction(() => onCheckOut(booking.id));
               }}
               className="w-full flex items-center gap-3 px-4 py-2 text-sm 
@@ -142,8 +157,15 @@ const BookingActionsDropdown: React.FC<BookingActionsDropdownProps> = ({
           {/* Cancel */}
           {canCancel && (
             <button
-              onClick={(e) => {
+              onClick={async (e) => {
                 e.stopPropagation();
+                if (
+                  !(await dialogs.confirm({
+                    title: "Confirm Cancel",
+                    message: "Are you sure you want to cancel this booking?",
+                  }))
+                )
+                  return;
                 handleAction(() => onCancel(booking.id));
               }}
               className="w-full flex items-center gap-3 px-4 py-2 text-sm 
@@ -163,8 +185,16 @@ const BookingActionsDropdown: React.FC<BookingActionsDropdownProps> = ({
           {/* Mark as Paid (placeholder) */}
           {booking.paymentStatus === "pending" && (
             <button
-              onClick={(e) => {
+              onClick={async (e) => {
                 e.stopPropagation();
+                if (
+                  !(await dialogs.confirm({
+                    title: "Confirm Mark as Paid",
+                    message:
+                      "Are you sure you want to mark this booking as paid?",
+                  }))
+                )
+                  return;
                 handleAction(() => onMarkAsPaid(booking.id));
               }}
               className="w-full flex items-center gap-3 px-4 py-2 text-sm 
@@ -178,24 +208,39 @@ const BookingActionsDropdown: React.FC<BookingActionsDropdownProps> = ({
 
           {/* Mark as Failed */}
           {booking.paymentStatus === "pending" && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleAction(() => onMarkAsFailed(booking.id));
-                }}
-                className="w-full flex items-center gap-3 px-4 py-2 text-sm 
+            <button
+              onClick={async (e) => {
+                e.stopPropagation();
+                if (
+                  !(await dialogs.confirm({
+                    title: "Confirm Mark as Failed",
+                    message:
+                      "Are you sure you want to mark this booking as failed?",
+                  }))
+                )
+                  return;
+                handleAction(() => onMarkAsFailed(booking.id));
+              }}
+              className="w-full flex items-center gap-3 px-4 py-2 text-sm 
                      text-[var(--text-primary)] hover:bg-[var(--card-hover-bg)] 
                      transition-colors"
-              >
-                <XCircle className="w-4 h-4 text-red-500" />
-                <span>Mark as Failed</span>
-              </button>
-            )}
+            >
+              <XCircle className="w-4 h-4 text-red-500" />
+              <span>Mark as Failed</span>
+            </button>
+          )}
 
           {/* Generate Invoice */}
           <button
-            onClick={(e) => {
+            onClick={async (e) => {
               e.stopPropagation();
+              if (
+                !(await dialogs.confirm({
+                  title: "Invoice",
+                  message: "Are you sure you want to invoice this booking?",
+                }))
+              )
+                return;
               handleAction(() => onGenerateInvoice(booking.id));
             }}
             className="w-full flex items-center gap-3 px-4 py-2 text-sm 
@@ -212,8 +257,15 @@ const BookingActionsDropdown: React.FC<BookingActionsDropdownProps> = ({
           {/* Delete – shown for cancelled or inactive bookings, or always with caution */}
           {!isActive && (
             <button
-              onClick={(e) => {
+              onClick={async (e) => {
                 e.stopPropagation();
+                if (
+                  !(await dialogs.confirm({
+                    title: "Confirm Deletion",
+                    message: "Are you sure you want to delete this booking?",
+                  }))
+                )
+                  return;
                 handleAction(() => onDelete(booking.id));
               }}
               className="w-full flex items-center gap-3 px-4 py-2 text-sm 

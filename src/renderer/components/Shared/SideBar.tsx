@@ -22,6 +22,7 @@ import {
   TrendingUp,
   Activity,
   Home,
+  Mail,
 } from "lucide-react";
 import { version } from "../../../../package.json"; // adjust path as needed
 import dashboardAPI from "../../api/dashboard";
@@ -68,18 +69,12 @@ const SideBar: React.FC<SidebarProps> = ({ isOpen }) => {
       name: "Rooms",
       icon: DoorOpen,
       category: "core",
-      children: [
-        { path: "/rooms", name: "Room List", icon: BedDouble },
-      ],
     },
     {
       path: "/bookings",
       name: "Bookings",
       icon: CalendarCheck,
       category: "core",
-      children: [
-        { path: "/bookings", name: "All Bookings", icon: ClipboardList },
-      ],
     },
     { path: "/guests", name: "Guests", icon: Users, category: "core" },
     {
@@ -100,6 +95,7 @@ const SideBar: React.FC<SidebarProps> = ({ isOpen }) => {
       category: "system",
       children: [
         { path: "/settings/audit", name: "Audit Trail", icon: ClipboardList },
+        { path: "/settings/notifications", name: "Notifications", icon: Mail },
         { path: "/settings/preferences", name: "Preferences", icon: Settings },
       ],
     },

@@ -17,7 +17,8 @@ const AuditLog = new EntitySchema({
       type: "varchar"
     },
     entityId: {
-      type: "int"
+      type: "int",
+      nullable: true
     },
     timestamp: {
       type: "datetime",

@@ -11,6 +11,7 @@ import ExportPage from "../pages/Analytics/Export";
 import AuditPage from "../pages/Audit";
 import SettingsPage from "../pages/Settings";
 import RoomPage from "../pages/Room/RoomTable";
+import NotificationLogPage from "../pages/NotificationLog";
 
 // 🔹 Placeholder components para hindi mag red mark
 const Placeholder = ({ title }: { title: string }) => (
@@ -46,6 +47,7 @@ function App() {
 
           {/* Settings */}
           <Route path="settings/audit" element={<AuditPage />} />
+          <Route path="/settings/notifications" element={<NotificationLogPage/>} />
           <Route path="settings/preferences" element={<SettingsPage />} />
 
           {/* 404 */}

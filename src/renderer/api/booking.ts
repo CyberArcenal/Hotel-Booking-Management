@@ -239,6 +239,7 @@ class BookingAPI {
         method: "getAllBookings",
         params: params || {},
       });
+      console.log(response)
       if (response.status) return response;
       throw new Error(response.message || "Failed to fetch bookings");
     } catch (error: any) {
@@ -299,6 +300,7 @@ class BookingAPI {
         method: "getBookingByRoom",
         params: { roomId },
       });
+      console.log(response)
       if (response.status) return response;
       throw new Error(response.message || "Failed to fetch room bookings");
     } catch (error: any) {
@@ -326,7 +328,7 @@ class BookingAPI {
   }
 
   /**
-   * Get all active bookings (confirmed + checked-in)
+   * Get all active bookings (confirmed + checked_in)
    */
   async getActive(): Promise<BookingsResponse> {
     try {
@@ -593,6 +595,7 @@ class BookingAPI {
         method: "markAsPaid",
         params: { id, reason },
       });
+      console.log(response)
       if (response.status) return response;
       throw new Error(response.message || "Failed to mark As Paid");
     } catch (error: any) {

@@ -1,8 +1,8 @@
-
-const { AppDataSource } = require('../main/db/datasource');
-const { Room } = require('../entities/Room');
-const auditLogger = require('../utils/auditLogger');
-const { validateRoomData } = require('../utils/validation');
+//@ts-check
+const { AppDataSource } = require("../main/db/datasource");
+const { Room } = require("../entities/Room");
+const auditLogger = require("../utils/auditLogger");
+const { validateRoomData } = require("../utils/validation");
 
 class RoomService {
   constructor() {
@@ -14,7 +14,7 @@ class RoomService {
       await AppDataSource.initialize();
     }
     this.repository = AppDataSource.getRepository(Room);
-    console.log('RoomService initialized');
+    console.log("RoomService initialized");
   }
 
   /**
@@ -33,41 +33,66 @@ class RoomService {
    * @param {string} user - User performing the action
    * @returns {Promise<Room>} Created room
    */
-  async create(roomData, user = 'system') {
+  async create(roomData, user = "system") {
     try {
       const repo = await this.getRepository();
-      
+
       // Validate room data
       const validation = validateRoomData(roomData);
+      // @ts-ignore
       if (!validation.valid) {
-        throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
+        // @ts-ignore
+        throw new Error(`Validation failed: ${validation.errors.join(", ")}`);
       }
 
+      // Normalize room number (case-insensitive check)
+      // @ts-ignore
+      const normalizedRoomNumber = roomData.roomNumber.trim().toUpperCase();
+
       // Check if room number already exists
-      const existingRoom = await repo.findOne({ 
-        where: { roomNumber: roomData.roomNumber } 
+      // @ts-ignore
+      const existingRoom = await repo.findOne({
+        where: { roomNumber: normalizedRoomNumber },
       });
-      
       if (existingRoom) {
+        // @ts-ignore
         throw new Error(`Room number ${roomData.roomNumber} already exists`);
       }
 
-      // Create room
+      // Determine status and isAvailable
+      // @ts-ignore
+      const status = roomData.status || "available";
+      const isAvailable =
+        // @ts-ignore
+        roomData.isAvailable !== undefined
+          // @ts-ignore
+          ? roomData.isAvailable
+          : status === "available"; // default: true if status = available
+
+      // Create room with defaults
+      // @ts-ignore
       const room = repo.create({
         ...roomData,
-        isAvailable: roomData.isAvailable !== undefined ? roomData.isAvailable : true,
-        createdAt: new Date()
+        roomNumber: normalizedRoomNumber,
+        status,
+        isAvailable,
+        createdAt: new Date(),
       });
 
+      // @ts-ignore
       const savedRoom = await repo.save(room);
-      
+
       // Log audit trail
-      await auditLogger.logCreate('Room', savedRoom.id, savedRoom, user);
-      
-      console.log(`Room created: ${savedRoom.roomNumber} (ID: ${savedRoom.id})`);
+      await auditLogger.logCreate("Room", savedRoom.id, savedRoom, user);
+
+      console.log(
+        `Room created: ${savedRoom.roomNumber} (ID: ${savedRoom.id})`,
+      );
+      // @ts-ignore
       return savedRoom;
     } catch (error) {
-      console.error('Failed to create room:', error.message);
+      // @ts-ignore
+      console.error("Failed to create room:", error.message);
       throw error;
     }
   }
@@ -79,50 +104,117 @@ class RoomService {
    * @param {string} user - User performing the action
    * @returns {Promise<Room>} Updated room
    */
-  async update(id, roomData, user = 'system') {
+  async update(id, roomData, user = "system") {
     try {
       const repo = await this.getRepository();
-      
-      // Find existing room
-      const existingRoom = await repo.findOne({ where: { id } });
+
+      // Find existing room with bookings
+      // @ts-ignore
+      const existingRoom = await repo.findOne({
+        where: { id },
+        relations: ["bookings"],
+      });
       if (!existingRoom) {
         throw new Error(`Room with ID ${id} not found`);
       }
 
+      const oldData = { ...existingRoom };
+
+      // Normalize room number if provided
+      // @ts-ignore
+      if (roomData.roomNumber) {
+        // @ts-ignore
+        roomData.roomNumber = roomData.roomNumber.trim().toUpperCase();
+      }
+
       // If room number is being changed, check for duplicates
-      if (roomData.roomNumber && roomData.roomNumber !== existingRoom.roomNumber) {
-        const duplicateRoom = await repo.findOne({ 
-          where: { roomNumber: roomData.roomNumber } 
+      if (
+        // @ts-ignore
+        roomData.roomNumber &&
+        // @ts-ignore
+        roomData.roomNumber !== existingRoom.roomNumber
+      ) {
+        // @ts-ignore
+        const duplicateRoom = await repo.findOne({
+          // @ts-ignore
+          where: { roomNumber: roomData.roomNumber },
         });
         if (duplicateRoom) {
+          // @ts-ignore
           throw new Error(`Room number ${roomData.roomNumber} already exists`);
         }
       }
 
-      // Validate updated data if provided
-      if (roomData.roomNumber || roomData.pricePerNight || roomData.capacity) {
-        const validationData = { ...existingRoom, ...roomData };
-        const validation = validateRoomData(validationData, true);
-        if (!validation.valid) {
-          throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
+      // Rule: cannot reduce capacity below current setting if active bookings exist
+      // @ts-ignore
+      if (roomData.capacity && roomData.capacity < existingRoom.capacity) {
+        // @ts-ignore
+        const hasActiveBookings = existingRoom.bookings.some((b) =>
+          ["confirmed", "checked_in"].includes(b.status),
+        );
+        if (hasActiveBookings) {
+          throw new Error(
+            "Cannot reduce room capacity while active bookings exist",
+          );
         }
       }
 
-      // Update room
-      const updatedRoom = repo.merge(existingRoom, {
-        ...roomData,
-        updatedAt: new Date()
-      });
+      // Rule: cannot set status = "available" if active bookings exist
+      // @ts-ignore
+      if (roomData.status === "available") {
+        // @ts-ignore
+        const hasActiveBookings = existingRoom.bookings.some((b) =>
+          ["confirmed", "checked_in"].includes(b.status),
+        );
+        if (hasActiveBookings) {
+          throw new Error(
+            "Cannot mark room as available while active bookings exist",
+          );
+        }
+      }
 
+      // Sync status & isAvailable if either is being updated
+      // @ts-ignore
+      if (roomData.status !== undefined || roomData.isAvailable !== undefined) {
+        // If status is explicitly changed, derive isAvailable
+        // @ts-ignore
+        if (roomData.status !== undefined) {
+          // @ts-ignore
+          roomData.isAvailable = roomData.status === "available";
+        }
+        // If isAvailable is explicitly changed (and status not already set), derive status
+        // @ts-ignore
+        else if (roomData.isAvailable !== undefined) {
+          // @ts-ignore
+          roomData.status = roomData.isAvailable ? "available" : "occupied";
+        }
+      }
+
+      // Validate updated data if provided
+      const validationData = { ...existingRoom, ...roomData };
+      const validation = validateRoomData(validationData, true);
+      // @ts-ignore
+      if (!validation.valid) {
+        // @ts-ignore
+        throw new Error(`Validation failed: ${validation.errors.join(", ")}`);
+      }
+
+      // Merge updates
+      // @ts-ignore
+      const updatedRoom = repo.merge(existingRoom, roomData);
+
+      // @ts-ignore
       const savedRoom = await repo.save(updatedRoom);
-      
+
       // Log audit trail
-      await auditLogger.logUpdate('Room', id, existingRoom, savedRoom, user);
-      
+      await auditLogger.logUpdate("Room", id, oldData, savedRoom, user);
+
       console.log(`Room updated: ${savedRoom.roomNumber} (ID: ${id})`);
+      // @ts-ignore
       return savedRoom;
     } catch (error) {
-      console.error('Failed to update room:', error.message);
+      // @ts-ignore
+      console.error("Failed to update room:", error.message);
       throw error;
     }
   }
@@ -133,42 +225,53 @@ class RoomService {
    * @param {string} user - User performing the action
    * @returns {Promise<boolean>} Success status
    */
-  async delete(id, user = 'system') {
+  async delete(id, user = "system") {
     try {
       const repo = await this.getRepository();
-      
+
       // Find room
-      const room = await repo.findOne({ 
+      // @ts-ignore
+      const room = await repo.findOne({
         where: { id },
-        relations: ['bookings'] 
+        relations: ["bookings"],
       });
-      
+
       if (!room) {
         throw new Error(`Room with ID ${id} not found`);
       }
 
       // Check if room has active bookings
-      const hasActiveBookings = room.bookings && room.bookings.some(
-        booking => booking.status === 'confirmed' || booking.status === 'checked_in'
-      );
-      
+      const hasActiveBookings =
+        // @ts-ignore
+        room.bookings &&
+        // @ts-ignore
+        room.bookings.some(
+          // @ts-ignore
+          (booking) =>
+            booking.status === "confirmed" || booking.status === "checked_in",
+        );
+
       if (hasActiveBookings) {
-        throw new Error(`Cannot delete room ${room.roomNumber} with active bookings`);
+        throw new Error(
+          `Cannot delete room ${room.roomNumber} with active bookings`,
+        );
       }
 
       // Store room data for audit log
       const roomData = { ...room };
-      
+
       // Delete room (cascade will delete associated bookings)
+      // @ts-ignore
       await repo.remove(room);
-      
+
       // Log audit trail
-      await auditLogger.logDelete('Room', id, roomData, user);
-      
+      await auditLogger.logDelete("Room", id, roomData, user);
+
       console.log(`Room deleted: ${roomData.roomNumber} (ID: ${id})`);
       return true;
     } catch (error) {
-      console.error('Failed to delete room:', error.message);
+      // @ts-ignore
+      console.error("Failed to delete room:", error.message);
       throw error;
     }
   }
@@ -181,21 +284,25 @@ class RoomService {
   async findById(id) {
     try {
       const repo = await this.getRepository();
-      const room = await repo.findOne({ 
+      // @ts-ignore
+      const room = await repo.findOne({
         where: { id },
-        relations: ['bookings'] 
+        relations: ["bookings"],
       });
-      
+
       if (!room) {
         throw new Error(`Room with ID ${id} not found`);
       }
-      
+
       // Log view action
-      await auditLogger.logView('Room', id, 'system');
-      
+      // @ts-ignore
+      await auditLogger.logView("Room", id, "system");
+
+      // @ts-ignore
       return room;
     } catch (error) {
-      console.error('Failed to find room:', error.message);
+      // @ts-ignore
+      console.error("Failed to find room:", error.message);
       throw error;
     }
   }
@@ -208,18 +315,21 @@ class RoomService {
   async findByRoomNumber(roomNumber) {
     try {
       const repo = await this.getRepository();
-      const room = await repo.findOne({ 
+      // @ts-ignore
+      const room = await repo.findOne({
         where: { roomNumber },
-        relations: ['bookings'] 
+        relations: ["bookings"],
       });
-      
+
       if (!room) {
         throw new Error(`Room ${roomNumber} not found`);
       }
-      
+
+      // @ts-ignore
       return room;
     } catch (error) {
-      console.error('Failed to find room by number:', error.message);
+      // @ts-ignore
+      console.error("Failed to find room by number:", error.message);
       throw error;
     }
   }
@@ -232,51 +342,68 @@ class RoomService {
    * @param {number} options.maxPrice - Maximum price per night
    * @param {boolean} options.availableOnly - Show only available rooms
    * @param {string} options.sortBy - Sort field
+   * @param {string} options.status - Filter by room status
    * @param {string} options.sortOrder - 'ASC' or 'DESC'
    * @returns {Promise<Room[]>} Array of rooms
    */
+  // @ts-ignore
   async findAll(options = {}) {
     try {
       const repo = await this.getRepository();
-      const queryBuilder = repo.createQueryBuilder('room');
-      
+      // @ts-ignore
+      const queryBuilder = repo.createQueryBuilder("room");
+
+      // Join related entities
+      queryBuilder
+        .leftJoinAndSelect("room.bookings", "bookings")
+        .leftJoinAndSelect("bookings.guest", "guest");
+
       // Apply filters
       if (options.type) {
-        queryBuilder.andWhere('room.type = :type', { type: options.type });
+        queryBuilder.andWhere("room.type = :type", { type: options.type });
       }
-      
+
       if (options.minCapacity) {
-        queryBuilder.andWhere('room.capacity >= :minCapacity', { 
-          minCapacity: options.minCapacity 
+        queryBuilder.andWhere("room.capacity >= :minCapacity", {
+          minCapacity: options.minCapacity,
         });
       }
-      
+
       if (options.maxPrice) {
-        queryBuilder.andWhere('room.pricePerNight <= :maxPrice', { 
-          maxPrice: options.maxPrice 
+        queryBuilder.andWhere("room.pricePerNight <= :maxPrice", {
+          maxPrice: options.maxPrice,
         });
       }
-      
+
       if (options.availableOnly === true) {
-        queryBuilder.andWhere('room.isAvailable = :available', { available: true });
+        queryBuilder.andWhere("room.isAvailable = :available", {
+          available: true,
+        });
       }
-      
+
+      if (options.status) {
+        queryBuilder.andWhere("room.status = :status", {
+          status: options.status,
+        });
+      }
+
       // Apply sorting
       if (options.sortBy) {
-        const order = options.sortOrder === 'DESC' ? 'DESC' : 'ASC';
+        const order = options.sortOrder === "DESC" ? "DESC" : "ASC";
         queryBuilder.orderBy(`room.${options.sortBy}`, order);
       } else {
-        queryBuilder.orderBy('room.roomNumber', 'ASC');
+        queryBuilder.orderBy("room.roomNumber", "ASC");
       }
-      
+
       const rooms = await queryBuilder.getMany();
-      
+
       // Log view action
-      await auditLogger.logView('Room', null, 'system');
-      
+      await auditLogger.logView("Room", null, "system");
+
+      // @ts-ignore
       return rooms;
     } catch (error) {
-      console.error('Failed to fetch rooms:', error);
+      console.error("Failed to fetch rooms:", error);
       throw error;
     }
   }
@@ -291,7 +418,7 @@ class RoomService {
   async getAvailableRooms(checkInDate, checkOutDate, filters = {}) {
     try {
       const repo = await this.getRepository();
-      
+
       // Build query for available rooms
       const query = `
         SELECT r.* FROM rooms r
@@ -303,24 +430,37 @@ class RoomService {
             (b.checkInDate <= :checkOutDate AND b.checkOutDate >= :checkInDate)
           )
         )
-        ${filters.type ? 'AND r.type = :type' : ''}
-        ${filters.minCapacity ? 'AND r.capacity >= :minCapacity' : ''}
-        ${filters.maxPrice ? 'AND r.pricePerNight <= :maxPrice' : ''}
+        ${filters.
+// @ts-ignore
+        type ? "AND r.type = :type" : ""}
+        ${filters.
+// @ts-ignore
+        minCapacity ? "AND r.capacity >= :minCapacity" : ""}
+        ${filters.
+// @ts-ignore
+        maxPrice ? "AND r.pricePerNight <= :maxPrice" : ""}
         ORDER BY r.roomNumber ASC
       `;
-      
+
+      // @ts-ignore
       const rooms = await repo.query(query, {
+        // @ts-ignore
         checkInDate,
         checkOutDate,
+        // @ts-ignore
         type: filters.type,
+        // @ts-ignore
         minCapacity: filters.minCapacity,
-        maxPrice: filters.maxPrice
+        // @ts-ignore
+        maxPrice: filters.maxPrice,
       });
-      
-      console.log(`Found ${rooms.length} available rooms for ${checkInDate} to ${checkOutDate}`);
+
+      console.log(
+        `Found ${rooms.length} available rooms for ${checkInDate} to ${checkOutDate}`,
+      );
       return rooms;
     } catch (error) {
-      console.error('Failed to get available rooms:', error);
+      console.error("Failed to get available rooms:", error);
       throw error;
     }
   }
@@ -332,31 +472,36 @@ class RoomService {
    * @param {string} user - User performing the action
    * @returns {Promise<Room>} Updated room
    */
-  async setAvailability(id, isAvailable, user = 'system') {
+  async setAvailability(id, isAvailable, user = "system") {
     try {
       const repo = await this.getRepository();
-      
+
+      // @ts-ignore
       const room = await repo.findOne({ where: { id } });
       if (!room) {
         throw new Error(`Room with ID ${id} not found`);
       }
-      
+
       // Store old data for audit
       const oldData = { ...room };
-      
-      // Update availability
+
+      // Update both fields to stay consistent
       room.isAvailable = isAvailable;
-      room.updatedAt = new Date();
-      
+      room.status = isAvailable ? "available" : "occupied";
+
+      // @ts-ignore
       const updatedRoom = await repo.save(room);
-      
+
       // Log audit trail
-      await auditLogger.logUpdate('Room', id, oldData, updatedRoom, user);
-      
-      console.log(`Room ${room.roomNumber} availability set to: ${isAvailable}`);
+      await auditLogger.logUpdate("Room", id, oldData, updatedRoom, user);
+
+      console.log(
+        `Room ${room.roomNumber} availability set to: ${isAvailable}`,
+      );
+      // @ts-ignore
       return updatedRoom;
     } catch (error) {
-      console.error('Failed to set room availability:', error);
+      console.error("Failed to set room availability:", error);
       throw error;
     }
   }
@@ -368,11 +513,13 @@ class RoomService {
   async getStatistics() {
     try {
       const repo = await this.getRepository();
-      
+
+      // @ts-ignore
       const totalRooms = await repo.count();
+      // @ts-ignore
       const availableRooms = await repo.count({ where: { isAvailable: true } });
       const occupiedRooms = totalRooms - availableRooms;
-      
+
       // Get room type distribution
       const typeQuery = `
         SELECT type, COUNT(*) as count
@@ -380,8 +527,9 @@ class RoomService {
         GROUP BY type
         ORDER BY count DESC
       `;
+      // @ts-ignore
       const typeDistribution = await repo.query(typeQuery);
-      
+
       // Get price statistics
       const priceQuery = `
         SELECT 
@@ -390,18 +538,20 @@ class RoomService {
           AVG(pricePerNight) as avgPrice
         FROM rooms
       `;
+      // @ts-ignore
       const priceStats = await repo.query(priceQuery);
-      
+
       return {
         totalRooms,
         availableRooms,
         occupiedRooms,
-        occupancyRate: totalRooms > 0 ? ((occupiedRooms / totalRooms) * 100).toFixed(2) : 0,
+        occupancyRate:
+          totalRooms > 0 ? ((occupiedRooms / totalRooms) * 100).toFixed(2) : 0,
         typeDistribution,
-        priceStats: priceStats[0]
+        priceStats: priceStats[0],
       };
     } catch (error) {
-      console.error('Failed to get room statistics:', error);
+      console.error("Failed to get room statistics:", error);
       throw error;
     }
   }
@@ -413,91 +563,118 @@ class RoomService {
    * @param {string} user - User performing export
    * @returns {Promise<Object>} Export data
    */
-  async exportRooms(format = 'json', filters = {}, user = 'system') {
+  async exportRooms(format = "json", filters = {}, user = "system") {
     try {
+      // @ts-ignore
       const rooms = await this.findAll(filters);
-      
+
       let exportData;
-      if (format === 'csv') {
+      if (format === "csv") {
         // Convert to CSV
-        const headers = ['Room Number', 'Type', 'Capacity', 'Price', 'Availability', 'Amenities'];
-        const rows = rooms.map(room => [
+        const headers = [
+          "Room Number",
+          "Type",
+          "Capacity",
+          "Price",
+          "Status", // now using actual status
+          "Amenities",
+        ];
+        const rows = rooms.map((room) => [
+          // @ts-ignore
           room.roomNumber,
+          // @ts-ignore
           room.type,
+          // @ts-ignore
           room.capacity,
+          // @ts-ignore
           room.pricePerNight,
-          room.isAvailable ? 'Available' : 'Occupied',
-          room.amenities || 'N/A'
+          // @ts-ignore
+          room.status, // export the real status value
+          // @ts-ignore
+          room.amenities || "N/A",
         ]);
-        
+
         exportData = {
-          format: 'csv',
-          data: [headers, ...rows].map(row => row.join(',')).join('\n'),
-          filename: `rooms_export_${new Date().toISOString().split('T')[0]}.csv`
+          format: "csv",
+          data: [headers, ...rows].map((row) => row.join(",")).join("\n"),
+          filename: `rooms_export_${new Date().toISOString().split("T")[0]}.csv`,
         };
       } else {
         // JSON format
         exportData = {
-          format: 'json',
+          format: "json",
           data: rooms,
-          filename: `rooms_export_${new Date().toISOString().split('T')[0]}.json`
+          filename: `rooms_export_${new Date().toISOString().split("T")[0]}.json`,
         };
       }
-      
+
       // Log export action
-      await auditLogger.logExport('Room', format, filters, user);
-      
+      // @ts-ignore
+      await auditLogger.logExport("Room", format, filters, user);
+
       console.log(`Exported ${rooms.length} rooms in ${format} format`);
       return exportData;
     } catch (error) {
-      console.error('Failed to export rooms:', error);
+      console.error("Failed to export rooms:", error);
       throw error;
     }
   }
 
   /**
    * Bulk update rooms (for maintenance, price changes, etc.)
-   * @param {Array} updates - Array of update objects {id, updates}
    * @param {string} user - User performing bulk update
    * @returns {Promise<Object>} Results
+   * @param {string | any[]} updates
    */
-  async bulkUpdate(updates, user = 'system') {
+  async bulkUpdate(updates, user = "system") {
     try {
+      // @ts-ignore
       const repo = await this.getRepository();
       const results = {
         success: [],
-        failed: []
+        failed: [],
       };
-      
+
       for (const update of updates) {
         try {
           const room = await this.update(update.id, update.updates, user);
+          // @ts-ignore
           results.success.push({
             id: update.id,
+            // @ts-ignore
             roomNumber: room.roomNumber,
-            updates: update.updates
+            updates: update.updates,
           });
         } catch (error) {
+          // @ts-ignore
           results.failed.push({
             id: update.id,
-            error: error.message
+            // @ts-ignore
+            error: error.message,
           });
         }
       }
-      
+
       // Log bulk action
       await auditLogger.log({
-        action: 'BULK_UPDATE',
-        entity: 'Room',
+        action: "BULK_UPDATE",
+        entity: "Room",
+        // @ts-ignore
         entityId: null,
-        newData: { total: updates.length, success: results.success.length, failed: results.failed.length },
-        user
+        newData: {
+          total: updates.length,
+          success: results.success.length,
+          failed: results.failed.length,
+        },
+        user,
       });
-      
-      console.log(`Bulk update completed: ${results.success.length} successful, ${results.failed.length} failed`);
+
+      console.log(
+        `Bulk update completed: ${results.success.length} successful, ${results.failed.length} failed`,
+      );
       return results;
     } catch (error) {
-      console.error('Failed to perform bulk update:', error);
+      console.error("Failed to perform bulk update:", error);
       throw error;
     }
   }
