@@ -26,7 +26,13 @@ const Booking = new EntitySchema({
     },
     status: {
       type: "varchar",
-      default: "confirmed"
+      default: "confirmed",
+      enum: ["confirmed", "checked_in", "checked_out", "cancelled"]  // ✅ ADD THIS: For booking lifecycle
+    },
+    paymentStatus: {
+      type: "varchar",
+      default: "pending",
+      enum: ["pending", "paid", "failed"],
     },
     specialRequests: {  // ✅ ADD THIS: For guest preferences
       type: "text",

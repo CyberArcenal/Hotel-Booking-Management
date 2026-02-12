@@ -1,4 +1,4 @@
-const bookingService = require('../../../services/booking');
+const bookingService = require("../../../services/Booking");
 
 /**
  * Get revenue statistics (total, average, monthly)

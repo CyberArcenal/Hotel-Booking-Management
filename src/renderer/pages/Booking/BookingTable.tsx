@@ -75,7 +75,7 @@ const BookingPage: React.FC = () => {
 
   const handleEdit = (id: number) => {
     setSelectedBooking(bookings.find((b) => b.id === id) || null);
-  
+
     setIsFormDialogOpen(true);
   };
 
@@ -90,8 +90,59 @@ const BookingPage: React.FC = () => {
     }
   };
 
-  const handleInvoice = (id: number) => {
+  const handleInvoice = (id: number) => {};
 
+  const handleCheckIn = async (id: number) => {
+    try {
+      await bookingAPI.checkIn(id, "admin");
+      refetch();
+    } catch (err) {
+      alert("Failed to check in booking");
+    }
+  };
+
+  const handleCheckOut = async (id: number) => {
+    try {
+      await bookingAPI.checkOut(id, "admin");
+      await dialogs.success("Booking checked out successfully");
+      refetch();
+    } catch (err) {
+      alert("Failed to check out booking");
+    }
+  };
+
+  const handleMarkAsPaid = async (id: number) => {
+    try {
+      await bookingAPI.markAsPaid(id);
+      await dialogs.success("Booking marked as paid");
+      refetch();
+    } catch (err) {
+      alert("Failed to mark booking as paid");
+    }
+  };
+
+    const handleMarkAsFailed = async (id: number) => {
+    try {
+      const reason = prompt("Enter reason for marking as failed:");
+      if (!reason) return;
+      await bookingAPI.markAsFailed(id, reason);
+      await dialogs.success("Booking marked as failed");
+      refetch();
+    } catch (err) {
+      alert("Failed to mark booking as failed");
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (confirm("Are you sure you want to delete this booking?")) {
+      try {
+        await bookingAPI.delete(id, "admin");
+        await dialogs.success("Booking deleted successfully");
+        refetch();
+      } catch (err) {
+        alert("Failed to delete booking");
+      }
+    }
   };
 
   return (
@@ -181,6 +232,11 @@ const BookingPage: React.FC = () => {
             onEdit={handleEdit}
             onCancel={handleCancel}
             onInvoice={handleInvoice}
+            onCheckIn={handleCheckIn}
+            onCheckOut={handleCheckOut}
+            onMarkAsPaid={handleMarkAsPaid}
+            onMarkAsFailed={handleMarkAsFailed}
+            onDelete={handleDelete}
           />
         </div>
 
@@ -218,7 +274,10 @@ const BookingPage: React.FC = () => {
         <BookingViewDialog
           id={selectedBooking.id!}
           isOpen={isViewDialogOpen}
-          onClose={() => {setIsViewDialogOpen(false); setSelectedBooking(null);}}
+          onClose={() => {
+            setIsViewDialogOpen(false);
+            setSelectedBooking(null);
+          }}
         />
       )}
     </div>

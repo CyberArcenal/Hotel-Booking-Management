@@ -33,6 +33,7 @@ export interface Booking {
   numberOfGuests: number;
   totalPrice: number;
   status: "confirmed" | "checked_in" | "checked_out" | "cancelled";
+  paymentStatus: "pending" | "paid" | "failed";
   specialRequests?: string | null;
   createdAt: string; // ISO datetime
   room: Room;
@@ -580,6 +581,38 @@ class BookingAPI {
       throw new Error(response.message || "Failed to check out");
     } catch (error: any) {
       throw new Error(error.message || "Failed to check out");
+    }
+  }
+
+  async markAsPaid(id: number, reason?: string): Promise<BookingResponse> {
+    try {
+      if (!window.backendAPI?.booking) {
+        throw new Error("Electron API (booking) not available");
+      }
+      const response = await window.backendAPI.booking({
+        method: "markAsPaid",
+        params: { id, reason },
+      });
+      if (response.status) return response;
+      throw new Error(response.message || "Failed to mark As Paid");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to mark As Paid");
+    }
+  }
+
+  async markAsFailed(id: number, reason?: string): Promise<BookingResponse> {
+    try {
+      if (!window.backendAPI?.booking) {
+        throw new Error("Electron API (booking) not available");
+      }
+      const response = await window.backendAPI.booking({
+        method: "markAsFailed",
+        params: { id, reason },
+      });
+      if (response.status) return response;
+      throw new Error(response.message || "Failed to mark As Paid");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to mark As Paid");
     }
   }
 

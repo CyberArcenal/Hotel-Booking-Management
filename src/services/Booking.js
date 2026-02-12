@@ -454,6 +454,71 @@ class BookingService {
     }
   }
 
+  async markAsPaid(id, user = 'system') {
+    const { booking: bookingRepo } = await this.getRepositories();
+    
+    try {
+      const booking = await bookingRepo.findOne({
+        where: { id },
+        relations: ['room', 'guest']
+      });
+      
+      if (!booking) {
+        throw new Error(`Booking with ID ${id} not found`);
+      }
+
+      // Store old data for audit
+      const oldData = { ...booking };
+      
+      // Update booking payment status
+      booking.paymentStatus = 'paid';
+      const savedBooking = await bookingRepo.save(booking);
+      
+      // Log audit trail
+      await auditLogger.logUpdate('Booking', id, oldData, savedBooking, user);
+      
+      console.log(`Booking marked as paid: #${id}`);
+      return savedBooking;
+    } catch (error) {
+      console.error('Failed to mark booking as paid:', error.message);
+      throw error;
+    }
+  }
+
+  async markAsFailed(id, reason, user = 'system') {
+    const { booking: bookingRepo } = await this.getRepositories();
+    
+    try {
+      const booking = await bookingRepo.findOne({
+        where: { id },
+        relations: ['room', 'guest']
+      });
+      
+      if (!booking) {
+        throw new Error(`Booking with ID ${id} not found`);
+      }
+
+      // Store old data for audit
+      const oldData = { ...booking };
+      
+      // Update booking payment status
+      booking.paymentStatus = 'failed';
+      if (reason) {
+        booking.paymentFailureReason = reason;
+      }
+      const savedBooking = await bookingRepo.save(booking);
+      
+      // Log audit trail
+      await auditLogger.logUpdate('Booking', id, oldData, savedBooking, user);
+      
+      console.log(`Booking marked as failed: #${id}`);
+      return savedBooking;
+    } catch (error) {
+      console.error('Failed to mark booking as failed:', error.message);
+      throw error;
+    }
+  }
+
   /**
    * Find booking by ID
    * @param {number} id - Booking ID

@@ -1,4 +1,6 @@
-const bookingService = require('../../../services/booking');
+//@ts-check
+
+const bookingService = require("../../../services/Booking");
 
 /**
  * Search bookings by guest name, email, or phone
@@ -18,9 +20,11 @@ module.exports = async (params) => {
       data: bookings
     };
   } catch (error) {
+    // @ts-ignore
     console.error('[search.ipc] Error:', error.message);
     return {
       status: false,
+      // @ts-ignore
       message: error.message || 'Failed to search bookings',
       data: []
     };

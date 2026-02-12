@@ -1,4 +1,6 @@
-const bookingService = require('../../../services/booking');
+//@ts-check
+
+const bookingService = require('../../../services/Booking');
 
 /**
  * Generate a custom booking report
@@ -16,6 +18,7 @@ module.exports = async (params) => {
     if (!startDate || !endDate) throw new Error('Start date and end date are required');
 
     let reportData;
+    // @ts-ignore
     const filters = { startDate, endDate };
 
     switch (reportType) {
@@ -30,6 +33,7 @@ module.exports = async (params) => {
         break;
       case 'revenue':
         const stats = await bookingService.getStatistics();
+        // @ts-ignore
         reportData = { revenue: stats.revenue, monthlyTrends: stats.monthlyTrends };
         break;
       case 'occupancy':
@@ -60,10 +64,13 @@ module.exports = async (params) => {
       data: reportData
     };
   } catch (error) {
+    // @ts-ignore
     console.error('[generate_report.ipc] Error:', error.message);
     return {
       status: false,
+      // @ts-ignore
       message: error.message || 'Failed to generate report',
+      // @ts-ignore
       data: null
     };
   }

@@ -1,4 +1,4 @@
-const bookingService = require('../../../services/booking');
+const bookingService = require('../../../services/Booking');
 
 /**
  * Generate an invoice for a booking

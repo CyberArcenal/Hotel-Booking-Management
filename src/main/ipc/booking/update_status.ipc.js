@@ -1,4 +1,6 @@
-const bookingService = require('../../../services/booking');
+//@ts-check
+
+const bookingService = require("../../../services/Booking");
 
 /**
  * Update only the status of a booking
@@ -14,6 +16,11 @@ module.exports = async (params) => {
     const { id, status, reason, user = 'system' } = params;
     if (!id) throw new Error('Booking ID is required');
     if (!status) throw new Error('Status is required');
+
+
+    if (!['confirmed', 'checked_in', 'checked_out', 'cancelled'].includes(status)) {
+      throw new Error('Invalid status value');
+    }
 
     let updated;
     switch (status) {
@@ -37,9 +44,11 @@ module.exports = async (params) => {
       data: updated
     };
   } catch (error) {
+    // @ts-ignore
     console.error('[update_status.ipc] Error:', error.message);
     return {
       status: false,
+      // @ts-ignore
       message: error.message || 'Failed to update booking status',
       data: null
     };

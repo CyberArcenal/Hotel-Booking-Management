@@ -2,7 +2,7 @@
 const fs = require('fs').promises;
 const path = require('path');
 const csv = require('csv-parse/sync'); // you may need to install this package
-const bookingService = require('../../../services/booking');
+const bookingService = require("../../../services/Booking");
 
 /**
  * Import bookings from a CSV file

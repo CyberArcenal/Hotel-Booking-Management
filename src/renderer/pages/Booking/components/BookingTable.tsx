@@ -1,6 +1,8 @@
 import React from "react";
 import { Eye, Edit2, XCircle, FileText } from "lucide-react";
 import type { Booking } from "../../../api/booking";
+import BookingActionsDropdown from "./Dropdown";
+import { formatCurrency } from "../../../utils/formatters";
 
 interface BookingTableProps {
   bookings: Booking[];
@@ -8,6 +10,12 @@ interface BookingTableProps {
   onEdit: (id: number) => void;
   onCancel: (id: number) => void;
   onInvoice: (id: number) => void;
+  // New handlers for dropdown actions
+  onCheckIn: (id: number) => void;
+  onCheckOut: (id: number) => void;
+  onMarkAsPaid: (id: number) => void;
+  onMarkAsFailed: (id: number) => void;
+  onDelete: (id: number) => void;
 }
 
 const BookingTable: React.FC<BookingTableProps> = ({
@@ -16,6 +24,11 @@ const BookingTable: React.FC<BookingTableProps> = ({
   onEdit,
   onCancel,
   onInvoice,
+  onCheckIn,
+  onCheckOut,
+  onMarkAsPaid,
+  onMarkAsFailed,
+  onDelete,
 }) => {
   const getStatusBadge = (status: string) => {
     const baseClasses = "px-2 py-1 text-xs font-medium rounded-full capitalize";
@@ -34,11 +47,9 @@ const BookingTable: React.FC<BookingTableProps> = ({
   };
 
   // Mock payment status – since wala sa current schema, gagamit tayo ng placeholder
-  const getPaymentBadge = (booking: Booking) => {
+  const getPaymentBadge = (paymentStatus: string) => {
     // Dummy logic: paid kapag confirmed/checked_in, otherwise unpaid
-    const isPaid = ["confirmed", "checked_in", "checked_out"].includes(
-      booking.status,
-    );
+    const isPaid = ["paid"].includes(paymentStatus);
     return isPaid ? (
       <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-500/20 text-green-500 border border-green-500/30">
         Paid
@@ -63,7 +74,6 @@ const BookingTable: React.FC<BookingTableProps> = ({
             <th className="px-4 py-3 text-left font-medium">Status</th>
             <th className="px-4 py-3 text-left font-medium">Payment</th>
             <th className="px-4 py-3 text-left font-medium">Total</th>
-            <th className="px-4 py-3 text-left font-medium">Created By</th>
             <th className="px-4 py-3 text-left font-medium">Actions</th>
           </tr>
         </thead>
@@ -108,13 +118,11 @@ const BookingTable: React.FC<BookingTableProps> = ({
                     {booking.status}
                   </span>
                 </td>
-                <td className="px-4 py-3">{getPaymentBadge(booking)}</td>
-                <td className="px-4 py-3 text-[var(--text-primary)] font-medium">
-                  ₱{booking.totalPrice.toLocaleString()}
+                <td className="px-4 py-3">
+                  {getPaymentBadge(booking.paymentStatus)}
                 </td>
-                <td className="px-4 py-3 text-[var(--text-secondary)]">
-                  {/* Wala pang createdBy sa entity; pwedeng i-add sa future */}
-                  Admin
+                <td className="px-4 py-3 text-[var(--text-primary)] font-medium">
+                  {formatCurrency(booking.totalPrice)}
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
@@ -158,6 +166,17 @@ const BookingTable: React.FC<BookingTableProps> = ({
                     >
                       <FileText className="w-4 h-4" />
                     </button>
+                    {/* NEW: Dropdown with more actions */}
+                    <BookingActionsDropdown
+                      booking={booking}
+                      onCheckIn={onCheckIn}
+                      onCheckOut={onCheckOut}
+                      onCancel={onCancel}
+                      onMarkAsPaid={onMarkAsPaid}
+                      onMarkAsFailed={onMarkAsFailed}
+                      onGenerateInvoice={onInvoice} // reuse invoice handler
+                      onDelete={onDelete}
+                    />
                   </div>
                 </td>
               </tr>

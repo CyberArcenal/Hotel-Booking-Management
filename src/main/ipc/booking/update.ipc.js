@@ -1,5 +1,7 @@
 // update.ipc.js placeholder
-const bookingService = require('../../../services/booking');
+//@ts-check
+
+const bookingService = require("../../../services/Booking");
 
 /**
  * Update an existing booking
@@ -22,9 +24,11 @@ module.exports = async (params) => {
       data: updated
     };
   } catch (error) {
+    // @ts-ignore
     console.error('[update.ipc] Error:', error.message);
     return {
       status: false,
+      // @ts-ignore
       message: error.message || 'Failed to update booking',
       data: null
     };

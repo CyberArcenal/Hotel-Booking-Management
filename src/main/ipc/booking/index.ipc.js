@@ -3,7 +3,7 @@
 const { ipcMain } = require("electron");
 const { logger } = require("../../../utils/logger");
 const { AppDataSource } = require("../../db/datasource");
-const {AuditLog} = require("../../../entities/AuditLog");
+const { AuditLog } = require("../../../entities/AuditLog");
 const { withErrorHandling } = require("../../../middlewares/errorHandler");
 
 class BookingHandler {
@@ -32,6 +32,8 @@ class BookingHandler {
     this.cancelBooking = this.importHandler("./cancel.ipc");
     this.checkInBooking = this.importHandler("./check_in.ipc");
     this.checkOutBooking = this.importHandler("./check_out.ipc");
+    this.markAsPaid = this.importHandler("./mark_as_paid.ipc");
+    this.markAsFailed = this.importHandler("./mark_as_failed.ipc");
 
     // 📊 STATISTICS HANDLERS
     this.getBookingRevenue = this.importHandler("./get_revenue.ipc");
@@ -42,7 +44,7 @@ class BookingHandler {
     this.bulkUpdateBookings = this.importHandler("./bulk_update.ipc");
     this.importBookingsFromCSV = this.importHandler("./import_csv.ipc");
     this.exportBookingsToCSV = this.importHandler("./export_csv.ipc");
-    
+
     // 📄 REPORT HANDLERS
     this.generateInvoice = this.importHandler("./generate_invoice.ipc");
     this.generateBookingReport = this.importHandler("./generate_report.ipc");
@@ -83,7 +85,7 @@ class BookingHandler {
       // Log the request
       if (logger) {
         // @ts-ignore
-        logger.info(`BookingHandler: ${method}`, { params});
+        logger.info(`BookingHandler: ${method}`, { params });
       }
 
       // ROUTE REQUESTS
@@ -162,6 +164,18 @@ class BookingHandler {
         case "checkOutBooking":
           return await this.handleWithTransaction(
             this.checkOutBooking,
+            // @ts-ignore
+            enrichedParams,
+          );
+        case "markAsPaid":
+          return await this.handleWithTransaction(
+            this.markAsPaid,
+            // @ts-ignore
+            enrichedParams,
+          );
+        case "markAsFailed":
+          return await this.handleWithTransaction(
+            this.markAsFailed,
             // @ts-ignore
             enrichedParams,
           );
