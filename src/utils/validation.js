@@ -51,16 +51,6 @@ function validateRoomData(roomData, isUpdate = false) {
   };
 }
 
-/**
- * Validate booking data
- */
-function validateBookingData(bookingData) {
-  const errors = [];
-  // Add booking validation logic here
-  return { valid: errors.length === 0, errors };
-}
-
 module.exports = {
-  validateRoomData,
-  validateBookingData
+  validateRoomData
 };

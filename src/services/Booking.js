@@ -46,7 +46,7 @@ class BookingService {
     
     try {
       // Validate booking data
-      const validation = validateBookingData(bookingData);
+      const validation = await validateBookingData(bookingData);
       if (!validation.valid) {
         throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
       }

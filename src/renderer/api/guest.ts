@@ -9,7 +9,7 @@ export interface Guest {
   fullName: string;
   email: string;
   phone: string;
-  nationality: string;
+  nationality?: string;
   address?: string | null;
   idNumber?: string | null;
   createdAt: string; // ISO date

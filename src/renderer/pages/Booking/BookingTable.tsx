@@ -1,20 +1,21 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Filter, Download, Plus } from "lucide-react";
-import { useGuests } from "./hooks/useGuests";
-import GuestSearch from "./components/GuestSearch";
-import GuestFilterPanel from "./components/GuestFilterPanel";
-import GuestTable from "./components/GuestTable";
-import GuestQuickStats from "./components/GuestQuickStats";
+import { useBookings } from "./hooks/useBookings";
+import BookingSearch from "./components/BookingSearch";
+import BookingFilterPanel from "./components/BookingFilterPanel";
+import BookingTable from "./components/BookingTable";
+import BookingQuickStats from "./components/BookingQuickStats";
 import Pagination from "../../components/Shared/Pagination";
-import guestAPI, { type Guest } from "../../api/guest";
-import { GuestViewDialog } from "./Dialogs/View";
-import { GuestFormDialog } from "./Dialogs/Form";
+import bookingAPI, { type Booking } from "../../api/booking";
+import BookingFormDialog from "../../components/BookingForm";
+import { dialogs } from "../../utils/dialogs";
+import { BookingViewDialog } from "./Dialogs/View";
 
-const GuestPage: React.FC = () => {
+const BookingPage: React.FC = () => {
   const navigate = useNavigate();
   const {
-    guests,
+    bookings,
     total,
     totalPages,
     currentPage,
@@ -28,16 +29,15 @@ const GuestPage: React.FC = () => {
     setSearchQuery,
     clearFilters,
     refetch,
-    activeGuestIds,
-  } = useGuests();
+  } = useBookings();
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [searchInput, setSearchInput] = useState("");
 
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
-  const [isBookingFormDialogOpen, setIsBookingFormDialogOpen] = useState(false);
-  const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
   const handleSearchChange = (query: string) => {
     setSearchInput(query);
@@ -55,16 +55,10 @@ const GuestPage: React.FC = () => {
 
   const handleExport = async () => {
     try {
-      const result = await guestAPI.exportToCSV(filters, "admin");
-      if (result.status && result.data?.data) {
-        // Simulate file download
-        const blob = new Blob([result.data.data], { type: "text/csv" });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = result.data.filename || "guests.csv";
-        a.click();
-        window.URL.revokeObjectURL(url);
+      // Gamitin ang exportCSV method mula sa bookingAPI
+      const result = await bookingAPI.exportCSV("", filters, "admin");
+      if (result.status && result.data?.filePath) {
+        alert(`Exported to ${result.data.filePath}`);
       } else {
         alert("Export failed");
       }
@@ -75,25 +69,29 @@ const GuestPage: React.FC = () => {
   };
 
   const handleView = (id: number) => {
-    setSelectedGuest(guests.find((g) => g.id === id) || null);
+    setSelectedBooking(bookings.find((b) => b.id === id) || null);
     setIsViewDialogOpen(true);
   };
+
   const handleEdit = (id: number) => {
-    setSelectedGuest(guests.find((g) => g.id === id) || null);
+    setSelectedBooking(bookings.find((b) => b.id === id) || null);
+  
     setIsFormDialogOpen(true);
   };
-  const handleDelete = async (id: number) => {
-    if (confirm("Are you sure you want to delete this guest?")) {
+
+  const handleCancel = async (id: number) => {
+    if (confirm("Are you sure you want to cancel this booking?")) {
       try {
-        await guestAPI.delete(id, "admin");
+        await bookingAPI.cancel(id, "Cancelled by user", "admin");
         refetch();
       } catch (err) {
-        alert("Failed to delete guest");
+        alert("Failed to cancel booking");
       }
     }
   };
-  const handleAddBooking = (guestId: number) => {
-    setIsBookingFormDialogOpen(true);
+
+  const handleInvoice = (id: number) => {
+
   };
 
   return (
@@ -103,25 +101,22 @@ const GuestPage: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
             <h2 className="text-2xl font-bold text-[var(--text-primary)]">
-              Guests
+              Bookings
             </h2>
             <p className="text-[var(--text-secondary)] mt-1">
-              {total} guest{total !== 1 ? "s" : ""} found
+              {total} booking{total !== 1 ? "s" : ""} found
             </p>
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => {
-                setSelectedGuest(null);
-                setIsFormDialogOpen(true);
-              }}
+              onClick={() => setIsFormDialogOpen(true)}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg
                          bg-[var(--card-secondary-bg)] hover:bg-[var(--card-hover-bg)]
                          text-[var(--text-primary)] border border-[var(--border-color)]/20
                          hover:border-[var(--border-color)]/40 transition-all duration-200"
             >
               <Plus className="w-4 h-4" />
-              New Guest
+              Create Booking
             </button>
             <button
               onClick={handleExport}
@@ -147,11 +142,11 @@ const GuestPage: React.FC = () => {
         </div>
 
         {/* Quick Stats */}
-        <GuestQuickStats />
+        <BookingQuickStats />
 
         {/* Search */}
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-          <GuestSearch value={searchInput} onChange={handleSearchChange} />
+          <BookingSearch value={searchInput} onChange={handleSearchChange} />
           {filters.search && (
             <span className="text-sm text-[var(--text-secondary)]">
               Searching: “{filters.search}”
@@ -160,7 +155,7 @@ const GuestPage: React.FC = () => {
         </div>
 
         {/* Filter Panel */}
-        <GuestFilterPanel
+        <BookingFilterPanel
           filters={filters}
           onChange={handleFilterChange}
           onClear={handleClearFilters}
@@ -180,13 +175,12 @@ const GuestPage: React.FC = () => {
 
         {/* Table */}
         <div className="mt-6">
-          <GuestTable
-            guests={guests}
-            activeGuestIds={activeGuestIds}
+          <BookingTable
+            bookings={bookings}
             onView={handleView}
             onEdit={handleEdit}
-            onDelete={handleDelete}
-            onAddBooking={handleAddBooking}
+            onCancel={handleCancel}
+            onInvoice={handleInvoice}
           />
         </div>
 
@@ -204,36 +198,31 @@ const GuestPage: React.FC = () => {
         )}
       </main>
 
-      {isViewDialogOpen && selectedGuest && (
-        <GuestViewDialog
-          id={selectedGuest.id!}
-          isOpen={isViewDialogOpen}
-          onClose={() => {
-            setSelectedGuest(null);
-            setIsViewDialogOpen(false);
+      {isFormDialogOpen && (
+        <BookingFormDialog
+          id={selectedBooking ? selectedBooking.id : undefined}
+          onClose={async () => {
+            setIsFormDialogOpen(false);
+            setSelectedBooking(null);
           }}
-          showBookings={true}
+          mode={selectedBooking ? "edit" : "add"}
+          onSuccess={async (booking: Booking) => {
+            setIsFormDialogOpen(false);
+            setSelectedBooking(null);
+            refetch();
+          }}
         />
       )}
 
-      {isFormDialogOpen && (
-        <GuestFormDialog
-          id={selectedGuest ? selectedGuest.id : undefined}
-          mode={selectedGuest ? "edit" : "add"}
-          isOpen={isFormDialogOpen}
-          onClose={() => {
-            setSelectedGuest(null);
-            setIsFormDialogOpen(false);
-          }}
-          onSuccess={() => {
-            setSelectedGuest(null);
-            setIsFormDialogOpen(false);
-            refetch();
-          }}
+      {isViewDialogOpen && selectedBooking && (
+        <BookingViewDialog
+          id={selectedBooking.id!}
+          isOpen={isViewDialogOpen}
+          onClose={() => {setIsViewDialogOpen(false); setSelectedBooking(null);}}
         />
       )}
     </div>
   );
 };
 
-export default GuestPage;
+export default BookingPage;

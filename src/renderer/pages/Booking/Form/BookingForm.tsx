@@ -1,1 +1,0 @@
-// BookingForm.tsx placeholder
