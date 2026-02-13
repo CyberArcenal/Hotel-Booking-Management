@@ -1,8 +1,9 @@
 //@ts-check
 const { AppDataSource } = require("../main/db/datasource");
 const { Room } = require("../entities/Room");
-const auditLogger = require("../utils/auditLogger");
+const auditLogger = require("../utils/AuditLogger");
 const { validateRoomData } = require("../utils/validation");
+const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
 
 class RoomService {
   constructor() {
@@ -80,7 +81,7 @@ class RoomService {
       });
 
       // @ts-ignore
-      const savedRoom = await repo.save(room);
+      const savedRoom = await saveDb(repo, room);
 
       // Log audit trail
       await auditLogger.logCreate("Room", savedRoom.id, savedRoom, user);
@@ -204,7 +205,7 @@ class RoomService {
       const updatedRoom = repo.merge(existingRoom, roomData);
 
       // @ts-ignore
-      const savedRoom = await repo.save(updatedRoom);
+      const savedRoom = await updateDb(repo, updatedRoom);
 
       // Log audit trail
       await auditLogger.logUpdate("Room", id, oldData, savedRoom, user);
@@ -490,7 +491,7 @@ class RoomService {
       room.status = isAvailable ? "available" : "occupied";
 
       // @ts-ignore
-      const updatedRoom = await repo.save(room);
+      const updatedRoom = await updateDb(repo, room);
 
       // Log audit trail
       await auditLogger.logUpdate("Room", id, oldData, updatedRoom, user);

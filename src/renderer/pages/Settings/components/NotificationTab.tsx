@@ -73,7 +73,7 @@ const NotificationTab: React.FC<Props> = ({
               Enable SMS Alerts
             </label>
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center hidden">
             <label className="flex items-center gap-2 text-sm text-[var(--text-primary)]">
               <input
                 type="checkbox"

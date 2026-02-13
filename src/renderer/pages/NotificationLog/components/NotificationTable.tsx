@@ -1,5 +1,16 @@
 import React from 'react';
-import { Eye, RefreshCw, Send, Trash2, Clock, CheckCircle, XCircle, RotateCw, Mail } from 'lucide-react';
+import {
+  Eye,
+  RefreshCw,
+  Send,
+  Trash2,
+  Clock,
+  CheckCircle,
+  XCircle,
+  RotateCw,
+  Mail,
+  Loader2,
+} from 'lucide-react';
 import { formatDate } from '../../../utils/formatters';
 import type { NotificationLogEntry } from '../../../api/notification_log';
 
@@ -10,6 +21,7 @@ interface NotificationTableProps {
   onResend: (id: number) => void;
   onDelete: (id: number) => void;
   isLoading?: boolean;
+  sendingIds?: Set<number>;
 }
 
 export const NotificationTable: React.FC<NotificationTableProps> = ({
@@ -19,6 +31,7 @@ export const NotificationTable: React.FC<NotificationTableProps> = ({
   onResend,
   onDelete,
   isLoading,
+  sendingIds = new Set(),
 }) => {
   const getStatusBadge = (status: string) => {
     const baseClasses = 'px-2 py-1 text-xs font-medium rounded-full inline-flex items-center gap-1';
@@ -70,69 +83,89 @@ export const NotificationTable: React.FC<NotificationTableProps> = ({
           </tr>
         </thead>
         <tbody className="divide-y divide-[var(--border-color)]/10">
-          {logs?.map((log) => (
-            <tr key={log.id} className="hover:bg-[var(--card-hover-bg)]/20 transition-colors">
-              <td className="px-4 py-3 text-[var(--text-primary)] whitespace-nowrap">#{log.id}</td>
-              <td className="px-4 py-3 text-[var(--text-primary)] whitespace-nowrap">{log.recipient_email}</td>
-              <td className="px-4 py-3 text-[var(--text-secondary)] max-w-[200px] truncate">
-                {log.subject || '—'}
-              </td>
-              <td className="px-4 py-3 whitespace-nowrap">
-                <span className={getStatusBadge(log.status)}>
-                  {log.status === 'resend' && <RotateCw className="w-3 h-3" />}
-                  {log.status === 'sent' && <CheckCircle className="w-3 h-3" />}
-                  {log.status === 'queued' && <Clock className="w-3 h-3" />}
-                  {log.status === 'failed' && <XCircle className="w-3 h-3" />}
-                  {log.status}
-                </span>
-              </td>
-              <td className="px-4 py-3 text-[var(--text-secondary)] whitespace-nowrap">
-                {log.retry_count} / {log.resend_count}
-              </td>
-              <td className="px-4 py-3 text-[var(--text-secondary)] whitespace-nowrap">
-                {log.sent_at ? formatDate(log.sent_at) : '—'}
-              </td>
-              <td className="px-4 py-3 text-[var(--text-secondary)] whitespace-nowrap">
-                {formatDate(log.created_at)}
-              </td>
-              <td className="px-4 py-3 whitespace-nowrap text-right">
-                <div className="flex items-center justify-end gap-2">
-                  <button
-                    onClick={() => onView(log)}
-                    className="p-1.5 rounded-md hover:bg-[var(--card-hover-bg)] text-[var(--text-tertiary)] hover:text-[var(--primary-color)] transition-colors"
-                    title="View details"
-                  >
-                    <Eye className="w-4 h-4" />
-                  </button>
-                  {log.status === 'failed' && (
+          {logs?.map((log) => {
+            const isSending = sendingIds.has(log.id);
+            return (
+              <tr
+                key={log.id}
+                className={`hover:bg-[var(--card-hover-bg)]/20 transition-colors ${
+                  isSending ? 'sending-row' : ''
+                }`}
+              >
+                <td className="px-4 py-3 text-[var(--text-primary)] whitespace-nowrap">#{log.id}</td>
+                <td className="px-4 py-3 text-[var(--text-primary)] whitespace-nowrap">{log.recipient_email}</td>
+                <td className="px-4 py-3 text-[var(--text-secondary)] max-w-[200px] truncate">
+                  {log.subject || '—'}
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap">
+                  <span className={getStatusBadge(log.status)}>
+                    {log.status === 'resend' && <RotateCw className="w-3 h-3" />}
+                    {log.status === 'sent' && <CheckCircle className="w-3 h-3" />}
+                    {log.status === 'queued' && <Clock className="w-3 h-3" />}
+                    {log.status === 'failed' && <XCircle className="w-3 h-3" />}
+                    {log.status}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-[var(--text-secondary)] whitespace-nowrap">
+                  {log.retry_count} / {log.resend_count}
+                </td>
+                <td className="px-4 py-3 text-[var(--text-secondary)] whitespace-nowrap">
+                  {log.sent_at ? formatDate(log.sent_at) : '—'}
+                </td>
+                <td className="px-4 py-3 text-[var(--text-secondary)] whitespace-nowrap">
+                  {formatDate(log.created_at)}
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap text-right">
+                  <div className="flex items-center justify-end gap-2">
                     <button
-                      onClick={() => onRetry(log.id)}
-                      className="p-1.5 rounded-md hover:bg-[var(--card-hover-bg)] text-[var(--text-tertiary)] hover:text-[var(--primary-color)] transition-colors"
-                      title="Retry failed"
+                      onClick={() => onView(log)}
+                      disabled={isSending}
+                      className="p-1.5 rounded-md hover:bg-[var(--card-hover-bg)] text-[var(--text-tertiary)] hover:text-[var(--primary-color)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="View details"
                     >
-                      <RefreshCw className="w-4 h-4" />
+                      <Eye className="w-4 h-4" />
                     </button>
-                  )}
-                  {(log.status === 'sent' || log.status === 'resend') && (
+                    {log.status === 'failed' && (
+                      <button
+                        onClick={() => onRetry(log.id)}
+                        disabled={isSending}
+                        className="p-1.5 rounded-md hover:bg-[var(--card-hover-bg)] text-[var(--text-tertiary)] hover:text-[var(--primary-color)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Retry failed"
+                      >
+                        {isSending ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <RefreshCw className="w-4 h-4" />
+                        )}
+                      </button>
+                    )}
+                    {(log.status === 'sent' || log.status === 'resend') && (
+                      <button
+                        onClick={() => onResend(log.id)}
+                        disabled={isSending}
+                        className="p-1.5 rounded-md hover:bg-[var(--card-hover-bg)] text-[var(--text-tertiary)] hover:text-[var(--primary-color)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Resend"
+                      >
+                        {isSending ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Send className="w-4 h-4" />
+                        )}
+                      </button>
+                    )}
                     <button
-                      onClick={() => onResend(log.id)}
-                      className="p-1.5 rounded-md hover:bg-[var(--card-hover-bg)] text-[var(--text-tertiary)] hover:text-[var(--primary-color)] transition-colors"
-                      title="Resend"
+                      onClick={() => onDelete(log.id)}
+                      disabled={isSending}
+                      className="p-1.5 rounded-md hover:bg-red-500/10 text-[var(--text-tertiary)] hover:text-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Delete"
                     >
-                      <Send className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
-                  )}
-                  <button
-                    onClick={() => onDelete(log.id)}
-                    className="p-1.5 rounded-md hover:bg-red-500/10 text-[var(--text-tertiary)] hover:text-red-400 transition-colors"
-                    title="Delete"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          ))}
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

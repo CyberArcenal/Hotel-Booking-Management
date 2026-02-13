@@ -6,6 +6,7 @@ const { withErrorHandling } = require("../../../middlewares/errorHandler");
 const { AppDataSource } = require("../../db/datasource");
 const { AuditLog } = require("../../../entities/AuditLog");
 const { NotificationLogService } = require("../../../services/NotificationLog");
+const { saveDb } = require("../../../utils/dbUtils/dbActions");
 
 const service = new NotificationLogService();
 
@@ -115,7 +116,7 @@ class NotificationLogHandler {
         entity: "NotificationLog",
         timestamp: new Date(),
       });
-      await repo.save(activity);
+      await saveDb(repo, activity)
     } catch (error) {
       // @ts-ignore
       logger?.warn("Failed to log activity:", error);

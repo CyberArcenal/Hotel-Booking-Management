@@ -6,6 +6,7 @@ import {
   TrendingUp,
   CalendarDays
 } from 'lucide-react';
+import { formatPercentage } from '../../../../utils/formatters';
 
 interface OccupancyStatsProps {
   totalRooms: number;
@@ -27,14 +28,14 @@ const OccupancyStats: React.FC<OccupancyStatsProps> = ({
   const statCards = [
     {
       label: 'Today\'s Occupancy',
-      value: `${occupancyRate.toFixed(1)}%`,
+      value: `${occupancyRate? formatPercentage(occupancyRate) : '0'}`,
       sublabel: `${occupiedRooms} / ${totalRooms} rooms`,
       icon: Home,
       color: 'text-[var(--primary-color)]',
     },
     {
       label: 'Avg. Occupancy (30d)',
-      value: `${averageOccupancy.toFixed(1)}%`,
+      value: `${ formatPercentage(averageOccupancy)}`,
       icon: TrendingUp,
       color: 'text-[var(--primary-color)]',
     },

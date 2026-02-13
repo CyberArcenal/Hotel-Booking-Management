@@ -1,0 +1,59 @@
+// transitionServices/RoomStatusService.js
+// @ts-check
+
+const { logger } = require("../utils/logger");
+
+class RoomStatusService {
+  /**
+   * Handle transition to AVAILABLE
+   * @param {{ id: any; updatedBy: any; status: any; }} room
+   * @param {any} oldStatus
+   */
+  static async available(room, oldStatus) {
+    const auditLogger = require("../utils/AuditLogger");
+    logger.debug(`[RoomStatusService] Room ${room.id} marked AVAILABLE`);
+    await auditLogger.logCreate(
+      "Room",
+      room.id,
+      { oldStatus, newStatus: room.status },
+      room.updatedBy || "system",
+    );
+    return room;
+  }
+
+  /**
+   * Handle transition to OCCUPIED
+   * @param {{ id: any; updatedBy: any; status: any; }} room
+   * @param {any} oldStatus
+   */
+  static async occupied(room, oldStatus) {
+    const auditLogger = require("../utils/AuditLogger");
+    logger.debug(`[RoomStatusService] Room ${room.id} marked OCCUPIED`);
+    await auditLogger.logCreate(
+      "Room",
+      room.id,
+      { oldStatus, newStatus: room.status },
+      room.updatedBy || "system",
+    );
+    return room;
+  }
+
+  /**
+   * Handle transition to MAINTENANCE
+   * @param {{ id: any; updatedBy: any; status: any; }} room
+   * @param {any} oldStatus
+   */
+  static async maintenance(room, oldStatus) {
+    const auditLogger = require("../utils/AuditLogger");
+    logger.debug(`[RoomStatusService] Room ${room.id} marked MAINTENANCE`);
+    await auditLogger.logCreate(
+      "Room",
+      room.id,
+      { oldStatus, newStatus: room.status },
+      room.updatedBy || "system",
+    );
+    return room;
+  }
+}
+
+module.exports = RoomStatusService;

@@ -1,8 +1,8 @@
 // src/renderer/api/notificationLog.ts
-// Similar structure to audit.ts – Notification Log API client
+// Refactored – fully aligned with backend NotificationLogService
 
 // ----------------------------------------------------------------------
-// 📦 Types & Interfaces
+// 📦 Types & Interfaces (client‑side normalized shape)
 // ----------------------------------------------------------------------
 
 export interface NotificationLogEntry {
@@ -42,7 +42,7 @@ export interface NotificationStats {
 }
 
 // ----------------------------------------------------------------------
-// 📨 Response Interfaces (mirror IPC response format)
+// 📨 Client‑side response interfaces (normalized, message always present)
 // ----------------------------------------------------------------------
 
 export interface NotificationsResponse {
@@ -53,26 +53,53 @@ export interface NotificationsResponse {
 
 export interface NotificationResponse {
   status: boolean;
-  message: string;
+  message?: string;
   data: NotificationLogEntry;
 }
 
 export interface NotificationStatsResponse {
   status: boolean;
-  message: string;
+  message?: string;
   data: NotificationStats;
 }
 
-export interface NotificationActionResult {
-  status: boolean;
-  message: string;
-  data?: NotificationLogEntry | NotificationLogEntry[] | { sendResult?: any };
-}
-
-// Generic response for retry/resend/delete/update operations
 export interface NotificationActionResponse {
   status: boolean;
-  message: string;
+  message?: string;
+  data?: any;
+}
+
+// ----------------------------------------------------------------------
+// 🧠 Internal types – match actual backend IPC responses (message optional)
+// ----------------------------------------------------------------------
+
+interface BackendPaginatedResponse {
+  status: boolean;
+  message?: string;
+  data: NotificationLogEntry[];
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+}
+
+interface BackendSingleResponse {
+  status: boolean;
+  message?: string;
+  data: NotificationLogEntry;
+}
+
+interface BackendStatsResponse {
+  status: boolean;
+  message?: string;
+  data: NotificationStats;
+}
+
+interface BackendActionResponse {
+  status: boolean;
+  message?: string;
   data?: any;
 }
 
@@ -81,20 +108,83 @@ export interface NotificationActionResponse {
 // ----------------------------------------------------------------------
 
 class NotificationLogAPI {
+  /**
+   * Internal IPC caller – always returns a consistent response object
+   * with a `message` string (never undefined). The generic type T
+   * allows message to be optional, but the returned object will always
+   * include a string message.
+   */
+  private async call<T extends { status: boolean; message?: string; data?: any }>(
+    method: string,
+    params: Record<string, any> = {}
+  ): Promise<T> {
+    // Fallback when Electron API is missing
+    if (!window.backendAPI?.notification) {
+      return {
+        status: false,
+        message: "Electron API (notification) not available",
+        data: null,
+      } as T;
+    }
+
+    try {
+      const response = await window.backendAPI.notification({ method, params });
+
+      // Handle malformed or non‑object response
+      if (!response || typeof response !== "object") {
+        return {
+          status: false,
+          message: "Invalid response format from backend",
+          data: null,
+        } as T;
+      }
+
+      // ----- TRANSFORM PAGINATED RESPONSE -----
+      if ("pagination" in response && Array.isArray(response.data)) {
+        const paginated = response as BackendPaginatedResponse;
+        if (paginated.status && paginated.pagination) {
+          const { page, limit, total, pages } = paginated.pagination;
+          return {
+            status: true,
+            message: "", // ensure message is always present
+            data: {
+              items: paginated.data,
+              page,
+              limit,
+              total,
+              totalPages: pages,
+            },
+          } as T;
+        }
+        // Failed paginated response – preserve original message or fallback
+        return {
+          status: false,
+          message: paginated.message ?? "Unknown error",
+          data: { items: [], total: 0, page: 1, limit: 50, totalPages: 0 },
+        } as T;
+      }
+
+      // ----- NON‑PAGINATED RESPONSE -----
+      // Guarantee a `message` string (backend might omit it on success)
+      const enrichedResponse = {
+        ...response,
+        message: response.message ?? "",
+      };
+
+      return enrichedResponse as T;
+    } catch (error: any) {
+      return {
+        status: false,
+        message: error?.message ?? "Unknown error calling notification API",
+        data: null,
+      } as T;
+    }
+  }
+
   // --------------------------------------------------------------------
   // 🔎 READ-ONLY METHODS
   // --------------------------------------------------------------------
 
-  /**
-   * Get all notification logs with pagination and optional filters
-   * @param params.page - Page number (1‑based)
-   * @param params.limit - Items per page (default 50, max 100)
-   * @param params.status - Filter by status ('queued', 'sent', 'failed', 'resend')
-   * @param params.startDate - ISO date string
-   * @param params.endDate - ISO date string
-   * @param params.sortBy - Field to sort by (default 'created_at')
-   * @param params.sortOrder - 'ASC' or 'DESC' (default 'DESC')
-   */
   async getAll(params?: {
     page?: number;
     limit?: number;
@@ -104,151 +194,47 @@ class NotificationLogAPI {
     sortBy?: string;
     sortOrder?: "ASC" | "DESC";
   }): Promise<NotificationsResponse> {
-    try {
-      if (!window.backendAPI?.notification) {
-        throw new Error("Electron API (notification) not available");
-      }
-
-      const response = await window.backendAPI.notification({
-        method: "getAllNotifications",
-        params: params || {},
-      });
-
-      if (response.status) {
-        return response;
-      }
-      throw new Error(response.message || "Failed to fetch notification logs");
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to fetch notification logs");
-    }
+    const response = await this.call<BackendPaginatedResponse>("getAllNotifications", params || {});
+    // The call method already transformed paginated responses into NotificationsResponse shape
+    return response as unknown as NotificationsResponse;
   }
 
-  /**
-   * Get a single notification log by ID
-   * @param id - Notification log ID
-   */
   async getById(id: number): Promise<NotificationResponse> {
-    try {
-      if (!window.backendAPI?.notification) {
-        throw new Error("Electron API (notification) not available");
-      }
-
-      const response = await window.backendAPI.notification({
-        method: "getNotificationById",
-        params: { id },
-      });
-
-      if (response.status) {
-        return response;
-      }
-      throw new Error(response.message || "Failed to fetch notification log");
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to fetch notification log");
-    }
+    return this.call<BackendSingleResponse>("getNotificationById", { id });
   }
 
-  /**
-   * Get notification logs filtered by recipient email
-   * @param params.recipient_email - Email address
-   * @param params.page - Page number
-   * @param params.limit - Items per page
-   */
   async getByRecipient(params: {
     recipient_email: string;
     page?: number;
     limit?: number;
   }): Promise<NotificationsResponse> {
-    try {
-      if (!window.backendAPI?.notification) {
-        throw new Error("Electron API (notification) not available");
-      }
-
-      const response = await window.backendAPI.notification({
-        method: "getNotificationsByRecipient",
-        params,
-      });
-
-      if (response.status) {
-        return response;
-      }
-      throw new Error(response.message || "Failed to fetch notifications by recipient");
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to fetch notifications by recipient");
-    }
+    const response = await this.call<BackendPaginatedResponse>("getNotificationsByRecipient", params);
+    return response as unknown as NotificationsResponse;
   }
 
-  /**
-   * Get notification logs associated with a booking
-   * @param params.bookingId - Booking ID
-   * @param params.page - Page number
-   * @param params.limit - Items per page
-   */
   async getByBooking(params: {
     bookingId: number;
     page?: number;
     limit?: number;
   }): Promise<NotificationsResponse> {
-    try {
-      if (!window.backendAPI?.notification) {
-        throw new Error("Electron API (notification) not available");
-      }
-
-      const response = await window.backendAPI.notification({
-        method: "getNotificationsByBooking",
-        params,
-      });
-
-      if (response.status) {
-        return response;
-      }
-      throw new Error(response.message || "Failed to fetch notifications by booking");
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to fetch notifications by booking");
-    }
+    const response = await this.call<BackendPaginatedResponse>("getNotificationsByBooking", params);
+    return response as unknown as NotificationsResponse;
   }
 
-  /**
-   * Search notification logs by keyword in recipient, subject, or payload
-   * @param params.keyword - Search term
-   * @param params.page - Page number
-   * @param params.limit - Items per page
-   */
   async search(params: {
     keyword: string;
     page?: number;
     limit?: number;
   }): Promise<NotificationsResponse> {
-    try {
-      if (!window.backendAPI?.notification) {
-        throw new Error("Electron API (notification) not available");
-      }
-
-      const response = await window.backendAPI.notification({
-        method: "searchNotifications",
-        params,
-      });
-
-      if (response.status) {
-        return response;
-      }
-      throw new Error(response.message || "Failed to search notifications");
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to search notifications");
-    }
+    const response = await this.call<BackendPaginatedResponse>("searchNotifications", params);
+    return response as unknown as NotificationsResponse;
   }
 
-  /**
-   * Get notification logs filtered by status (shortcut)
-   * @param params.status - Status value
-   * @param params.page - Page number
-   * @param params.limit - Items per page
-   */
   async getByStatus(params: {
     status: string;
     page?: number;
     limit?: number;
   }): Promise<NotificationsResponse> {
-    // Reuse getAll with status filter
     return this.getAll({ ...params });
   }
 
@@ -256,215 +242,67 @@ class NotificationLogAPI {
   // 📊 STATISTICS
   // --------------------------------------------------------------------
 
-  /**
-   * Get summary statistics of notification logs
-   * @param params.startDate - Optional start date
-   * @param params.endDate - Optional end date
-   */
   async getStats(params?: {
     startDate?: string;
     endDate?: string;
   }): Promise<NotificationStatsResponse> {
-    try {
-      if (!window.backendAPI?.notification) {
-        throw new Error("Electron API (notification) not available");
-      }
-
-      const response = await window.backendAPI.notification({
-        method: "getNotificationStats",
-        params: params || {},
-      });
-
-      if (response.status) {
-        return response;
-      }
-      throw new Error(response.message || "Failed to fetch notification stats");
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to fetch notification stats");
-    }
+    return this.call<BackendStatsResponse>("getNotificationStats", params || {});
   }
 
   // --------------------------------------------------------------------
-  // ✏️ WRITE OPERATIONS (status updates, delete)
+  // ✏️ WRITE OPERATIONS
   // --------------------------------------------------------------------
 
-  /**
-   * Delete a notification log entry
-   * @param id - Notification log ID
-   * @param userId - Optional user ID for audit logging
-   */
-  async delete(id: number, userId?: string | number): Promise<NotificationActionResponse> {
-    try {
-      if (!window.backendAPI?.notification) {
-        throw new Error("Electron API (notification) not available");
-      }
-
-      const response = await window.backendAPI.notification({
-        method: "deleteNotification",
-        params: { id, userId },
-      });
-
-      if (response.status) {
-        return response;
-      }
-      throw new Error(response.message || "Failed to delete notification log");
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to delete notification log");
-    }
+  async delete(id: number): Promise<NotificationActionResponse> {
+    return this.call<BackendActionResponse>("deleteNotification", { id });
   }
 
-  /**
-   * Manually update the status of a notification
-   * @param params.id - Notification log ID
-   * @param params.status - New status
-   * @param params.errorMessage - Optional error message if failed
-   * @param params.userId - Optional user ID for audit logging
-   */
   async updateStatus(params: {
     id: number;
     status: string;
     errorMessage?: string | null;
-    userId?: string | number;
   }): Promise<NotificationActionResponse> {
-    try {
-      if (!window.backendAPI?.notification) {
-        throw new Error("Electron API (notification) not available");
-      }
-
-      const response = await window.backendAPI.notification({
-        method: "updateNotificationStatus",
-        params,
-      });
-
-      if (response.status) {
-        return response;
-      }
-      throw new Error(response.message || "Failed to update notification status");
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to update notification status");
-    }
+    return this.call<BackendActionResponse>("updateNotificationStatus", params);
   }
 
   // --------------------------------------------------------------------
   // 🔄 RETRY / RESEND OPERATIONS
   // --------------------------------------------------------------------
 
-  /**
-   * Retry sending a failed or queued notification
-   * @param id - Notification log ID
-   * @param userId - Optional user ID for audit logging
-   */
-  async retryFailed(id: number, userId?: string | number): Promise<NotificationActionResponse> {
-    try {
-      if (!window.backendAPI?.notification) {
-        throw new Error("Electron API (notification) not available");
-      }
-
-      const response = await window.backendAPI.notification({
-        method: "retryFailedNotification",
-        params: { id, userId },
-      });
-
-      if (response.status) {
-        return response;
-      }
-      throw new Error(response.message || "Failed to retry notification");
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to retry notification");
-    }
+  async retryFailed(id: number): Promise<NotificationActionResponse> {
+    return this.call<BackendActionResponse>("retryFailedNotification", { id });
   }
 
-  /**
-   * Retry all failed/queued notifications (with optional filters)
-   * @param params.filters - Optional filters (recipient_email, createdBefore)
-   * @param params.userId - Optional user ID for audit logging
-   */
   async retryAllFailed(params?: {
     filters?: {
       recipient_email?: string;
       createdBefore?: string;
     };
-    userId?: string | number;
   }): Promise<NotificationActionResponse> {
-    try {
-      if (!window.backendAPI?.notification) {
-        throw new Error("Electron API (notification) not available");
-      }
-
-      const response = await window.backendAPI.notification({
-        method: "retryAllFailed",
-        params: params || {},
-      });
-
-      if (response.status) {
-        return response;
-      }
-      throw new Error(response.message || "Failed to retry all failed notifications");
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to retry all failed notifications");
-    }
+    return this.call<BackendActionResponse>("retryAllFailed", params || {});
   }
 
-  /**
-   * Resend a notification (force resend, increments resend_count)
-   * @param id - Notification log ID
-   * @param userId - Optional user ID for audit logging
-   */
-  async resend(id: number, userId?: string | number): Promise<NotificationActionResponse> {
-    try {
-      if (!window.backendAPI?.notification) {
-        throw new Error("Electron API (notification) not available");
-      }
-
-      const response = await window.backendAPI.notification({
-        method: "resendNotification",
-        params: { id, userId },
-      });
-
-      if (response.status) {
-        return response;
-      }
-      throw new Error(response.message || "Failed to resend notification");
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to resend notification");
-    }
+  async resend(id: number): Promise<NotificationActionResponse> {
+    return this.call<BackendActionResponse>("resendNotification", { id });
   }
 
   // --------------------------------------------------------------------
   // 🧰 UTILITY METHODS
   // --------------------------------------------------------------------
 
-  /**
-   * Check if a specific recipient has any notification logs
-   * @param recipient_email - Email address
-   */
   async hasLogs(recipient_email: string): Promise<boolean> {
-    try {
-      const response = await this.getByRecipient({ recipient_email, limit: 1 });
-      return response.data.total > 0;
-    } catch (error) {
-      console.error("Error checking notification logs:", error);
-      return false;
-    }
+    const response = await this.getByRecipient({ recipient_email, limit: 1 });
+    return response.status && response.data.total > 0;
   }
 
-  /**
-   * Get the latest notification log entry for a recipient
-   * @param recipient_email - Email address
-   */
   async getLatestByRecipient(recipient_email: string): Promise<NotificationLogEntry | null> {
-    try {
-      const response = await this.getByRecipient({ recipient_email, limit: 1, page: 1 });
-      return response.data.items[0] || null;
-    } catch (error) {
-      console.error("Error fetching latest notification:", error);
-      return null;
+    const response = await this.getByRecipient({ recipient_email, limit: 1, page: 1 });
+    if (response.status && response.data.items.length > 0) {
+      return response.data.items[0];
     }
+    return null;
   }
 
-  /**
-   * Check if the backend API is available
-   */
   async isAvailable(): Promise<boolean> {
     return !!(window.backendAPI?.notification);
   }

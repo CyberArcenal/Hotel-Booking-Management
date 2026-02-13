@@ -97,3 +97,18 @@
   background: linear-gradient(to right, #1a1a1a 4%, #2a2a2a 25%, #1a1a1a 36%);
   background-size: 1000px 100%;
 }
+
+/* index.css (add at the end) */
+
+/* Sending row animation – gold pulse */
+@keyframes sending-pulse {
+  0%, 100% {
+    background-color: rgba(212, 175, 55, 0.05);
+  }
+  50% {
+    background-color: rgba(212, 175, 55, 0.2);
+  }
+}
+.sending-row {
+  animation: sending-pulse 1.5s infinite;
+}

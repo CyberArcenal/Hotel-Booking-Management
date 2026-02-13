@@ -105,8 +105,9 @@ const BookingPage: React.FC = () => {
   const handleCheckOut = async (id: number) => {
     try {
       await bookingAPI.checkOut(id, "admin");
-      await dialogs.success("Booking checked out successfully");
       refetch();
+      await dialogs.success("Booking checked out successfully");
+      
     } catch (err) {
       showError("Failed to check out booking");
     }
@@ -115,8 +116,9 @@ const BookingPage: React.FC = () => {
   const handleMarkAsPaid = async (id: number) => {
     try {
       await bookingAPI.markAsPaid(id);
-      await dialogs.success("Booking marked as paid");
       refetch();
+      await dialogs.success("Booking marked as paid");
+      
     } catch (err) {
       // console.log(err)
       showApiError(err);
@@ -133,8 +135,9 @@ const BookingPage: React.FC = () => {
       );
       if (!reason) return; // user cancelled or entered empty string
       await bookingAPI.markAsFailed(id, reason);
-      await dialogs.success("Booking marked as failed");
       refetch();
+      await dialogs.success("Booking marked as failed");
+    
     } catch (err) {
       showApiError(err);
     }
@@ -144,8 +147,9 @@ const BookingPage: React.FC = () => {
     if (confirm("Are you sure you want to delete this booking?")) {
       try {
         await bookingAPI.delete(id, "admin");
-        await dialogs.success("Booking deleted successfully");
         refetch();
+        await dialogs.success("Booking deleted successfully");
+       
       } catch (err) {
         showError("Failed to delete booking");
       }

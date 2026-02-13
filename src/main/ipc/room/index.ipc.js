@@ -5,6 +5,7 @@ const { logger } = require("../../../utils/logger");
 const { AppDataSource } = require("../../db/datasource");
 const { AuditLog } = require("../../../entities/AuditLog");
 const { withErrorHandling } = require("../../../middlewares/errorHandler");
+const { saveDb } = require("../../../utils/dbUtils/dbActions");
 
 class RoomHandler {
   constructor() {
@@ -188,7 +189,7 @@ class RoomHandler {
         timestamp: new Date(),
       });
 
-      await repo.save(log);
+      await saveDb(repo, log);
     } catch (error) {
       console.warn("Failed to log room activity:", error);
       // @ts-ignore

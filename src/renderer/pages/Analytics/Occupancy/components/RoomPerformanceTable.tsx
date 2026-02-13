@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { type RoomPerformanceItem } from '../../../../api/dashboard';
 import { Search, ChevronDown } from 'lucide-react';
+import { formatCurrency, formatPercentage } from '../../../../utils/formatters';
 
 interface RoomPerformanceTableProps {
   data: RoomPerformanceItem[];
@@ -111,22 +112,22 @@ const RoomPerformanceTable: React.FC<RoomPerformanceTableProps> = ({ data, loadi
                   </td>
                   <td className="px-4 py-3 text-[var(--text-secondary)]">{room.type}</td>
                   <td className="px-4 py-3 text-[var(--text-primary)]">
-                    ₱{room.pricePerNight.toLocaleString()}
+                    {formatCurrency(room.pricePerNight)}
                   </td>
                   <td className="px-4 py-3 text-[var(--text-primary)]">{room.totalBookings}</td>
                   <td className="px-4 py-3 text-[var(--text-primary)]">
-                    ₱{room.totalRevenue.toLocaleString()}
+                    {formatCurrency(room.totalRevenue)}
                   </td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-1 text-xs font-medium rounded-full
                       ${room.occupancyRate > 70 ? 'bg-green-500/20 text-green-500' : 
                         room.occupancyRate > 40 ? 'bg-yellow-500/20 text-yellow-500' : 
                         'bg-red-500/20 text-red-500'}`}>
-                      {room.occupancyRate.toFixed(1)}%
+                      {formatPercentage(room.occupancyRate)}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-[var(--text-primary)]">
-                    ₱{room.averageRate.toLocaleString()}
+                    {formatCurrency(room.averageRate)}
                   </td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-1 text-xs font-medium rounded-full

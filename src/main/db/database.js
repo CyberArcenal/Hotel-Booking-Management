@@ -1,12 +1,8 @@
 // src/main/db/database.js
-//@ts-check
+// @ts-check
 const path = require("path");
 const fs = require("fs");
 const { app } = require("electron");
-const BookingSubscriber = require("../../subscribers/Booking");
-const GuestSubscriber = require("../../subscribers/Guest");
-const RoomSubscriber = require("../../subscribers/Room");
-const AuditLogSubscriber = require("../../subscribers/AuditLog");
 
 const isElectronAvailable = typeof app !== "undefined" && app !== null;
 const isDev =
@@ -20,13 +16,13 @@ function getDatabaseConfig() {
   let migrationsPath;
 
   if (isDev) {
-    // Development mode (local project files)
+    // Development mode
     databasePath = path.resolve(process.cwd(), "app.db");
     entitiesPath = path.resolve(process.cwd(), "src/entities/*.js");
     migrationsPath = path.resolve(process.cwd(), "src/migrations/*.js");
     console.log(`[PayTrack][DB] Development DB path: ${databasePath}`);
   } else {
-    // Production mode (packaged app)
+    // Production mode
     const userDataPath = app.getPath("userData");
     const dbDir = path.join(userDataPath, "data");
 
@@ -40,13 +36,11 @@ function getDatabaseConfig() {
     const isAsar = appPath.includes(".asar");
 
     if (isAsar) {
-      // Use unpacked resources when packaged with asar
       const unpackedRoot = appPath.replace(".asar", ".asar.unpacked");
       const unpackedDir = path.dirname(unpackedRoot);
       entitiesPath = path.join(unpackedDir, "src/entities/*.js");
       migrationsPath = path.join(unpackedDir, "src/migrations/*.js");
     } else {
-      // Not packaged
       entitiesPath = path.join(appPath, "src/entities/*.js");
       migrationsPath = path.join(appPath, "src/migrations/*.js");
     }
@@ -57,21 +51,15 @@ function getDatabaseConfig() {
   return {
     type: "sqlite",
     database: databasePath,
-    synchronize: isDev, // enable in dev, disable in production
+    synchronize: isDev, // dev only
     logging: false,
     entities: [entitiesPath],
     migrations: [migrationsPath],
-    subscribers: [
-      BookingSubscriber, // ← class lang, wag new
-      GuestSubscriber,
-      RoomSubscriber,
-      AuditLogSubscriber,
-    ],
     cli: {
       entitiesDir: "src/entities",
       migrationsDir: "src/migrations",
     },
-    // SQLite specific options
+    // SQLite options
     enableWAL: true,
     busyErrorRetry: 100,
   };

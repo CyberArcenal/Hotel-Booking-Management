@@ -20,10 +20,10 @@ const GeneralTab: React.FC<Props> = ({ settings, onUpdate }) => {
             className="w-full px-3 py-2 rounded-lg bg-[var(--card-secondary-bg)] border border-[var(--border-color)]/20
                        text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--primary-color)]/50"
           >
-            <option value="USD">USD</option>
+            {/* <option value="USD">USD</option> */}
             <option value="PHP">PHP</option>
-            <option value="EUR">EUR</option>
-            <option value="JPY">JPY</option>
+            {/* <option value="EUR">EUR</option>
+            <option value="JPY">JPY</option> */}
           </select>
         </div>
         <div>
@@ -35,11 +35,11 @@ const GeneralTab: React.FC<Props> = ({ settings, onUpdate }) => {
                        text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--primary-color)]/50"
           >
             <option value="en">English</option>
-            <option value="es">Spanish</option>
+            {/* <option value="es">Spanish</option>
             <option value="fr">French</option>
             <option value="de">German</option>
             <option value="zh">Chinese</option>
-            <option value="ja">Japanese</option>
+            <option value="ja">Japanese</option> */}
           </select>
         </div>
         <div>

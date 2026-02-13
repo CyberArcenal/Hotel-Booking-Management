@@ -5,7 +5,7 @@ import { SettingType } from '../../../api/system_config';
 
 const tabs: { id: SettingType; label: string }[] = [
   { id: 'general', label: 'General' },
-  { id: 'booking', label: 'Booking' },
+  // { id: 'booking', label: 'Booking' },
   { id: 'room', label: 'Room' },
   { id: 'notification', label: 'Notification' },
   { id: 'system', label: 'System' },

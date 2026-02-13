@@ -5,6 +5,7 @@ const { logger } = require("../../../utils/logger");
 const { AppDataSource } = require("../../db/datasource");
 const { AuditLog } = require("../../../entities/AuditLog");
 const { withErrorHandling } = require("../../../middlewares/errorHandler");
+const { saveDb } = require("../../../utils/dbUtils/dbActions");
 
 class BookingHandler {
   constructor() {
@@ -293,7 +294,8 @@ class BookingHandler {
         timestamp: new Date(),
       });
 
-      await activityRepo.save(activity);
+
+      await saveDb(activityRepo, activity);
     } catch (error) {
       console.warn("Failed to log booking activity:", error);
       if (logger) {

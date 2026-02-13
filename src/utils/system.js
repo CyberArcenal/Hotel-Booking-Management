@@ -1,9 +1,11 @@
+//@ts-check
+// @ts-ignore
 const path = require("path");
-
+// @ts-ignore
 const Decimal = require("decimal.js");
 const { logger } = require("./logger");
-const { AppDataSource } = require("../main/db/dataSource");
 const { SystemSetting, SettingType } = require("../entities/systemSettings");
+const { AppDataSource } = require("../main/db/datasource");
 
 // ============================================================
 // 📊 CORE GETTER FUNCTIONS
@@ -59,6 +61,7 @@ async function getValue(key, settingType, defaultValue = null) {
     return String(setting.value).trim();
   } catch (error) {
     logger.warn(
+      // @ts-ignore
       `[DB] Error fetching setting ${key}: ${error.message}, using default: ${defaultValue}`,
     );
     return defaultValue;
@@ -76,6 +79,7 @@ async function getBool(key, settingType, defaultValue = false) {
       key,
       settingType,
 
+      // @ts-ignore
       defaultValue ? "true" : "false",
     );
     if (raw === null) {
@@ -107,6 +111,7 @@ async function getBool(key, settingType, defaultValue = false) {
     return defaultValue;
   } catch (error) {
     logger.error(
+      // @ts-ignore
       `Error in getBool for ${key}: ${error.message}, using default: ${defaultValue}`,
     );
     return defaultValue;
@@ -120,6 +125,7 @@ async function getBool(key, settingType, defaultValue = false) {
  */
 async function getInt(key, settingType, defaultValue = 0) {
   try {
+    // @ts-ignore
     const raw = await getValue(key, settingType, defaultValue.toString());
     if (raw === null) {
       return defaultValue;
@@ -129,6 +135,7 @@ async function getInt(key, settingType, defaultValue = 0) {
     return isNaN(result) ? defaultValue : result;
   } catch (error) {
     logger.warn(
+      // @ts-ignore
       `Invalid int for key='${key}': '${error.message}' – using default=${defaultValue}`,
     );
     return defaultValue;
@@ -141,8 +148,10 @@ async function getInt(key, settingType, defaultValue = 0) {
  * @param {string} settingType
  */
 
+// @ts-ignore
 async function getArray(key, settingType, defaultValue = []) {
   try {
+    // @ts-ignore
     const raw = await getValue(key, settingType, JSON.stringify(defaultValue));
     if (raw === null) {
       return defaultValue;
@@ -160,6 +169,7 @@ async function getArray(key, settingType, defaultValue = []) {
     return defaultValue;
   } catch (error) {
     logger.warn(
+      // @ts-ignore
       `Error getting array setting ${key}: ${error.message}, using default`,
     );
     return defaultValue;
@@ -178,21 +188,25 @@ async function companyName() {
   return getValue(
     "company_name",
     SettingType.GENERAL,
+    // @ts-ignore
     "Hotel Management System",
   );
 }
 
 // ✅ RENAME: from 'timezone' to 'defaultTimezone' (para hindi malito)
 async function defaultTimezone() {
+  // @ts-ignore
   return getValue("default_timezone", SettingType.GENERAL, "Asia/Manila");
 }
 
 async function language() {
+  // @ts-ignore
   return getValue("language", SettingType.GENERAL, "en");
 }
 
 // ✅ NEW: para sa actual na "timezone" key (id 11)
 async function timezone() {
+  // @ts-ignore
   return getValue("timezone", SettingType.GENERAL, "Asia/Manila");
 }
 
@@ -201,22 +215,27 @@ async function timezone() {
 // ============================================================
 
 async function defaultCheckinTime() {
+  // @ts-ignore
   return getValue("default_checkin_time", SettingType.BOOKING, "14:00");
 }
 
 async function defaultCheckoutTime() {
+  // @ts-ignore
   return getValue("default_checkout_time", SettingType.BOOKING, "12:00");
 }
 
 async function cancellationWindowHours() {
+  // @ts-ignore
   return getValue("cancellation_window_hours", SettingType.BOOKING, "24");
 }
 
 async function autoAssignRooms() {
+  // @ts-ignore
   return getValue("auto_assign_rooms", SettingType.BOOKING, "false");
 }
 
 async function defaultBookingStatus() {
+  // @ts-ignore
   return getValue("default_booking_status", SettingType.BOOKING, "pending");
 }
 
@@ -225,14 +244,17 @@ async function defaultBookingStatus() {
 // ============================================================
 
 async function maxOccupancyPerType() {
+  // @ts-ignore
   return getValue("max_occupancy_per_type", SettingType.ROOM, "{}");
 }
 
 async function maintenanceMode() {
+  // @ts-ignore
   return getValue("maintenance_mode", SettingType.ROOM, "false");
 }
 
 async function defaultPricingRules() {
+  // @ts-ignore
   return getValue("default_pricing_rules", SettingType.ROOM, "{}");
 }
 
@@ -241,22 +263,27 @@ async function defaultPricingRules() {
 // ============================================================
 
 async function enableEmailAlerts() {
+  // @ts-ignore
   return getValue("enable_email_alerts", SettingType.NOTIFICATION, "false");
 }
 
 async function enableSmsAlerts() {
+  // @ts-ignore
   return getValue("enable_sms_alerts", SettingType.NOTIFICATION, "false");
 }
 
 async function adminAlerts() {
+  // @ts-ignore
   return getValue("admin_alerts", SettingType.NOTIFICATION, "false");
 }
 
 async function reminderIntervalHours() {
+  // @ts-ignore
   return getValue("reminder_interval_hours", SettingType.NOTIFICATION, "24");
 }
 
 async function smtpHost() {
+  // @ts-ignore
   return getValue("smtp_host", SettingType.NOTIFICATION, "smtp.gmail.com");
 }
 
@@ -265,39 +292,48 @@ async function smtpPort() {
 }
 
 async function smtpUsername() {
+  // @ts-ignore
   return getValue("smtp_username", SettingType.NOTIFICATION, "");
 }
 
 async function smtpPassword() {
+  // @ts-ignore
   return getValue("smtp_password", SettingType.NOTIFICATION, "");
 }
 
 async function smtpUseSsl() {
+  // @ts-ignore
   return getValue("smtp_use_ssl", SettingType.NOTIFICATION, "true");
 }
 
 async function smtpFromEmail() {
+  // @ts-ignore
   return getValue("smtp_from_email", SettingType.NOTIFICATION, "");
 }
 
 async function smtpFromName() {
+  // @ts-ignore
   return getValue("smtp_from_name", SettingType.NOTIFICATION, "");
 }
 
 // 📱 TWILIO SMS SETTINGS (NEW)
 async function twilioAccountSid() {
+  // @ts-ignore
   return getValue("twilio_account_sid", SettingType.NOTIFICATION, "");
 }
 
 async function twilioAuthToken() {
+  // @ts-ignore
   return getValue("twilio_auth_token", SettingType.NOTIFICATION, "");
 }
 
 async function twilioPhoneNumber() {
+  // @ts-ignore
   return getValue("twilio_phone_number", SettingType.NOTIFICATION, "");
 }
 
 async function twilioMessagingServiceSid() {
+  // @ts-ignore
   return getValue("twilio_messaging_service_sid", SettingType.NOTIFICATION, "");
 }
 
@@ -316,6 +352,7 @@ async function getSmtpConfig() {
 
   return {
     host,
+    // @ts-ignore
     port: parseInt(port, 10),
     username,
     password,
@@ -353,14 +390,17 @@ async function getTwilioConfig() {
 // ============================================================
 
 async function debugMode() {
+  // @ts-ignore
   return getValue("debug_mode", SettingType.SYSTEM, "false");
 }
 
 async function environment() {
+  // @ts-ignore
   return getValue("environment", SettingType.SYSTEM, "development");
 }
 
 async function auditTrailEnabled() {
+  // @ts-ignore
   return getValue("audit_trail_enabled", SettingType.SYSTEM, "true");
 }
 

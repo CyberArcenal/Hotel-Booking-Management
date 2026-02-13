@@ -1,6 +1,7 @@
 // create.ipc.js placeholder
-const bookingService = require('../../../services/booking');
-const auditLogger = require('../../../utils/auditLogger');
+//@ts-check
+
+const bookingService = require('../../../services/Booking');
 
 /**
  * Create a new booking (wrapped in transaction)
@@ -11,6 +12,7 @@ const auditLogger = require('../../../utils/auditLogger');
 module.exports = async (params, queryRunner) => {
   try {
     // bookingService.create does not accept queryRunner; transaction is managed in index.ipc
+    // @ts-ignore
     const user = params.user || 'system';
     const booking = await bookingService.create(params, user);
 
@@ -23,9 +25,10 @@ module.exports = async (params, queryRunner) => {
       data: booking
     };
   } catch (error) {
-    console.error('[create.ipc] Error:', error.message);
+    console.error('[create.ipc] Error:', error);
     return {
       status: false,
+      // @ts-ignore
       message: error.message || 'Failed to create booking',
       data: null
     };

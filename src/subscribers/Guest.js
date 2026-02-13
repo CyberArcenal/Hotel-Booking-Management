@@ -1,25 +1,62 @@
-const { EntitySubscriberInterface } = require("typeorm");
+// subscribers/GuestSubscriber.js
+// @ts-check
 const { Guest } = require("../entities/Guest");
+const { logger } = require("../utils/logger");
 
 class GuestSubscriber {
   constructor() {
-    console.log("✅ GuestSubscriber loaded and registered");
+    logger.info("✅ GuestSubscriber loaded and registered");
   }
+
   listenTo() {
     return Guest;
   }
 
-  afterInsert(event) {
-    console.log("Guest created:", event.entity);
+  // BEFORE hooks
+  /**
+   * @param {any} entity
+   */
+  beforeInsert(entity) {
+    logger.info("[GuestSubscriber] Before insert:", entity);
+    // pwede kang maglagay ng validation o defaults dito
   }
 
-  afterUpdate(event) {
-    console.log("Guest updated:", event.entity);
+  /**
+   * @param {{ id: any; }} entity
+   */
+  beforeUpdate(entity) {
+    logger.info("[GuestSubscriber] Before update:", entity.id);
   }
 
-  afterRemove(event) {
-    console.log("Guest deleted:", event.entityId);
+  /**
+   * @param {{ id: any; }} entity
+   */
+  beforeRemove(entity) {
+    logger.info("[GuestSubscriber] Before remove:", entity.id);
+  }
+
+  // AFTER hooks
+  /**
+   * @param {any} entity
+   */
+  afterInsert(entity) {
+    logger.info("[GuestSubscriber] Guest created:", entity);
+    // pwede kang mag‑emit ng notification o mag‑audit log
+  }
+
+  /**
+   * @param {any} entity
+   */
+  afterUpdate(entity) {
+    logger.info("[GuestSubscriber] Guest updated:", entity);
+  }
+
+  /**
+   * @param {any} entityId
+   */
+  afterRemove(entityId) {
+    logger.info("[GuestSubscriber] Guest deleted:", entityId);
   }
 }
 
-module.exports =  GuestSubscriber ;
+module.exports = GuestSubscriber;

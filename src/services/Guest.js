@@ -2,11 +2,12 @@
 const { AppDataSource } = require("../main/db/datasource");
 const { Guest } = require("../entities/Guest");
 const { Booking } = require("../entities/Booking");
-const auditLogger = require("../utils/auditLogger");
 const {
   validateGuestData,
   generateGuestReference,
 } = require("../utils/guestUtils");
+const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
+const auditLogger = require("../utils/AuditLogger");
 
 class GuestService {
   constructor() {
@@ -77,7 +78,7 @@ class GuestService {
       });
 
       // @ts-ignore
-      const savedGuest = await guestRepo.save(guest);
+      const savedGuest = await saveDb(guestRepo, guest);
 
       // Log audit trail
       // @ts-ignore
@@ -176,7 +177,7 @@ class GuestService {
       });
 
       // @ts-ignore
-      const savedGuest = await guestRepo.save(updatedGuest);
+      const savedGuest = await updateDb(guestRepo, updatedGuest);
 
       // Log audit trail
       await auditLogger.logUpdate("Guest", id, oldData, savedGuest, user);
@@ -866,19 +867,19 @@ class GuestService {
           for (const booking of guest.bookings) {
             booking.guest = masterGuest;
             // @ts-ignore
-            await bookingRepo.save(booking);
+            await updateDb(bookingRepo, booking);
           }
         }
       }
 
       // Save master guest
       // @ts-ignore
-      await guestRepo.save(masterGuest);
+      await updateDb(guestRepo, masterGuest);
 
       // Delete other guests
       for (const guest of guestsToDelete) {
         // @ts-ignore
-        await guestRepo.remove(guest);
+        await updateDb(guestRepo, guest);
       }
 
       // Log merge action

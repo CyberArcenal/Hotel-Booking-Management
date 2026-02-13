@@ -236,7 +236,7 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
         </div>
 
         {/* ---------- RIGHT SECTION ---------- */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 hidden">
           {/* Notification Bell */}
           <button
             className="relative p-2 rounded-lg transition-colors"

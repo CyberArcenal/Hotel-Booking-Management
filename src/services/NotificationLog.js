@@ -1,9 +1,9 @@
 // src/services/notificationLog.service.js
-// @ts-check
 const { AppDataSource } = require("../main/db/datasource");
 const NotificationLog = require("../entities/NotificationLog");
 const emailSender = require("../channels/email.sender");
 const { logger } = require("../utils/logger");
+const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
 
 const LOG_STATUS = {
   QUEUED: "queued",
@@ -12,13 +12,46 @@ const LOG_STATUS = {
   RESEND: "resend",
 };
 
+/**
+ * Allowed columns for sorting (prevents SQL injection)
+ */
+const ALLOWED_SORT_COLUMNS = new Set([
+  "id",
+  "recipient_email",
+  "subject",
+  "status",
+  "retry_count",
+  "resend_count",
+  "sent_at",
+  "last_error_at",
+  "created_at",
+  "updated_at",
+]);
+
+/**
+ * Wraps service methods to avoid repetitive try/catch blocks
+ */
+async function withErrorHandling(fn, ...args) {
+  try {
+    return await fn(...args);
+  } catch (error) {
+    logger?.error(`${fn.name || "Service"} error:`, error);
+    return {
+      status: false,
+      message: error?.message || "Unknown error",
+      data: null,
+    };
+  }
+}
+
 class NotificationLogService {
   /**
    * Get repository – optionally use queryRunner for transactions
+   * @param {import('typeorm').QueryRunner | null} [queryRunner]
+   * @returns {import('typeorm').Repository<NotificationLog>}
    */
   getRepository(queryRunner = null) {
-    if (queryRunner) {
-      // @ts-ignore
+    if (queryRunner?.manager) {
       return queryRunner.manager.getRepository(NotificationLog);
     }
     return AppDataSource.getRepository(NotificationLog);
@@ -26,75 +59,100 @@ class NotificationLogService {
 
   //#region 📋 READ OPERATIONS
 
+  /**
+   * @param {Object} params
+   * @param {number} [params.page=1]
+   * @param {number} [params.limit=50]
+   * @param {string} [params.status]
+   * @param {Date|string} [params.startDate]
+   * @param {Date|string} [params.endDate]
+   * @param {string} [params.sortBy='created_at']
+   * @param {'ASC'|'DESC'} [params.sortOrder='DESC']
+   * @param {import('typeorm').QueryRunner | null} [queryRunner]
+   */
   async getAllNotifications(
     {
       page = 1,
       limit = 50,
-      // @ts-ignore
       status,
-      // @ts-ignore
       startDate,
-      // @ts-ignore
       endDate,
       sortBy = "created_at",
       sortOrder = "DESC",
     },
     queryRunner = null,
   ) {
-    try {
+    return withErrorHandling(async () => {
       const repo = this.getRepository(queryRunner);
       const qb = repo.createQueryBuilder("log");
 
+      // Filters
       if (status) qb.andWhere("log.status = :status", { status });
       if (startDate) qb.andWhere("log.created_at >= :startDate", { startDate });
       if (endDate) qb.andWhere("log.created_at <= :endDate", { endDate });
 
-      qb.orderBy(`log.${sortBy}`, sortOrder)
-        .skip((page - 1) * limit)
-        .take(limit)
-        .leftJoinAndSelect("log.booking", "booking");
+      // Sorting – only allow safe columns
+      const safeSortBy = ALLOWED_SORT_COLUMNS.has(sortBy)
+        ? sortBy
+        : "created_at";
+      qb.orderBy(`log.${safeSortBy}`, sortOrder === "DESC" ? "DESC" : "ASC");
+
+      // Pagination
+      qb.skip((page - 1) * limit).take(limit);
+
+      // Join booking if relation exists
+      qb.leftJoinAndSelect("log.booking", "booking");
 
       const [data, total] = await qb.getManyAndCount();
+
       return {
         status: true,
         data,
-        pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit),
+        },
       };
-    } catch (error) {
-      // @ts-ignore
-      logger?.error("NotificationLogService.getAllNotifications error:", error);
-      // @ts-ignore
-      return { status: false, message: error.message, data: null };
-    }
+    });
   }
 
-  // @ts-ignore
+  /**
+   * @param {Object} params
+   * @param {number} params.id
+   * @param {import('typeorm').QueryRunner | null} [queryRunner]
+   */
   async getNotificationById({ id }, queryRunner = null) {
-    try {
+    return withErrorHandling(async () => {
       if (!id) return { status: false, message: "ID is required", data: null };
+
       const repo = this.getRepository(queryRunner);
       const notification = await repo.findOne({
         where: { id },
         relations: ["booking"],
       });
+
       if (!notification) {
         return { status: false, message: "Notification not found", data: null };
       }
+
       return { status: true, data: notification };
-    } catch (error) {
-      // @ts-ignore
-      logger?.error("NotificationLogService.getNotificationById error:", error);
-      // @ts-ignore
-      return { status: false, message: error.message, data: null };
-    }
+    });
   }
 
+  /**
+   * @param {Object} params
+   * @param {string} params.recipient_email
+   * @param {number} [params.page=1]
+   * @param {number} [params.limit=50]
+   * @param {import('typeorm').QueryRunner | null} [queryRunner]
+   */
   async getNotificationsByRecipient(
-    // @ts-ignore
     { recipient_email, page = 1, limit = 50 },
     queryRunner = null,
   ) {
-    try {
+    return withErrorHandling(async () => {
       if (!recipient_email) {
         return {
           status: false,
@@ -102,6 +160,7 @@ class NotificationLogService {
           data: null,
         };
       }
+
       const repo = this.getRepository(queryRunner);
       const [data, total] = await repo.findAndCount({
         where: { recipient_email },
@@ -110,31 +169,31 @@ class NotificationLogService {
         skip: (page - 1) * limit,
         take: limit,
       });
+
       return {
         status: true,
         data,
         pagination: { page, limit, total, pages: Math.ceil(total / limit) },
       };
-    } catch (error) {
-      logger?.error(
-        "NotificationLogService.getNotificationsByRecipient error:",
-        // @ts-ignore
-        error,
-      );
-      // @ts-ignore
-      return { status: false, message: error.message, data: null };
-    }
+    });
   }
 
+  /**
+   * @param {Object} params
+   * @param {number} params.bookingId
+   * @param {number} [params.page=1]
+   * @param {number} [params.limit=50]
+   * @param {import('typeorm').QueryRunner | null} [queryRunner]
+   */
   async getNotificationsByBooking(
-    // @ts-ignore
     { bookingId, page = 1, limit = 50 },
     queryRunner = null,
   ) {
-    try {
+    return withErrorHandling(async () => {
       if (!bookingId) {
         return { status: false, message: "Booking ID is required", data: null };
       }
+
       const repo = this.getRepository(queryRunner);
       const [data, total] = await repo.findAndCount({
         where: { booking: { id: bookingId } },
@@ -143,31 +202,31 @@ class NotificationLogService {
         skip: (page - 1) * limit,
         take: limit,
       });
+
       return {
         status: true,
         data,
         pagination: { page, limit, total, pages: Math.ceil(total / limit) },
       };
-    } catch (error) {
-      logger?.error(
-        "NotificationLogService.getNotificationsByBooking error:",
-        // @ts-ignore
-        error,
-      );
-      // @ts-ignore
-      return { status: false, message: error.message, data: null };
-    }
+    });
   }
 
+  /**
+   * @param {Object} params
+   * @param {string} params.keyword
+   * @param {number} [params.page=1]
+   * @param {number} [params.limit=50]
+   * @param {import('typeorm').QueryRunner | null} [queryRunner]
+   */
   async searchNotifications(
-    // @ts-ignore
     { keyword, page = 1, limit = 50 },
     queryRunner = null,
   ) {
-    try {
+    return withErrorHandling(async () => {
       if (!keyword) {
         return { status: false, message: "Keyword is required", data: null };
       }
+
       const repo = this.getRepository(queryRunner);
       const qb = repo
         .createQueryBuilder("log")
@@ -180,48 +239,52 @@ class NotificationLogService {
         .leftJoinAndSelect("log.booking", "booking");
 
       const [data, total] = await qb.getManyAndCount();
+
       return {
         status: true,
         data,
         pagination: { page, limit, total, pages: Math.ceil(total / limit) },
       };
-    } catch (error) {
-      // @ts-ignore
-      logger?.error("NotificationLogService.searchNotifications error:", error);
-      // @ts-ignore
-      return { status: false, message: error.message, data: null };
-    }
+    });
   }
 
   //#endregion
 
   //#region ✏️ WRITE OPERATIONS
 
-  // @ts-ignore
+  /**
+   * @param {Object} params
+   * @param {number} params.id
+   * @param {import('typeorm').QueryRunner | null} [queryRunner]
+   */
   async deleteNotification({ id }, queryRunner = null) {
-    try {
+    return withErrorHandling(async () => {
       if (!id) return { status: false, message: "ID is required", data: null };
+
       const repo = this.getRepository(queryRunner);
       const notification = await repo.findOne({ where: { id } });
+
       if (!notification) {
         return { status: false, message: "Notification not found", data: null };
       }
+
       await repo.remove(notification);
       return { status: true, message: "Notification deleted successfully" };
-    } catch (error) {
-      // @ts-ignore
-      logger?.error("NotificationLogService.deleteNotification error:", error);
-      // @ts-ignore
-      return { status: false, message: error.message, data: null };
-    }
+    });
   }
 
+  /**
+   * @param {Object} params
+   * @param {number} params.id
+   * @param {string} params.status
+   * @param {string|null} [params.errorMessage=null]
+   * @param {import('typeorm').QueryRunner | null} [queryRunner]
+   */
   async updateNotificationStatus(
-    // @ts-ignore
     { id, status, errorMessage = null },
     queryRunner = null,
   ) {
-    try {
+    return withErrorHandling(async () => {
       if (!id || !status) {
         return {
           status: false,
@@ -229,41 +292,77 @@ class NotificationLogService {
           data: null,
         };
       }
+
       const repo = this.getRepository(queryRunner);
       const notification = await repo.findOne({ where: { id } });
+
       if (!notification) {
         return { status: false, message: "Notification not found", data: null };
       }
 
       notification.status = status;
       notification.error_message = errorMessage;
+
       if (status === LOG_STATUS.SENT) {
         notification.sent_at = new Date();
       } else if (status === LOG_STATUS.FAILED) {
         notification.last_error_at = new Date();
       }
+
       notification.updated_at = new Date();
 
-      const saved = await repo.save(notification);
+      const saved = await updateDb(repo, notification);
       return { status: true, data: saved };
-    } catch (error) {
-      logger?.error(
-        "NotificationLogService.updateNotificationStatus error:",
-        // @ts-ignore
-        error,
-      );
-      // @ts-ignore
-      return { status: false, message: error.message, data: null };
-    }
+    });
   }
 
   //#endregion
 
   //#region 🔄 RETRY / RESEND OPERATIONS
 
-  // @ts-ignore
+  /**
+   * Internal method to send email and update log
+   * @private
+   */
+  async _sendAndUpdate(notification, isResend = false) {
+    const sendResult = await emailSender.send(
+      notification.recipient_email,
+      notification.subject || "No Subject",
+      notification.payload || "",
+      null,
+      {},
+      false,
+      notification.booking?.id || null,
+    );
+
+    if (sendResult?.success) {
+      notification.status = isResend ? LOG_STATUS.RESEND : LOG_STATUS.SENT;
+      notification.sent_at = new Date();
+      notification.error_message = null;
+      notification.last_error_at = null;
+    } else {
+      notification.status = LOG_STATUS.FAILED;
+      notification.last_error_at = new Date();
+      notification.error_message = sendResult?.error || "Unknown error";
+    }
+
+    if (isResend) {
+      notification.resend_count = (notification.resend_count || 0) + 1;
+    } else {
+      notification.retry_count = (notification.retry_count || 0) + 1;
+    }
+
+    notification.updated_at = new Date();
+    return sendResult;
+  }
+
+  /**
+   * @param {Object} params
+   * @param {number} params.id
+   * @param {import('typeorm').QueryRunner | null} [queryRunner]
+   */
   async retryFailedNotification({ id }, queryRunner = null) {
-    try {
+    return withErrorHandling(async () => {
       if (!id) {
         return {
           status: false,
@@ -291,53 +390,30 @@ class NotificationLogService {
           data: null,
         };
       }
+      notification.resend_count = notification.resend_count + 1;
+      const saved = await updateDb(repo, notification);
+      let sendResult = null;
+      try{
+      sendResult = await this._sendAndUpdate(saved, false);
+      }catch(err){}
 
-      // Attempt to send email
-      const sendResult = await emailSender.send(
-        notification.recipient_email,
-        notification.subject || "No Subject",
-        notification.payload || "",
-        null,
-        {},
-        false, // wait for result
-        notification.booking?.id || null,
-      );
-
-      // Update log
-      // @ts-ignore
-      if (sendResult.success) {
-        notification.status = LOG_STATUS.SENT;
-        notification.sent_at = new Date();
-        notification.error_message = null;
-        notification.last_error_at = null;
-      } else {
-        notification.status = LOG_STATUS.FAILED;
-        notification.last_error_at = new Date();
-        // @ts-ignore
-        notification.error_message = sendResult.error || "Unknown error";
-      }
-      notification.retry_count = (notification.retry_count || 0) + 1;
-      notification.updated_at = new Date();
-
-      const saved = await repo.save(notification);
       return {
         status: true,
         data: saved,
         sendResult,
       };
-    } catch (error) {
-      logger?.error(
-        "NotificationLogService.retryFailedNotification error:",
-        // @ts-ignore
-        error,
-      );
-      // @ts-ignore
-      return { status: false, message: error.message, data: null };
-    }
+    });
   }
 
+  /**
+   * @param {Object} params
+   * @param {Object} [params.filters={}]
+   * @param {string} [params.filters.recipient_email]
+   * @param {Date|string} [params.filters.createdBefore]
+   * @param {import('typeorm').QueryRunner | null} [queryRunner]
+   */
   async retryAllFailed({ filters = {} }, queryRunner = null) {
-    try {
+    return withErrorHandling(async () => {
       const repo = this.getRepository(queryRunner);
       const qb = repo
         .createQueryBuilder("log")
@@ -345,24 +421,21 @@ class NotificationLogService {
           statuses: [LOG_STATUS.FAILED, LOG_STATUS.QUEUED],
         });
 
-      // @ts-ignore
       if (filters.recipient_email) {
         qb.andWhere("log.recipient_email = :recipient", {
-          // @ts-ignore
           recipient: filters.recipient_email,
         });
       }
-      // @ts-ignore
+
       if (filters.createdBefore) {
         qb.andWhere("log.created_at <= :before", {
-          // @ts-ignore
           before: filters.createdBefore,
         });
       }
 
       const failedNotifications = await qb.getMany();
-
       const results = [];
+
       for (const notification of failedNotifications) {
         const result = await this.retryFailedNotification(
           { id: notification.id },
@@ -379,17 +452,16 @@ class NotificationLogService {
         message: `Retried ${results.length} notifications. ${successCount} succeeded, ${failCount} failed.`,
         data: results,
       };
-    } catch (error) {
-      // @ts-ignore
-      logger?.error("NotificationLogService.retryAllFailed error:", error);
-      // @ts-ignore
-      return { status: false, message: error.message, data: null };
-    }
+    });
   }
 
-  // @ts-ignore
+  /**
+   * @param {Object} params
+   * @param {number} params.id
+   * @param {import('typeorm').QueryRunner | null} [queryRunner]
+   */
   async resendNotification({ id }, queryRunner = null) {
-    try {
+    return withErrorHandling(async () => {
       if (!id) {
         return {
           status: false,
@@ -408,51 +480,29 @@ class NotificationLogService {
         return { status: false, message: "Notification not found", data: null };
       }
 
-      const sendResult = await emailSender.send(
-        notification.recipient_email,
-        notification.subject || "No Subject",
-        notification.payload || "",
-        null,
-        {},
-        false,
-        notification.booking?.id || null,
-      );
+      const sendResult = await this._sendAndUpdate(notification, true);
+      const saved = await updateDb(repo, notification);
 
-      // @ts-ignore
-      if (sendResult.success) {
-        notification.status = LOG_STATUS.RESEND;
-        notification.sent_at = new Date();
-        notification.error_message = null;
-      } else {
-        notification.status = LOG_STATUS.FAILED;
-        notification.last_error_at = new Date();
-        // @ts-ignore
-        notification.error_message = sendResult.error || "Unknown error";
-      }
-      notification.resend_count = (notification.resend_count || 0) + 1;
-      notification.updated_at = new Date();
-
-      const saved = await repo.save(notification);
       return {
         status: true,
         data: saved,
         sendResult,
       };
-    } catch (error) {
-      // @ts-ignore
-      logger?.error("NotificationLogService.resendNotification error:", error);
-      // @ts-ignore
-      return { status: false, message: error.message, data: null };
-    }
+    });
   }
 
   //#endregion
 
   //#region 📊 STATISTICS
 
-  // @ts-ignore
+  /**
+   * @param {Object} params
+   * @param {Date|string} [params.startDate]
+   * @param {Date|string} [params.endDate]
+   * @param {import('typeorm').QueryRunner | null} [queryRunner]
+   */
   async getNotificationStats({ startDate, endDate }, queryRunner = null) {
-    try {
+    return withErrorHandling(async () => {
       const repo = this.getRepository(queryRunner);
       const qb = repo.createQueryBuilder("log");
 
@@ -482,37 +532,38 @@ class NotificationLogService {
         })
         .getCount();
 
+      const byStatus = statusStats.reduce((acc, { status, count }) => {
+        acc[status] = parseInt(count, 10);
+        return acc;
+      }, {});
+
       return {
         status: true,
         data: {
           total,
-          // @ts-ignore
-          byStatus: statusStats.reduce((acc, { status, count }) => {
-            acc[status] = parseInt(count);
-            return acc;
-          }, {}),
+          byStatus,
           avgRetryFailed: parseFloat(avgRetry?.avg) || 0,
           last24h,
         },
       };
-    } catch (error) {
-      logger?.error(
-        "NotificationLogService.getNotificationStats error:",
-        // @ts-ignore
-        error,
-      );
-      // @ts-ignore
-      return { status: false, message: error.message, data: null };
-    }
+    });
   }
 
   //#endregion
 
   //#region 🧩 CREATE (used by email/sms sender)
 
-  // @ts-ignore
+  /**
+   * @param {Object} data
+   * @param {string} data.to
+   * @param {string} data.subject
+   * @param {string} [data.html]
+   * @param {string} [data.text]
+   * @param {number} [data.bookingId]
+   * @param {import('typeorm').QueryRunner | null} [queryRunner]
+   */
   async createLog(data, queryRunner = null) {
-    try {
+    return withErrorHandling(async () => {
       const repo = this.getRepository(queryRunner);
       const log = repo.create({
         recipient_email: data.to,
@@ -523,14 +574,10 @@ class NotificationLogService {
         resend_count: 0,
         booking: data.bookingId ? { id: data.bookingId } : null,
       });
-      const saved = await repo.save(log);
+
+      const saved = await saveDb(repo, log);
       return { status: true, data: saved };
-    } catch (error) {
-      // @ts-ignore
-      logger?.error("NotificationLogService.createLog error:", error);
-      // @ts-ignore
-      return { status: false, message: error.message, data: null };
-    }
+    });
   }
 
   //#endregion

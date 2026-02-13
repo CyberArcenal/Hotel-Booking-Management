@@ -4,7 +4,6 @@ const { AppDataSource } = require("../main/db/datasource");
 const { Booking } = require("../entities/Booking");
 const { Room } = require("../entities/Room");
 const { Guest } = require("../entities/Guest");
-const auditLogger = require("../utils/auditLogger");
 // @ts-ignore
 const roomService = require("./Room");
 const {
@@ -12,6 +11,8 @@ const {
   // @ts-ignore
   calculateTotalPrice,
 } = require("../utils/bookingUtils");
+const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
+const auditLogger = require("../utils/AuditLogger");
 
 class BookingService {
   constructor() {
@@ -136,7 +137,7 @@ class BookingService {
             createdAt: new Date(),
           });
           // @ts-ignore
-          await guestRepo.save(guest);
+          await saveDb(guestRepo, guest);
           // @ts-ignore
           await auditLogger.logCreate("Guest", guest.id, guest, user);
           // @ts-ignore
@@ -172,13 +173,13 @@ class BookingService {
       console.log(booking);
 
       // @ts-ignore
-      const savedBooking = await bookingRepo.save(booking);
+      const savedBooking = await saveDb(bookingRepo, booking);
 
       // Update room lifecycle
       const oldRoomData = { ...room };
       room.status = "occupied"; // use new enum field
       // @ts-ignore
-      const savedRoom = await roomRepo.save(room);
+      const savedRoom = await updateDb(roomRepo, room);
 
       // Log audit trail
       await auditLogger.logUpdate(
@@ -402,7 +403,7 @@ class BookingService {
         // @ts-ignore
         Object.assign(guest, bookingData.guestData);
         // @ts-ignore
-        await guestRepo.save(guest);
+        await updateDb(guestRepo, guest);
       }
 
       // Update other fields
@@ -438,7 +439,7 @@ class BookingService {
       }
 
       // @ts-ignore
-      const savedBooking = await bookingRepo.save(existingBooking);
+      const savedBooking = await updateDb(bookingRepo, existingBooking);
 
       // Handle room availability lifecycle if room changed
       if (roomChanged) {
@@ -453,13 +454,13 @@ class BookingService {
         );
         oldRoom.isAvailable = stillBooked ? false : true;
         // @ts-ignore
-        await roomRepo.save(oldRoom);
+        await updateDb(roomRepo, oldRoom);
 
         // New room should be unavailable
         // @ts-ignore
         existingBooking.room.isAvailable = false;
         // @ts-ignore
-        await roomRepo.save(existingBooking.room);
+        await updateDb(roomRepo, existingBooking.room);
       }
 
       // Log audit trail
@@ -517,13 +518,10 @@ class BookingService {
       }
 
       // @ts-ignore
-      const savedBooking = await bookingRepo.save(booking);
+      const savedBooking = await saveDb(bookingRepo, booking);
 
-      // Update room availability after cancellation
       // @ts-ignore
-      booking.room.isAvailable = true; // or booking.room.roomStatus = "available"
-      // @ts-ignore
-      await roomRepo.save(booking.room);
+      await saveDb(roomRepo, booking.room);
 
       // @ts-ignore
       await auditLogger.logUpdate("Room", booking.room.id, booking.room, user);
@@ -579,7 +577,7 @@ class BookingService {
       // Update booking status
       booking.status = "checked_in";
       // @ts-ignore
-      const savedBooking = await bookingRepo.save(booking);
+      const savedBooking = await updateDb(bookingRepo, booking);
 
       // Log audit trail
       await auditLogger.logUpdate("Booking", id, oldData, savedBooking, user);
@@ -634,26 +632,9 @@ class BookingService {
       }
 
       // @ts-ignore
-      const savedBooking = await bookingRepo.save(booking);
-
-      // Update room availability after check-out
+      const savedBooking = await updateDb(bookingRepo, booking);
       // @ts-ignore
-      booking.room.isAvailable = true; // or booking.room.roomStatus = "cleaning" then later "available"
-      // @ts-ignore
-      booking.room.status = "available"; // set to available immediately for simplicity
-      // @ts-ignore
-      await roomRepo.save(booking.room);
-
-      await auditLogger.logUpdate(
-        "Room",
-        // @ts-ignore
-        booking.room.id,
-        // @ts-ignore
-        oldData.room,
-        // @ts-ignore
-        booking.room,
-        user,
-      );
+      await updateDb(roomRepo, booking.room);
 
       // Log audit trail
       await auditLogger.logUpdate("Booking", id, oldData, savedBooking, user);
@@ -697,13 +678,8 @@ class BookingService {
       // Update booking payment status
       booking.paymentStatus = "paid";
 
-      // Optional: update lifecycle status if needed
-      if (booking.status === "pending") {
-        booking.status = "confirmed"; // keep or adjust depending on rules
-      }
-
       // @ts-ignore
-      const savedBooking = await bookingRepo.save(booking);
+      const savedBooking = await updateDb(bookingRepo, booking);
 
       // Log audit trail
       await auditLogger.logUpdate("Booking", id, oldData, savedBooking, user);
@@ -744,11 +720,9 @@ class BookingService {
         // @ts-ignore
         booking.paymentFailureReason = reason;
       }
-      if (booking.status === "pending") {
-        booking.status = "cancelled";
-      }
+
       // @ts-ignore
-      const savedBooking = await bookingRepo.save(booking);
+      const savedBooking = await updateDb(bookingRepo, booking);
 
       // Log audit trail
       await auditLogger.logUpdate("Booking", id, oldData, savedBooking, user);

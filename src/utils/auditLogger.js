@@ -1,6 +1,8 @@
-
+//@ts-check
 const { AppDataSource } = require('../main/db/datasource');
 const { AuditLog } = require('../entities/AuditLog');
+const { saveDb } = require('./dbUtils/dbActions');
+const { auditTrailEnabled } = require('./system');
 
 class AuditLogger {
   constructor() {
@@ -32,11 +34,16 @@ class AuditLogger {
     action,
     entity,
     entityId,
+    // @ts-ignore
     oldData = null,
+    // @ts-ignore
     newData = null,
     user = 'system',
+    // @ts-ignore
     ipAddress = null,
+    // @ts-ignore
     userAgent = null,
+    // @ts-ignore
     description = null
   }) {
     try {
@@ -44,6 +51,9 @@ class AuditLogger {
         await this.initialize();
       }
 
+      if(!await auditTrailEnabled())return;
+
+      // @ts-ignore
       const auditLog = this.repository.create({
         action,
         entity,
@@ -57,13 +67,15 @@ class AuditLogger {
         timestamp: new Date()
       });
 
-      await this.repository.save(auditLog);
+      // @ts-ignore
+      await saveDb(this.repository, auditLog);
       
-      console.log(`[AUDIT] ${action} on ${entity}${entityId ? ` #${entityId}` : ''} by ${user}`);
+      // console.log(`[AUDIT] ${action} on ${entity}${entityId ? ` #${entityId}` : ''} by ${user}`);
       
       return auditLog;
     } catch (error) {
       // Don't break the app if audit logging fails
+      // @ts-ignore
       console.error('Audit logging failed:', error.message);
       return null;
     }
@@ -72,7 +84,9 @@ class AuditLogger {
   /**
    * Log creation of an entity
    */
+  // @ts-ignore
   async logCreate(entity, entityId, newData, user = 'system') {
+    // @ts-ignore
     return this.log({
       action: 'CREATE',
       entity,
@@ -85,7 +99,9 @@ class AuditLogger {
   /**
    * Log update of an entity
    */
+  // @ts-ignore
   async logUpdate(entity, entityId, oldData, newData, user = 'system') {
+    // @ts-ignore
     return this.log({
       action: 'UPDATE',
       entity,
@@ -99,7 +115,9 @@ class AuditLogger {
   /**
    * Log deletion of an entity
    */
+  // @ts-ignore
   async logDelete(entity, entityId, oldData, user = 'system') {
+    // @ts-ignore
     return this.log({
       action: 'DELETE',
       entity,
@@ -112,10 +130,12 @@ class AuditLogger {
   /**
    * Log view/access of an entity
    */
+  // @ts-ignore
   async logView(entity, entityId = null, user = 'system') {
     return this.log({
       action: 'VIEW',
       entity,
+      // @ts-ignore
       entityId,
       user
     });
@@ -124,7 +144,9 @@ class AuditLogger {
   /**
    * Log export action
    */
+  // @ts-ignore
   async logExport(entity, format, filters = null, user = 'system') {
+    // @ts-ignore
     return this.log({
       action: 'EXPORT',
       entity,
@@ -151,6 +173,7 @@ class AuditLogger {
         await this.initialize();
       }
 
+      // @ts-ignore
       const queryBuilder = this.repository.createQueryBuilder('log');
 
       // Apply filters
@@ -185,7 +208,9 @@ class AuditLogger {
       return {
         logs: logs.map(log => ({
           ...log,
+          // @ts-ignore
           previousData: log.previousData ? JSON.parse(log.previousData) : null,
+          // @ts-ignore
           newData: log.newData ? JSON.parse(log.newData) : null
         })),
         total,
@@ -211,6 +236,7 @@ class AuditLogger {
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
 
+      // @ts-ignore
       const result = await this.repository
         .createQueryBuilder()
         .delete()

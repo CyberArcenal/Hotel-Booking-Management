@@ -12,7 +12,7 @@ const SystemTab: React.FC<Props> = ({ settings, onUpdate }) => {
     <div className="space-y-4">
       <h3 className="text-lg font-medium text-[var(--text-primary)]">System Settings</h3>
       <div className="space-y-3">
-        <div className="flex items-center">
+        <div className="flex items-center hidden">
           <label className="flex items-center gap-2 text-sm text-[var(--text-primary)]">
             <input
               type="checkbox"
@@ -38,7 +38,7 @@ const SystemTab: React.FC<Props> = ({ settings, onUpdate }) => {
             Enable Audit Trail
           </label>
         </div>
-        <div>
+        <div className='hidden'>
           <label className="block text-sm text-[var(--text-secondary)] mb-1">Environment</label>
           <select
             value={settings.environment || 'development'}

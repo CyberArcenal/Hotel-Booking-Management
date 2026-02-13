@@ -7,12 +7,10 @@ import { NotificationStats } from './components/NotificationStats';
 import { NotificationTable } from './components/NotificationTable';
 import Pagination from '../../components/Shared/Pagination';
 import { NotificationViewDialog } from './Dialogs/NotificationViewDialog';
-import { NotificationRetryDialog } from './Dialogs/NotificationRetryDialog';
-import { NotificationDeleteDialog } from './Dialogs/NotificationDeleteDialog';
 import { dialogs } from '../../utils/dialogs';
-import type { NotificationLogEntry } from '../../api/notification_log';
 import notificationLogAPI from '../../api/notification_log';
-import { NotificationResendDialog } from './Dialogs/NotificationResendDialog';
+import { showSuccess, showError } from '../../utils/notification';
+import type { NotificationLogEntry } from '../../api/notification_log';
 
 const NotificationLogPage: React.FC = () => {
   const {
@@ -32,17 +30,8 @@ const NotificationLogPage: React.FC = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLog, setSelectedLog] = useState<NotificationLogEntry | null>(null);
-  const [dialogState, setDialogState] = useState<{
-    view: boolean;
-    retry: boolean;
-    resend: boolean;
-    delete: boolean;
-  }>({
-    view: false,
-    retry: false,
-    resend: false,
-    delete: false,
-  });
+  const [sendingRows, setSendingRows] = useState<Set<number>>(new Set());
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 
   // Search handler
   const handleSearchChange = (query: string) => {
@@ -60,52 +49,111 @@ const NotificationLogPage: React.FC = () => {
     clearFilters();
   };
 
-  // Action handlers
+  // View handler
   const handleView = (log: NotificationLogEntry) => {
     setSelectedLog(log);
-    setDialogState((prev) => ({ ...prev, view: true }));
+    setIsViewDialogOpen(true);
   };
 
+  // ------------------------------------------------------------------
+  // 🔄 RETRY – with confirmation dialog
+  // ------------------------------------------------------------------
   const handleRetry = async (id: number) => {
+    setSendingRows((prev) => new Set(prev).add(id));
     try {
       const response = await notificationLogAPI.retryFailed(id);
       if (response.status) {
-        await dialogs.success('Retry initiated', 'The notification has been queued for retry.');
+        showSuccess('The notification has been queued for retry.');
         refetch();
       } else {
         throw new Error(response.message);
       }
     } catch (err: any) {
-      await dialogs.error('Retry failed', err.message);
+      showError('Retry failed', err.message || 'Unable to retry notification');
+    } finally {
+      setSendingRows((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     }
   };
 
+  const confirmRetry = (id: number) => {
+    dialogs
+      .confirm({
+        title: 'Retry Notification',
+        message: 'Are you sure you want to retry this failed notification?',
+        confirmText: 'Retry',
+        cancelText: 'Cancel',
+        icon: 'warning',
+      })
+      .then((confirmed) => {
+        if (confirmed) handleRetry(id);
+      });
+  };
+
+  // ------------------------------------------------------------------
+  // 🔄 RESEND – with confirmation dialog
+  // ------------------------------------------------------------------
   const handleResend = async (id: number) => {
+    setSendingRows((prev) => new Set(prev).add(id));
     try {
       const response = await notificationLogAPI.resend(id);
       if (response.status) {
-        await dialogs.success('Resend initiated', 'The notification has been resent.');
+        showSuccess('The notification has been resent.');
         refetch();
       } else {
         throw new Error(response.message);
       }
     } catch (err: any) {
-      await dialogs.error('Resend failed', err.message);
+      showError('Resend failed', err.message || 'Unable to resend notification');
+    } finally {
+      setSendingRows((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     }
   };
 
+  const confirmResend = (id: number) => {
+    dialogs
+      .confirm({
+        title: 'Resend Notification',
+        message: 'Are you sure you want to resend this notification?',
+        confirmText: 'Resend',
+        cancelText: 'Cancel',
+        icon: 'info',
+      })
+      .then((confirmed) => {
+        if (confirmed) handleResend(id);
+      });
+  };
+
+  // ------------------------------------------------------------------
+  // 🗑️ DELETE – with confirmation dialog
+  // ------------------------------------------------------------------
   const handleDelete = async (id: number) => {
     try {
       const response = await notificationLogAPI.delete(id);
       if (response.status) {
-        await dialogs.success('Deleted', `Notification #${id} has been deleted.`);
+        dialogs.success('Deleted', `Notification #${id} has been deleted.`);
         refetch();
       } else {
         throw new Error(response.message);
       }
     } catch (err: any) {
-      await dialogs.error('Delete failed', err.message);
+      dialogs.error('Delete failed', err.message);
     }
+  };
+
+  const confirmDelete = (id: number) => {
+    dialogs
+      .delete() // uses built-in delete confirmation with danger icon
+      .then((confirmed) => {
+        if (confirmed) handleDelete(id);
+      });
   };
 
   return (
@@ -186,19 +234,11 @@ const NotificationLogPage: React.FC = () => {
           <NotificationTable
             logs={logs}
             onView={handleView}
-            onRetry={(id) => {
-              setSelectedLog(logs.find((l) => l.id === id) || null);
-              setDialogState((prev) => ({ ...prev, retry: true }));
-            }}
-            onResend={(id) => {
-              setSelectedLog(logs.find((l) => l.id === id) || null);
-              setDialogState((prev) => ({ ...prev, resend: true }));
-            }}
-            onDelete={(id) => {
-              setSelectedLog(logs.find((l) => l.id === id) || null);
-              setDialogState((prev) => ({ ...prev, delete: true }));
-            }}
+            onRetry={confirmRetry}      // ← confirmation then action
+            onResend={confirmResend}    // ← confirmation then action
+            onDelete={confirmDelete}    // ← confirmation then action
             isLoading={loading}
+            sendingIds={sendingRows}
           />
         </div>
 
@@ -216,45 +256,16 @@ const NotificationLogPage: React.FC = () => {
         )}
       </main>
 
-      {/* Dialogs */}
+      {/* Only View Dialog remains */}
       {selectedLog && (
-        <>
-          <NotificationViewDialog
-            log={selectedLog}
-            isOpen={dialogState.view}
-            onClose={() => {
-              setDialogState((prev) => ({ ...prev, view: false }));
-              setSelectedLog(null);
-            }}
-          />
-          <NotificationRetryDialog
-            id={selectedLog.id}
-            isOpen={dialogState.retry}
-            onClose={() => {
-              setDialogState((prev) => ({ ...prev, retry: false }));
-              setSelectedLog(null);
-            }}
-            onConfirm={() => handleRetry(selectedLog.id)}
-          />
-          <NotificationResendDialog
-            id={selectedLog.id}
-            isOpen={dialogState.resend}
-            onClose={() => {
-              setDialogState((prev) => ({ ...prev, resend: false }));
-              setSelectedLog(null);
-            }}
-            onConfirm={() => handleResend(selectedLog.id)}
-          />
-          <NotificationDeleteDialog
-            id={selectedLog.id}
-            isOpen={dialogState.delete}
-            onClose={() => {
-              setDialogState((prev) => ({ ...prev, delete: false }));
-              setSelectedLog(null);
-            }}
-            onConfirm={() => handleDelete(selectedLog.id)}
-          />
-        </>
+        <NotificationViewDialog
+          log={selectedLog}
+          isOpen={isViewDialogOpen}
+          onClose={() => {
+            setIsViewDialogOpen(false);
+            setSelectedLog(null);
+          }}
+        />
       )}
     </div>
   );

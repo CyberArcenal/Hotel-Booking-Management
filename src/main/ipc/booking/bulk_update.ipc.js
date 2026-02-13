@@ -1,4 +1,5 @@
 const bookingService = require('../../../services/booking');
+const { updateDb } = require('../../../utils/dbUtils/dbActions');
 
 /**
  * Update multiple bookings in bulk
