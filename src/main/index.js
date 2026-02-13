@@ -289,28 +289,29 @@ async function initializeDatabase() {
           });
         }
 
-        // const migrationResult =
-        //   await migrationManager.runMigrationsWithBackup();
+        const migrationResult =
+          await migrationManager.runMigrationsWithBackup();
+
 
         // @ts-ignore
-        // if (migrationResult.success) {
-        //   log(LogLevel.SUCCESS, "Database migrations applied successfully");
+        if (migrationResult.success) {
+          log(LogLevel.SUCCESS, "Database migrations applied successfully");
 
-        //   if (splashWindow && !splashWindow.isDestroyed()) {
-        //     splashWindow.webContents.send("migration:status", {
-        //       status: "completed",
-        //       // @ts-ignore
-        //       applied: migrationResult.appliedCount,
-        //       message: "Database updated successfully",
-        //     });
-        //   }
-        // } else {
-        //   throw new MigrationError(
-        //     "Migration failed",
-        //     // @ts-ignore
-        //     migrationStatus.pendingMigrations,
-        //   );
-        // }
+          if (splashWindow && !splashWindow.isDestroyed()) {
+            splashWindow.webContents.send("migration:status", {
+              status: "completed",
+              // @ts-ignore
+              applied: migrationResult.appliedCount,
+              message: "Database updated successfully",
+            });
+          }
+        } else {
+          throw new MigrationError(
+            "Migration failed",
+            // @ts-ignore
+            migrationStatus.pendingMigrations,
+          );
+        }
       } else {
         log(LogLevel.INFO, "Database is up to date");
       }

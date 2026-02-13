@@ -3,6 +3,7 @@ const { AppDataSource } = require("../main/db/datasource");
 const { Room } = require("../entities/Room");
 
 const { validateRoomData } = require("../utils/validation");
+const auditLogger = require("../utils/auditLogger");
 
 class RoomService {
   constructor() {
@@ -34,7 +35,7 @@ class RoomService {
    * @returns {Promise<Room>} Created room
    */
   async create(roomData, user = "system") {
-    const auditLogger = require("../utils/AuditLogger");
+    
     const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
     try {
       const repo = await this.getRepository();
@@ -107,7 +108,7 @@ class RoomService {
    * @returns {Promise<Room>} Updated room
    */
   async update(id, roomData, user = "system") {
-    const auditLogger = require("../utils/AuditLogger");
+    
     const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
     try {
       const repo = await this.getRepository();
@@ -230,7 +231,7 @@ class RoomService {
    * @returns {Promise<boolean>} Success status
    */
   async delete(id, user = "system") {
-    const auditLogger = require("../utils/AuditLogger");
+    
     const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
     try {
       const repo = await this.getRepository();
@@ -354,7 +355,7 @@ class RoomService {
    */
   // @ts-ignore
   async findAll(options = {}) {
-    const auditLogger = require("../utils/AuditLogger");
+    
     const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
     try {
       const repo = await this.getRepository();
@@ -490,7 +491,7 @@ class RoomService {
    * @returns {Promise<Room>} Updated room
    */
   async setAvailability(id, isAvailable, user = "system") {
-    const auditLogger = require("../utils/AuditLogger");
+    
     const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
     try {
       const repo = await this.getRepository();
@@ -646,7 +647,7 @@ class RoomService {
    * @param {string | any[]} updates
    */
   async bulkUpdate(updates, user = "system") {
-    const auditLogger = require("../utils/AuditLogger");
+    
     const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
     try {
       // @ts-ignore

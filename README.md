@@ -61,9 +61,9 @@ npm run dev
 ## 📸 Screenshots
 Here are sample displays of the system
 
-![Screenshot 3](https://github.com/CyberArcenal/Hotel-Booking-Management/blob/main/screenshots/1.png?raw=true)
-![Screenshot 2](https://github.com/CyberArcenal/Hotel-Booking-Management/blob/main/screenshots/2.png?raw=true)
-![Screenshot 1](https://github.com/CyberArcenal/Hotel-Booking-Management/blob/main/screenshots/3.png?raw=true)
+![Screenshot 9](https://github.com/CyberArcenal/Hotel-Booking-Management/blob/main/screenshots/1.png?raw=true)
+![Screenshot 6](https://github.com/CyberArcenal/Hotel-Booking-Management/blob/main/screenshots/2.png?raw=true)
+![Screenshot 2](https://github.com/CyberArcenal/Hotel-Booking-Management/blob/main/screenshots/3.png?raw=true)
 
 ---
 

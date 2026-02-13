@@ -6,6 +6,7 @@ const {
   validateGuestData,
   generateGuestReference,
 } = require("../utils/guestUtils");
+const auditLogger = require("../utils/auditLogger");
 
 
 class GuestService {
@@ -105,7 +106,7 @@ class GuestService {
    */
   async update(id, guestData, user = "system") {
     const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
-const auditLogger = require("../utils/AuditLogger");
+
     const { guest: guestRepo } = await this.getRepositories();
 
     try {
@@ -201,7 +202,7 @@ const auditLogger = require("../utils/AuditLogger");
    */
   async delete(id, user = "system") {
     const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
-const auditLogger = require("../utils/AuditLogger");
+
     // @ts-ignore
     const { guest: guestRepo, booking: bookingRepo } =
       await this.getRepositories();
@@ -347,7 +348,7 @@ const auditLogger = require("../utils/AuditLogger");
   // @ts-ignore
   async search(criteria = {}) {
     const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
-const auditLogger = require("../utils/AuditLogger");
+
     const { guest: guestRepo } = await this.getRepositories();
 
     try {
@@ -695,7 +696,7 @@ const auditLogger = require("../utils/AuditLogger");
    */
   async getVIPGuests(criteria = {}) {
     const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
-const auditLogger = require("../utils/AuditLogger");
+
     const { guest: guestRepo } = await this.getRepositories();
 
     try {
@@ -833,7 +834,7 @@ const auditLogger = require("../utils/AuditLogger");
    */
   async mergeGuests(guestIds, masterData = {}, user = "system") {
     const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
-const auditLogger = require("../utils/AuditLogger");
+
     const { guest: guestRepo, booking: bookingRepo } =
       await this.getRepositories();
 

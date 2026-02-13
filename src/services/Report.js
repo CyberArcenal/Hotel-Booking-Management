@@ -7,6 +7,7 @@ const { Guest } = require("../entities/Guest");
 const roomService = require("./Room");
 const guestService = require("./Guest");
 const bookingService = require("./Booking");
+const auditLogger = require("../utils/auditLogger");
 
 class ReportService {
   constructor() {
@@ -41,7 +42,7 @@ class ReportService {
    * @returns {Promise<Object>} Dashboard data
    */
   async getDashboardData() {
-    const auditLogger = require("../utils/AuditLogger");
+    
     try {
       const [
         bookingStats,
@@ -830,7 +831,7 @@ class ReportService {
     format = "pdf",
     user = "system",
   ) {
-    const auditLogger = require("../utils/AuditLogger");
+    
     try {
       let reportData;
       let filename;

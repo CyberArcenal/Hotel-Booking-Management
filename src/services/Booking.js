@@ -4,14 +4,13 @@ const { AppDataSource } = require("../main/db/datasource");
 const { Booking } = require("../entities/Booking");
 const { Room } = require("../entities/Room");
 const { Guest } = require("../entities/Guest");
-
-// @ts-ignore
-const roomService = require("./Room");
 const {
   validateBookingData,
   // @ts-ignore
   calculateTotalPrice,
 } = require("../utils/bookingUtils");
+const auditLogger = require("../utils/auditLogger");
+
 
 class BookingService {
   constructor() {
@@ -48,6 +47,7 @@ class BookingService {
    * @returns {Promise<Booking>} Created booking
    */
   async create(bookingData, user = "system") {
+    const { updateDb, saveDb } = require("../utils/dbUtils/dbActions");
     const {
       booking: bookingRepo,
       room: roomRepo,
@@ -171,6 +171,7 @@ class BookingService {
 
       console.log(booking);
 
+
       // @ts-ignore
       const savedBooking = await saveDb(bookingRepo, booking);
 
@@ -287,7 +288,7 @@ class BookingService {
    * @returns {Promise<Booking>} Updated booking
    */
   async update(id, bookingData, user = "system") {
-    const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
+    const { updateDb, saveDb } = require("../utils/dbUtils/dbActions");
     
     const {
       booking: bookingRepo,
@@ -465,8 +466,8 @@ class BookingService {
       }
 
       // Log audit trail
-      const auditLogger = require("../utils/AuditLogger");
-      
+     
+
       await auditLogger.logUpdate("Booking", id, oldData, savedBooking, user);
 
       console.log(`Booking updated: #${id}`);
@@ -489,7 +490,7 @@ class BookingService {
   // @ts-ignore
   async cancel(id, reason = null, user = "system") {
     const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
-    const auditLogger = require("../utils/AuditLogger");
+    
     const { booking: bookingRepo } = await this.getRepositories();
 
     try {
@@ -553,7 +554,7 @@ class BookingService {
    */
   async checkIn(id, user = "system") {
     const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
-    const auditLogger = require("../utils/AuditLogger");
+    
     const { booking: bookingRepo } = await this.getRepositories();
 
     try {
@@ -609,6 +610,7 @@ class BookingService {
    */
   // @ts-ignore
   async checkOut(id, notes = null, user = "system") {
+    const { updateDb} = require("../utils/dbUtils/dbActions");
     const { booking: bookingRepo } = await this.getRepositories();
 
     try {
@@ -660,8 +662,8 @@ class BookingService {
    */
   // @ts-ignore
   async markAsPaid(id, reason = null, user = "system") {
-    const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
-    const auditLogger = require("../utils/AuditLogger");
+    const { updateDb } = require("../utils/dbUtils/dbActions");
+    
     const { booking: bookingRepo } = await this.getRepositories();
 
     try {
@@ -705,8 +707,8 @@ class BookingService {
    * @param {string | null} reason
    */
   async markAsFailed(id, reason, user = "system") {
-    const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
-    const auditLogger = require("../utils/AuditLogger");
+    const { updateDb } = require("../utils/dbUtils/dbActions");
+    
     const { booking: bookingRepo } = await this.getRepositories();
 
     try {
@@ -784,7 +786,7 @@ class BookingService {
    */
   async findAll(options = {}) {
     const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
-    const auditLogger = require("../utils/AuditLogger");
+    
     const { booking: bookingRepo } = await this.getRepositories();
 
     try {

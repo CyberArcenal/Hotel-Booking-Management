@@ -1,65 +1,65 @@
-// src/main/db/database.js
-// @ts-check
+// config/database.js
 const path = require("path");
 const fs = require("fs");
 const { app } = require("electron");
 
-const isElectronAvailable = typeof app !== "undefined" && app !== null;
-const isDev =
-  process.env.NODE_ENV === "development" ||
-  !isElectronAvailable ||
-  !app?.isPackaged;
+const isDev = process.env.NODE_ENV === "development" || !app?.isPackaged;
 
 function getDatabaseConfig() {
   let databasePath;
   let entitiesPath;
   let migrationsPath;
-
+  
   if (isDev) {
     // Development mode
-    databasePath = path.resolve(process.cwd(), "app.db");
-    entitiesPath = path.resolve(process.cwd(), "src/entities/*.js");
-    migrationsPath = path.resolve(process.cwd(), "src/migrations/*.js");
-    console.log(`[PayTrack][DB] Development DB path: ${databasePath}`);
+    databasePath = "App.db";
+    entitiesPath = "src/entities/*.js";
+    migrationsPath = "src/migrations/*.js";
+    console.log(`Development DB path: ${databasePath}`);
   } else {
     // Production mode
-    const userDataPath = app.getPath("userData");
-    const dbDir = path.join(userDataPath, "data");
-
+    const userDataPath = app.getPath('userData');
+    const dbDir = path.join(userDataPath, 'data');
+    
+    // Create directory if it doesn't exist
     if (!fs.existsSync(dbDir)) {
       fs.mkdirSync(dbDir, { recursive: true });
     }
-
-    databasePath = path.join(dbDir, "app.db");
-
+    
+    databasePath = path.join(dbDir, 'App.db');
+    
+    // Production paths - use unpacked resources
     const appPath = app.getAppPath();
-    const isAsar = appPath.includes(".asar");
-
+    const isAsar = appPath.includes('.asar');
+    
     if (isAsar) {
-      const unpackedRoot = appPath.replace(".asar", ".asar.unpacked");
-      const unpackedDir = path.dirname(unpackedRoot);
-      entitiesPath = path.join(unpackedDir, "src/entities/*.js");
-      migrationsPath = path.join(unpackedDir, "src/migrations/*.js");
+      // When packaged in .asar, use unpacked directory
+      const unpackedPath = path.dirname(appPath.replace('.asar', '.asar.unpacked'));
+      entitiesPath = path.join(unpackedPath, 'src/entities/*.js');
+      migrationsPath = path.join(unpackedPath, 'src/migrations/*.js');
     } else {
-      entitiesPath = path.join(appPath, "src/entities/*.js");
-      migrationsPath = path.join(appPath, "src/migrations/*.js");
+      // When not packaged
+      entitiesPath = path.join(appPath, 'src/entities/*.js');
+      migrationsPath = path.join(appPath, 'src/migrations/*.js');
     }
-
-    console.log(`[PayTrack][DB] Production DB path: ${databasePath}`);
+    
+    console.log(`Production DB path: ${databasePath}`);
   }
-
+  
   return {
     type: "sqlite",
     database: databasePath,
-    synchronize: isDev, // dev only
+    synchronize: true, // Change to true for first run
     logging: false,
     entities: [entitiesPath],
     migrations: [migrationsPath],
+    subscribers: ["src/subscribers/*.js"],
     cli: {
       entitiesDir: "src/entities",
       migrationsDir: "src/migrations",
+      subscribersDir: "src/subscribers",
     },
-    // SQLite options
+    // SQLite specific options
     enableWAL: true,
     busyErrorRetry: 100,
   };

@@ -1,8 +1,8 @@
 //@ts-check
 const { AppDataSource } = require('../main/db/datasource');
 const { AuditLog } = require('../entities/AuditLog');
-const { saveDb } = require('./dbUtils/dbActions');
-const { auditTrailEnabled } = require('./system');
+
+
 
 class AuditLogger {
   constructor() {
@@ -47,6 +47,7 @@ class AuditLogger {
     description = null
   }) {
     try {
+      const { auditTrailEnabled } = require('./system');
       if (!this.repository) {
         await this.initialize();
       }
@@ -68,7 +69,7 @@ class AuditLogger {
       });
 
       // @ts-ignore
-      await saveDb(this.repository, auditLog);
+      await this.repository?.save(auditLog);
       
       // console.log(`[AUDIT] ${action} on ${entity}${entityId ? ` #${entityId}` : ''} by ${user}`);
       
