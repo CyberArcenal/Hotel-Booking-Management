@@ -10,14 +10,8 @@ class RoomStatusService {
    * @param {any} oldStatus
    */
   static async available(room, oldStatus) {
-    const auditLogger = require("../utils/AuditLogger");
     logger.debug(`[RoomStatusService] Room ${room.id} marked AVAILABLE`);
-    await auditLogger.logCreate(
-      "Room",
-      room.id,
-      { oldStatus, newStatus: room.status },
-      room.updatedBy || "system",
-    );
+
     return room;
   }
 
@@ -27,14 +21,8 @@ class RoomStatusService {
    * @param {any} oldStatus
    */
   static async occupied(room, oldStatus) {
-    const auditLogger = require("../utils/AuditLogger");
     logger.debug(`[RoomStatusService] Room ${room.id} marked OCCUPIED`);
-    await auditLogger.logCreate(
-      "Room",
-      room.id,
-      { oldStatus, newStatus: room.status },
-      room.updatedBy || "system",
-    );
+
     return room;
   }
 
@@ -44,14 +32,8 @@ class RoomStatusService {
    * @param {any} oldStatus
    */
   static async maintenance(room, oldStatus) {
-    const auditLogger = require("../utils/AuditLogger");
     logger.debug(`[RoomStatusService] Room ${room.id} marked MAINTENANCE`);
-    await auditLogger.logCreate(
-      "Room",
-      room.id,
-      { oldStatus, newStatus: room.status },
-      room.updatedBy || "system",
-    );
+
     return room;
   }
 }

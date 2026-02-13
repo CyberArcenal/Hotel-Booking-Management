@@ -1,4 +1,4 @@
-const bookingService = require("../../../../services/booking");
+const bookingService = require("../../../../services/Booking");
 
 /**
  * Get detailed booking statistics (revenue, occupancy, trends)
@@ -10,15 +10,15 @@ module.exports = async () => {
     // getOccupancyRates is separate, but we can add it here if needed
     return {
       status: true,
-      message: 'Booking statistics retrieved successfully',
-      data: stats
+      message: "Booking statistics retrieved successfully",
+      data: stats,
     };
   } catch (error) {
-    console.error('[get/stats.ipc] Error:', error.message);
+    console.error("[get/stats.ipc] Error:", error.message);
     return {
       status: false,
-      message: error.message || 'Failed to retrieve booking statistics',
-      data: {}
+      message: error.message || "Failed to retrieve booking statistics",
+      data: {},
     };
   }
 };

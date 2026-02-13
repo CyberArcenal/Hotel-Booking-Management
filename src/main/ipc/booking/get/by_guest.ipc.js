@@ -1,4 +1,4 @@
-const bookingService = require("../../../../services/booking");
+const bookingService = require("../../../../services/Booking");
 
 /**
  * Get all bookings for a specific guest
@@ -9,20 +9,20 @@ const bookingService = require("../../../../services/booking");
 module.exports = async (params) => {
   try {
     const { guestId } = params;
-    if (!guestId) throw new Error('Guest ID is required');
+    if (!guestId) throw new Error("Guest ID is required");
 
     const bookings = await bookingService.findAll({ guestId });
     return {
       status: true,
-      message: 'Guest bookings retrieved successfully',
-      data: bookings
+      message: "Guest bookings retrieved successfully",
+      data: bookings,
     };
   } catch (error) {
-    console.error('[get/by_guest.ipc] Error:', error.message);
+    console.error("[get/by_guest.ipc] Error:", error.message);
     return {
       status: false,
-      message: error.message || 'Failed to retrieve guest bookings',
-      data: []
+      message: error.message || "Failed to retrieve guest bookings",
+      data: [],
     };
   }
 };

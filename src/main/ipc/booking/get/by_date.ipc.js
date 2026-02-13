@@ -1,5 +1,4 @@
-
-const bookingService = require("../../../../services/booking");
+const bookingService = require("../../../../services/Booking");
 
 /**
  * Get bookings that fall within a specific date range
@@ -12,25 +11,25 @@ module.exports = async (params) => {
   try {
     const { startDate, endDate } = params;
     if (!startDate || !endDate) {
-      throw new Error('startDate and endDate are required');
+      throw new Error("startDate and endDate are required");
     }
 
     // Use findAll with date filters
     const bookings = await bookingService.findAll({
       checkInDate: startDate,
-      checkOutDate: endDate
+      checkOutDate: endDate,
     });
     return {
       status: true,
-      message: 'Bookings by date retrieved successfully',
-      data: bookings
+      message: "Bookings by date retrieved successfully",
+      data: bookings,
     };
   } catch (error) {
-    console.error('[get/by_date.ipc] Error:', error.message);
+    console.error("[get/by_date.ipc] Error:", error.message);
     return {
       status: false,
-      message: error.message || 'Failed to retrieve bookings by date',
-      data: []
+      message: error.message || "Failed to retrieve bookings by date",
+      data: [],
     };
   }
 };

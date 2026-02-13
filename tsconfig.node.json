@@ -8,11 +8,26 @@
     "types": ["node"],
     "skipLibCheck": true,
     "moduleResolution": "node",
-    "noEmit": true,
+    "noEmit": false,
+    "outDir": "dist",
+    "rootDir": "src",
     "strict": true,
-    "useDefineForClassFields": false,
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "emitDecoratorMetadata": true,
+    "sourceMap": true
   },
-  "include": ["src/**/*"]
+  "include": [
+    "src/main/**/*",
+    "src/config/**/*",
+    "src/entities/**/*",
+    "src/migrations/**/*",
+    "src/handlers/**/*",
+    "src/services/**/*",
+    "src/subscribers/**/*",
+    "src/utils/**/*",
+    "src/middlewares/**/*",
+    "src/transitionServices/**/*",
+    "src/channels/**/*"
+  ],
+  "exclude": ["src/renderer", "node_modules", "dist"]
 }

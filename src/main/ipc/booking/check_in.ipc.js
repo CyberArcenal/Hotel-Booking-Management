@@ -1,4 +1,4 @@
-const bookingService = require('../../../services/booking');
+const bookingService = require("../../../services/Booking");
 
 /**
  * Check in a guest
@@ -9,21 +9,21 @@ const bookingService = require('../../../services/booking');
  */
 module.exports = async (params) => {
   try {
-    const { id, user = 'system' } = params;
-    if (!id) throw new Error('Booking ID is required');
+    const { id, user = "system" } = params;
+    if (!id) throw new Error("Booking ID is required");
 
     const booking = await bookingService.checkIn(id, user);
     return {
       status: true,
-      message: 'Guest checked in successfully',
-      data: booking
+      message: "Guest checked in successfully",
+      data: booking,
     };
   } catch (error) {
-    console.error('[check_in.ipc] Error:', error.message);
+    console.error("[check_in.ipc] Error:", error.message);
     return {
       status: false,
-      message: error.message || 'Failed to check in guest',
-      data: null
+      message: error.message || "Failed to check in guest",
+      data: null,
     };
   }
 };

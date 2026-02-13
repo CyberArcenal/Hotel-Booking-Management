@@ -1,5 +1,5 @@
-const bookingService = require('../../../services/booking');
-const { updateDb } = require('../../../utils/dbUtils/dbActions');
+const bookingService = require("../../../services/Booking");
+const { updateDb } = require("../../../utils/dbUtils/dbActions");
 
 /**
  * Update multiple bookings in bulk
@@ -10,15 +10,15 @@ const { updateDb } = require('../../../utils/dbUtils/dbActions');
  */
 module.exports = async (params) => {
   try {
-    const { updates, user = 'system' } = params;
+    const { updates, user = "system" } = params;
     if (!Array.isArray(updates) || updates.length === 0) {
-      throw new Error('Updates array is required and must not be empty');
+      throw new Error("Updates array is required and must not be empty");
     }
 
     const results = {
       updated: 0,
       failed: 0,
-      errors: []
+      errors: [],
     };
 
     for (const { id, bookingData } of updates) {
@@ -30,7 +30,7 @@ module.exports = async (params) => {
         results.errors.push({
           id,
           bookingData,
-          error: err.message
+          error: err.message,
         });
       }
     }
@@ -38,14 +38,14 @@ module.exports = async (params) => {
     return {
       status: true,
       message: `Bulk update completed: ${results.updated} updated, ${results.failed} failed`,
-      data: results
+      data: results,
     };
   } catch (error) {
-    console.error('[bulk_update.ipc] Error:', error.message);
+    console.error("[bulk_update.ipc] Error:", error.message);
     return {
       status: false,
-      message: error.message || 'Failed to bulk update bookings',
-      data: { updated: 0, failed: 0, errors: [] }
+      message: error.message || "Failed to bulk update bookings",
+      data: { updated: 0, failed: 0, errors: [] },
     };
   }
 };

@@ -1,8 +1,8 @@
 // subscribers/BookingSubscriber.js
 //@ts-check
 const { Booking } = require("../entities/Booking");
-const BookingPaymentStatusHandler = require("../handlers/BookingPaymentStatusHandler");
-const BookingStatusHandler = require("../handlers/BookingStatusHandler");
+
+
 const { logger } = require("../utils/logger");
 
 class BookingSubscriber {
@@ -22,6 +22,7 @@ class BookingSubscriber {
    * @param {null | undefined} entity
    */
   async afterInsert(entity) {
+    const BookingStatusHandler = require("../handlers/BookingStatusHandler");
     logger.info("[BookingSubscriber] After insert:", entity);
     await BookingStatusHandler.handleStatusChange(
       // @ts-ignore
@@ -45,6 +46,8 @@ class BookingSubscriber {
    * @param {{ databaseEntity: any; entity: any; }} event
    */
   async afterUpdate(event) {
+    const BookingPaymentStatusHandler = require("../handlers/BookingPaymentStatusHandler");
+    const BookingStatusHandler = require("../handlers/BookingStatusHandler");
     const { databaseEntity, entity } = event;
     logger.info("[BookingSubscriber] After update:", entity);
 

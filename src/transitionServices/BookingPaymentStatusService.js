@@ -16,8 +16,6 @@ class BookingPaymentStatusService {
   static async onPending(booking, oldPaymentStatus) {
     // @ts-ignore
     const { updateDb } = require("../utils/dbUtils/dbActions");
-    // @ts-ignore
-    const auditLogger = require("../utils/AuditLogger");
     logger.debug(
       `[BookingPaymentStatusService] Booking ${booking.id} set to PAYMENT PENDING`,
     );
@@ -31,28 +29,15 @@ class BookingPaymentStatusService {
    */
   static async onPaid(booking, oldPaymentStatus) {
     const { updateDb } = require("../utils/dbUtils/dbActions");
-    const auditLogger = require("../utils/AuditLogger");
     const bookingRepo = AppDataSource.getRepository(Booking);
     logger.debug(
       `[BookingPaymentStatusService] Booking ${booking.id} marked as PAID`,
-    );
-    await auditLogger.logCreate(
-      "Booking",
-      booking.id,
-      { oldStatus: oldPaymentStatus, newStatus: booking.paymentStatus },
-      booking.updatedBy || "system",
     );
 
     // 🔹 Effects: auto-confirm booking
     if (booking.status === "pending") {
       const oldStatus = booking.status;
       booking.status = "confirmed";
-      await auditLogger.logCreate(
-        "Booking",
-        booking.id,
-        { oldStatus, newStatus: booking.status },
-        booking.updatedBy || "system",
-      );
     }
 
     // 🔹 Effects: occupy room
@@ -64,13 +49,6 @@ class BookingPaymentStatusService {
           const oldRoomStatus = room.status;
           room.status = "occupied";
           await updateDb(roomRepo, room);
-          await auditLogger.logUpdate(
-            "Room",
-            room.id,
-            { status: oldRoomStatus },
-            { status: room.status },
-            booking.updatedBy || "system",
-          );
         }
       }
     }
@@ -90,27 +68,14 @@ class BookingPaymentStatusService {
    */
   static async onFailed(booking, oldPaymentStatus) {
     const { updateDb } = require("../utils/dbUtils/dbActions");
-    const auditLogger = require("../utils/AuditLogger");
     logger.debug(
       `[BookingPaymentStatusService] Booking ${booking.id} payment FAILED`,
-    );
-    await auditLogger.logCreate(
-      "Booking",
-      booking.id,
-      { oldStatus: oldPaymentStatus, newStatus: booking.paymentStatus },
-      booking.updatedBy || "system",
     );
 
     // 🔹 Effects: auto-cancel booking
     if (booking.status !== "cancelled") {
       const oldStatus = booking.status;
       booking.status = "cancelled";
-      await auditLogger.logCreate(
-        "Booking",
-        booking.id,
-        { oldStatus, newStatus: booking.status },
-        booking.updatedBy || "system",
-      );
     }
 
     // 🔹 Effects: release room
@@ -122,13 +87,6 @@ class BookingPaymentStatusService {
           const oldRoomStatus = room.status;
           room.status = "available";
           await updateDb(roomRepo, room);
-          await auditLogger.logUpdate(
-            "Room",
-            room.id,
-            { status: oldRoomStatus },
-            { status: room.status },
-            booking.updatedBy || "system",
-          );
         }
       }
     }

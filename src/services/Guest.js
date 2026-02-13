@@ -41,6 +41,7 @@ class GuestService {
    * @returns {Promise<Guest>} Created guest
    */
   async create(guestData, user = "system") {
+    const { saveDb } = require("../utils/dbUtils/dbActions");
     const { guest: guestRepo } = await this.getRepositories();
 
     try {
@@ -105,7 +106,7 @@ class GuestService {
    * @returns {Promise<Guest>} Updated guest
    */
   async update(id, guestData, user = "system") {
-    const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
+    const { updateDb } = require("../utils/dbUtils/dbActions");
 
     const { guest: guestRepo } = await this.getRepositories();
 
@@ -201,7 +202,7 @@ class GuestService {
    * @returns {Promise<boolean>} Success status
    */
   async delete(id, user = "system") {
-    const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
+    const { removeDb } = require("../utils/dbUtils/dbActions");
 
     // @ts-ignore
     const { guest: guestRepo, booking: bookingRepo } =
@@ -241,7 +242,7 @@ class GuestService {
 
       // Delete guest (cascade will delete associated bookings if configured)
       // @ts-ignore
-      await guestRepo.remove(guest);
+      await removeDb(guestRepo, guest);
 
       // Log audit trail
       await auditLogger.logDelete("Guest", id, guestData, user);

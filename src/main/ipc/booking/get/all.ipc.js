@@ -1,5 +1,5 @@
-const bookingService = require("../../../../services/booking");
-
+//@ts-check
+const bookingService = require("../../../../services/Booking");
 /**
  * Get all bookings with optional filtering, sorting, and pagination
  * @param {Object} params - Request parameters
@@ -15,7 +15,7 @@ const bookingService = require("../../../../services/booking");
  * @param {number} [params.limit] - Items per page
  * @returns {Promise<{ status: boolean; message: string; data: any[]; pagination?: any }>}
  */
-module.exports = async (params) => {
+module.exports = async function getAllBookings(params) {
   try {
     const bookings = await bookingService.findAll(params);
     return {
@@ -32,9 +32,11 @@ module.exports = async (params) => {
         }),
     };
   } catch (error) {
+    // @ts-ignore
     console.error("[get/all.ipc] Error:", error.message);
     return {
       status: false,
+      // @ts-ignore
       message: error.message || "Failed to retrieve bookings",
       data: [],
     };

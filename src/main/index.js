@@ -245,131 +245,69 @@ function setupGlobalErrorHandlers() {
 // ===================== DATABASE SERVICE =====================
 
 async function initializeDatabase() {
-  const MAX_RETRIES = 3;
-  let retryCount = 0;
+  try {
+    log(LogLevel.INFO, "Initializing database...");
 
-  while (retryCount < MAX_RETRIES) {
-    try {
+    if (!AppDataSource.isInitialized) {
+      await AppDataSource.initialize();
+      log(LogLevel.SUCCESS, "Database connected");
+    }
+
+    migrationManager = new MigrationManager(AppDataSource);
+
+    const status = await migrationManager.getMigrationStatus();
+
+    if (status.needsMigration) {
       log(
         LogLevel.INFO,
-        `Initializing database (Attempt ${retryCount + 1}/${MAX_RETRIES})...`,
+        `Found ${status.pending} pending migration(s). Running now...`,
       );
 
-      // Initialize DataSource
-      if (!AppDataSource.isInitialized) {
-        await AppDataSource.initialize();
-        log(LogLevel.SUCCESS, "Database connection established");
+      if (splashWindow && !splashWindow.isDestroyed()) {
+        splashWindow.webContents.send("migration:status", {
+          status: "running",
+          message: "Updating database structure...",
+        });
       }
 
-      // Create migration manager
-      migrationManager = new MigrationManager(AppDataSource);
-      log(LogLevel.INFO, "Migration Manager initialized");
+      const result = await migrationManager.runMigrations();
 
-      // Check and run migrations
-      const migrationStatus = await migrationManager.getMigrationStatus();
-
-      if (
-        // @ts-ignore
-        migrationStatus.needsMigration ||
-        // @ts-ignore
-        migrationStatus.pendingMigrations > 0
-      ) {
-        log(
-          LogLevel.INFO,
-          // @ts-ignore
-          `Found ${migrationStatus.pendingMigrations} pending migrations`,
-        );
-
-        if (splashWindow && !splashWindow.isDestroyed()) {
+      if (result.success) {
+        log(LogLevel.SUCCESS, result.message);
+        if (splashWindow) {
           splashWindow.webContents.send("migration:status", {
-            status: "running",
-            // @ts-ignore
-            pending: migrationStatus.pendingMigrations,
-            message: "Updating database structure...",
+            status: "completed",
+            message: result.message,
           });
         }
-
-        const migrationResult =
-          await migrationManager.runMigrationsWithBackup();
-
-
-        // @ts-ignore
-        if (migrationResult.success) {
-          log(LogLevel.SUCCESS, "Database migrations applied successfully");
-
-          if (splashWindow && !splashWindow.isDestroyed()) {
-            splashWindow.webContents.send("migration:status", {
-              status: "completed",
-              // @ts-ignore
-              applied: migrationResult.appliedCount,
-              message: "Database updated successfully",
-            });
-          }
-        } else {
-          throw new MigrationError(
-            "Migration failed",
-            // @ts-ignore
-            migrationStatus.pendingMigrations,
-          );
-        }
       } else {
-        log(LogLevel.INFO, "Database is up to date");
+        log(LogLevel.ERROR, "Migration failed:", result.error);
+        dialog.showMessageBoxSync({
+          type: "warning",
+          title: "Migration Warning",
+          message: "Database update had an issue",
+          detail: result.message + "\n\nContinuing with current schema.",
+          buttons: ["OK"],
+        });
       }
+    } else {
+      log(LogLevel.INFO, "Database is up to date ✅");
+    }
 
-      // Verify database is operational
-      await AppDataSource.query("SELECT 1");
-      log(LogLevel.SUCCESS, "Database verification passed");
+    isDatabaseInitialized = true;
+    return { success: true };
+  } catch (error) {
+    log(LogLevel.ERROR, "Database init failed:", error);
 
+    // Last resort fallback
+    try {
+      await AppDataSource.synchronize(false);
+      log(LogLevel.WARN, "Used fallback synchronize");
       isDatabaseInitialized = true;
-
-      return {
-        success: true,
-        message: "Database initialized successfully",
-        data: {
-          migrationStatus,
-          isInitialized: true,
-        },
-      };
-    } catch (error) {
-      retryCount++;
-
-      if (retryCount === MAX_RETRIES) {
-        log(
-          LogLevel.ERROR,
-          "Database initialization failed after all retries:",
-          error,
-        );
-
-        // Try fallback synchronization
-        try {
-          log(LogLevel.WARN, "Attempting fallback database synchronization...");
-          await AppDataSource.synchronize(false);
-          log(LogLevel.WARN, "Fallback synchronization completed");
-
-          return {
-            success: true,
-            message: "Database recovered via fallback sync",
-            recovered: true,
-          };
-        } catch (syncError) {
-          log(
-            LogLevel.ERROR,
-            "Fallback synchronization also failed:",
-            syncError,
-          );
-
-          return {
-            success: false,
-            // @ts-ignore
-            message: `Database initialization failed: ${error.message}`,
-            error: error,
-          };
-        }
-      } else {
-        const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff
-        log(LogLevel.WARN, `Retrying database connection in ${delay}ms...`);
-        await new Promise((resolve) => setTimeout(resolve, delay));
-      }
+      return { success: true, fallback: true };
+    } catch (e) {
+      // @ts-ignore
+      return { success: false, error: e.message };
     }
   }
 }
@@ -596,7 +534,7 @@ async function createMainWindow() {
     const appUrl = await getAppUrl();
     log(LogLevel.INFO, `Loading URL: ${appUrl}`);
 
-   try {
+    try {
       if (!APP_CONFIG.isDev) {
         await mainWindow.loadURL(appUrl);
       } else {
@@ -827,21 +765,6 @@ function registerIpcHandlers() {
       return { success: true, backupPath };
     } catch (error) {
       log(LogLevel.ERROR, "Database backup failed:", error);
-      // @ts-ignore
-      return { success: false, error: error.message };
-    }
-  });
-
-  ipcMain.handle("database:run-migrations", async () => {
-    try {
-      if (!migrationManager) {
-        throw new Error("Migration manager not initialized");
-      }
-
-      const result = await migrationManager.runMigrationsWithBackup();
-      return result;
-    } catch (error) {
-      log(LogLevel.ERROR, "Manual migration failed:", error);
       // @ts-ignore
       return { success: false, error: error.message };
     }

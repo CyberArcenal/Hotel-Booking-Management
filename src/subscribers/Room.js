@@ -1,7 +1,7 @@
 // subscribers/RoomSubscriber.js
 // @ts-check
 const { Room } = require("../entities/Room");
-const RoomStatusHandler = require("../handlers/RoomStatusHandler");
+
 const { logger } = require("../utils/logger");
 
 class RoomSubscriber {
@@ -28,6 +28,7 @@ class RoomSubscriber {
    * @param {{ databaseEntity: any; entity: any; }} event
    */
   async afterUpdate(event) {
+    const RoomStatusHandler = require("../handlers/RoomStatusHandler");
     const { databaseEntity, entity } = event;
     // @ts-ignore
     logger.info("ROOM AFTER UPDATE TRIGGERED!", entity);

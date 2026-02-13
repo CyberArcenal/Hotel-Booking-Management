@@ -1,4 +1,4 @@
-const bookingService = require("../../../../services/booking");
+const bookingService = require("../../../../services/Booking");
 
 /**
  * Get a summary of bookings (counts, revenue, etc.)
@@ -9,15 +9,15 @@ module.exports = async () => {
     const statistics = await bookingService.getStatistics();
     return {
       status: true,
-      message: 'Booking summary retrieved successfully',
-      data: statistics
+      message: "Booking summary retrieved successfully",
+      data: statistics,
     };
   } catch (error) {
-    console.error('[get/summary.ipc] Error:', error.message);
+    console.error("[get/summary.ipc] Error:", error.message);
     return {
       status: false,
-      message: error.message || 'Failed to retrieve booking summary',
-      data: {}
+      message: error.message || "Failed to retrieve booking summary",
+      data: {},
     };
   }
 };

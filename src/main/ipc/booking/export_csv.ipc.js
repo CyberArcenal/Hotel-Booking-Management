@@ -1,6 +1,6 @@
-const bookingService = require('../../../services/booking');
-const fs = require('fs').promises;
-const path = require('path');
+const bookingService = require("../../../services/Booking");
+const fs = require("fs").promises;
+const path = require("path");
 
 /**
  * Export bookings to CSV file
@@ -12,28 +12,32 @@ const path = require('path');
  */
 module.exports = async (params) => {
   try {
-    const { filePath, filters = {}, user = 'system' } = params;
-    if (!filePath) throw new Error('File path is required');
+    const { filePath, filters = {}, user = "system" } = params;
+    if (!filePath) throw new Error("File path is required");
 
-    const exportData = await bookingService.exportBookings('csv', filters, user);
-    
+    const exportData = await bookingService.exportBookings(
+      "csv",
+      filters,
+      user,
+    );
+
     // Write CSV content to file
-    await fs.writeFile(filePath, exportData.data, 'utf-8');
+    await fs.writeFile(filePath, exportData.data, "utf-8");
 
     return {
       status: true,
-      message: `Exported ${exportData.data.split('\n').length - 1} bookings to CSV`,
+      message: `Exported ${exportData.data.split("\n").length - 1} bookings to CSV`,
       data: {
         filePath,
-        count: exportData.data.split('\n').length - 1 // subtract header
-      }
+        count: exportData.data.split("\n").length - 1, // subtract header
+      },
     };
   } catch (error) {
-    console.error('[export_csv.ipc] Error:', error.message);
+    console.error("[export_csv.ipc] Error:", error.message);
     return {
       status: false,
-      message: error.message || 'Failed to export CSV',
-      data: null
+      message: error.message || "Failed to export CSV",
+      data: null,
     };
   }
 };

@@ -1,16 +1,13 @@
 // bookingService.js placeholder
 //@ts-check
 const { AppDataSource } = require("../main/db/datasource");
-const { Booking } = require("../entities/Booking");
-const { Room } = require("../entities/Room");
-const { Guest } = require("../entities/Guest");
+
 const {
   validateBookingData,
   // @ts-ignore
   calculateTotalPrice,
 } = require("../utils/bookingUtils");
 const auditLogger = require("../utils/auditLogger");
-
 
 class BookingService {
   constructor() {
@@ -20,6 +17,9 @@ class BookingService {
   }
 
   async initialize() {
+    const { Booking } = require("../entities/Booking");
+    const { Room } = require("../entities/Room");
+    const { Guest } = require("../entities/Guest");
     if (!AppDataSource.isInitialized) {
       await AppDataSource.initialize();
     }
@@ -44,7 +44,6 @@ class BookingService {
    * Create a new booking
    * @param {Object} bookingData - Booking data
    * @param {string} user - User performing the action
-   * @returns {Promise<Booking>} Created booking
    */
   async create(bookingData, user = "system") {
     const { updateDb, saveDb } = require("../utils/dbUtils/dbActions");
@@ -171,7 +170,6 @@ class BookingService {
 
       console.log(booking);
 
-
       // @ts-ignore
       const savedBooking = await saveDb(bookingRepo, booking);
 
@@ -285,11 +283,10 @@ class BookingService {
    * @param {number} id - Booking ID
    * @param {Object} bookingData - Updated booking data
    * @param {string} user - User performing the action
-   * @returns {Promise<Booking>} Updated booking
    */
   async update(id, bookingData, user = "system") {
     const { updateDb, saveDb } = require("../utils/dbUtils/dbActions");
-    
+
     const {
       booking: bookingRepo,
       room: roomRepo,
@@ -466,7 +463,6 @@ class BookingService {
       }
 
       // Log audit trail
-     
 
       await auditLogger.logUpdate("Booking", id, oldData, savedBooking, user);
 
@@ -485,12 +481,11 @@ class BookingService {
    * @param {number} id - Booking ID
    * @param {string} reason - Cancellation reason
    * @param {string} user - User performing the action
-   * @returns {Promise<Booking>} Cancelled booking
    */
   // @ts-ignore
   async cancel(id, reason = null, user = "system") {
     const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
-    
+
     const { booking: bookingRepo } = await this.getRepositories();
 
     try {
@@ -550,11 +545,10 @@ class BookingService {
    * Check in guest
    * @param {number} id - Booking ID
    * @param {string} user - User performing the action
-   * @returns {Promise<Booking>} Updated booking
    */
   async checkIn(id, user = "system") {
     const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
-    
+
     const { booking: bookingRepo } = await this.getRepositories();
 
     try {
@@ -606,11 +600,10 @@ class BookingService {
    * @param {number} id - Booking ID
    * @param {string} notes - Check-out notes
    * @param {string} user - User performing the action
-   * @returns {Promise<Booking>} Updated booking
    */
   // @ts-ignore
   async checkOut(id, notes = null, user = "system") {
-    const { updateDb} = require("../utils/dbUtils/dbActions");
+    const { updateDb } = require("../utils/dbUtils/dbActions");
     const { booking: bookingRepo } = await this.getRepositories();
 
     try {
@@ -663,7 +656,7 @@ class BookingService {
   // @ts-ignore
   async markAsPaid(id, reason = null, user = "system") {
     const { updateDb } = require("../utils/dbUtils/dbActions");
-    
+
     const { booking: bookingRepo } = await this.getRepositories();
 
     try {
@@ -708,7 +701,7 @@ class BookingService {
    */
   async markAsFailed(id, reason, user = "system") {
     const { updateDb } = require("../utils/dbUtils/dbActions");
-    
+
     const { booking: bookingRepo } = await this.getRepositories();
 
     try {
@@ -750,7 +743,6 @@ class BookingService {
   /**
    * Find booking by ID
    * @param {number} id - Booking ID
-   * @returns {Promise<Booking>} Booking object
    */
   async findById(id) {
     const { booking: bookingRepo } = await this.getRepositories();
@@ -782,11 +774,8 @@ class BookingService {
   /**
    * Get all bookings with optional filters
    * @param {Object} options - Filter options
-   * @returns {Promise<Booking[]>} Array of bookings
    */
   async findAll(options = {}) {
-    const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
-    
     const { booking: bookingRepo } = await this.getRepositories();
 
     try {

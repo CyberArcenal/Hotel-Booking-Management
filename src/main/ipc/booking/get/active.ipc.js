@@ -1,4 +1,4 @@
-const bookingService = require("../../../../services/booking");
+const bookingService = require("../../../../services/Booking");
 
 /**
  * Get all active bookings (confirmed + checked_in)

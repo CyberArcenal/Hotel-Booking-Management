@@ -1,6 +1,4 @@
-
-
-const bookingService = require("../../../../services/booking");
+const bookingService = require("../../../../services/Booking");
 
 /**
  * Get a single booking by its ID
@@ -11,20 +9,20 @@ const bookingService = require("../../../../services/booking");
 module.exports = async (params) => {
   try {
     const { id } = params;
-    if (!id) throw new Error('Booking ID is required');
+    if (!id) throw new Error("Booking ID is required");
 
     const booking = await bookingService.findById(id);
     return {
       status: true,
-      message: 'Booking retrieved successfully',
-      data: booking
+      message: "Booking retrieved successfully",
+      data: booking,
     };
   } catch (error) {
-    console.error('[get/by_id.ipc] Error:', error.message);
+    console.error("[get/by_id.ipc] Error:", error.message);
     return {
       status: false,
-      message: error.message || 'Failed to retrieve booking',
-      data: null
+      message: error.message || "Failed to retrieve booking",
+      data: null,
     };
   }
 };

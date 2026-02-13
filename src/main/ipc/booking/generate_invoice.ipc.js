@@ -1,4 +1,4 @@
-const bookingService = require('../../../services/Booking');
+const bookingService = require("../../../services/Booking");
 
 /**
  * Print an invoice for a booking
@@ -9,7 +9,7 @@ const bookingService = require('../../../services/Booking');
 module.exports = async (params) => {
   try {
     const { bookingId } = params;
-    if (!bookingId) throw new Error('Booking ID is required');
+    if (!bookingId) throw new Error("Booking ID is required");
 
     // Generate invoice data
     const invoice = await bookingService.generateInvoice(bookingId);
@@ -20,14 +20,14 @@ module.exports = async (params) => {
     return {
       status: printResult.status,
       message: printResult.message,
-      data: invoice
+      data: invoice,
     };
   } catch (error) {
-    console.error('[print_invoice.ipc] Error:', error.message);
+    console.error("[print_invoice.ipc] Error:", error.message);
     return {
       status: false,
-      message: error.message || 'Failed to print invoice',
-      data: null
+      message: error.message || "Failed to print invoice",
+      data: null,
     };
   }
 };
