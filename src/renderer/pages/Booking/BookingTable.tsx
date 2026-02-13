@@ -81,7 +81,12 @@ const BookingPage: React.FC = () => {
   };
 
   const handleCancel = async (id: number) => {
-    if (confirm("Are you sure you want to cancel this booking?")) {
+    if (
+      await dialogs.confirm({
+        title: "Cancel Booking",
+        message: "Are you sure you want to cancel this booking?",
+      })
+    ) {
       try {
         await bookingAPI.cancel(id, "Cancelled by user", "admin");
         refetch();
@@ -91,7 +96,38 @@ const BookingPage: React.FC = () => {
     }
   };
 
-  const handleInvoice = (id: number) => {};
+  const handleInvoice = async (id: number) => {
+    if (
+      !(await dialogs.confirm({
+        title: "Generate Invoice",
+        message: "Are you sure you want to generate invoice for this booking?",
+      }))
+    )
+      return;
+
+    try {
+      const response = await bookingAPI.generateInvoice(id);
+      if (response.status) {
+        const invoice = response.data;
+
+        // Example: show invoice in modal
+        dialogs.alert({
+          title: `Invoice #${invoice.invoiceNumber}`,
+          message: `
+          Guest: ${invoice.guest.fullName}
+          Room: ${invoice.room.type} (${invoice.room.roomNumber})
+          Stay: ${invoice.stay.checkIn} → ${invoice.stay.checkOut}
+          Total: ₱${invoice.total}
+        `,
+        });
+
+        // Or trigger print
+        window.print(); // basic browser print
+      }
+    } catch (err) {
+      showApiError(err);
+    }
+  };
 
   const handleCheckIn = async (id: number) => {
     try {
@@ -107,7 +143,6 @@ const BookingPage: React.FC = () => {
       await bookingAPI.checkOut(id, "admin");
       refetch();
       await dialogs.success("Booking checked out successfully");
-      
     } catch (err) {
       showError("Failed to check out booking");
     }
@@ -118,7 +153,6 @@ const BookingPage: React.FC = () => {
       await bookingAPI.markAsPaid(id);
       refetch();
       await dialogs.success("Booking marked as paid");
-      
     } catch (err) {
       // console.log(err)
       showApiError(err);
@@ -127,17 +161,14 @@ const BookingPage: React.FC = () => {
 
   const handleMarkAsFailed = async (id: number) => {
     try {
-      const reason = await showPrompt(
-        {
-          title: "Mark Booking as Failed",
-          message: "Enter reason for marking booking as failed:",
-        }
-      );
+      const reason = await showPrompt({
+        title: "Mark Booking as Failed",
+        message: "Enter reason for marking booking as failed:",
+      });
       if (!reason) return; // user cancelled or entered empty string
       await bookingAPI.markAsFailed(id, reason);
       refetch();
       await dialogs.success("Booking marked as failed");
-    
     } catch (err) {
       showApiError(err);
     }
@@ -149,7 +180,6 @@ const BookingPage: React.FC = () => {
         await bookingAPI.delete(id, "admin");
         refetch();
         await dialogs.success("Booking deleted successfully");
-       
       } catch (err) {
         showError("Failed to delete booking");
       }

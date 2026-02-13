@@ -6,7 +6,7 @@ const { withErrorHandling } = require("../../../middlewares/errorHandler");
 const { AppDataSource } = require("../../db/datasource");
 const { AuditLog } = require("../../../entities/AuditLog");
 const { NotificationLogService } = require("../../../services/NotificationLog");
-const { saveDb } = require("../../../utils/dbUtils/dbActions");
+
 
 const service = new NotificationLogService();
 
@@ -105,6 +105,7 @@ class NotificationLogHandler {
 
   // @ts-ignore
   async logActivity(userId, action, description) {
+    const { saveDb } = require("../../../utils/dbUtils/dbActions");
     try {
       if (!userId) return;
       const repo = AppDataSource.getRepository(AuditLog);

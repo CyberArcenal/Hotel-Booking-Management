@@ -5,7 +5,7 @@ const { logger } = require("../../../utils/logger");
 const { AppDataSource } = require("../../db/datasource");
 const { withErrorHandling } = require("../../../middlewares/errorHandler");
 const { AuditLog } = require("../../../entities/AuditLog");
-const { saveDb } = require("../../../utils/dbUtils/dbActions");
+
 
 class GuestHandler {
   constructor() {
@@ -235,6 +235,7 @@ class GuestHandler {
    * @param {any} description
    */
   async logActivity(user_id, action, description, qr = null) {
+    const { saveDb } = require("../../../utils/dbUtils/dbActions");
     try {
       let activityRepo;
 

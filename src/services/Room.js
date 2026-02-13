@@ -1,9 +1,8 @@
 //@ts-check
 const { AppDataSource } = require("../main/db/datasource");
 const { Room } = require("../entities/Room");
-const auditLogger = require("../utils/AuditLogger");
+
 const { validateRoomData } = require("../utils/validation");
-const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
 
 class RoomService {
   constructor() {
@@ -35,6 +34,8 @@ class RoomService {
    * @returns {Promise<Room>} Created room
    */
   async create(roomData, user = "system") {
+    const auditLogger = require("../utils/AuditLogger");
+    const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
     try {
       const repo = await this.getRepository();
 
@@ -66,8 +67,8 @@ class RoomService {
       const isAvailable =
         // @ts-ignore
         roomData.isAvailable !== undefined
-          // @ts-ignore
-          ? roomData.isAvailable
+          ? // @ts-ignore
+            roomData.isAvailable
           : status === "available"; // default: true if status = available
 
       // Create room with defaults
@@ -106,6 +107,8 @@ class RoomService {
    * @returns {Promise<Room>} Updated room
    */
   async update(id, roomData, user = "system") {
+    const auditLogger = require("../utils/AuditLogger");
+    const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
     try {
       const repo = await this.getRepository();
 
@@ -227,6 +230,8 @@ class RoomService {
    * @returns {Promise<boolean>} Success status
    */
   async delete(id, user = "system") {
+    const auditLogger = require("../utils/AuditLogger");
+    const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
     try {
       const repo = await this.getRepository();
 
@@ -349,6 +354,8 @@ class RoomService {
    */
   // @ts-ignore
   async findAll(options = {}) {
+    const auditLogger = require("../utils/AuditLogger");
+    const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
     try {
       const repo = await this.getRepository();
       // @ts-ignore
@@ -431,15 +438,24 @@ class RoomService {
             (b.checkInDate <= :checkOutDate AND b.checkOutDate >= :checkInDate)
           )
         )
-        ${filters.
-// @ts-ignore
-        type ? "AND r.type = :type" : ""}
-        ${filters.
-// @ts-ignore
-        minCapacity ? "AND r.capacity >= :minCapacity" : ""}
-        ${filters.
-// @ts-ignore
-        maxPrice ? "AND r.pricePerNight <= :maxPrice" : ""}
+        ${
+          // @ts-ignore
+          filters.type
+            ? "AND r.type = :type"
+            : ""
+        }
+        ${
+          // @ts-ignore
+          filters.minCapacity
+            ? "AND r.capacity >= :minCapacity"
+            : ""
+        }
+        ${
+          // @ts-ignore
+          filters.maxPrice
+            ? "AND r.pricePerNight <= :maxPrice"
+            : ""
+        }
         ORDER BY r.roomNumber ASC
       `;
 
@@ -474,6 +490,8 @@ class RoomService {
    * @returns {Promise<Room>} Updated room
    */
   async setAvailability(id, isAvailable, user = "system") {
+    const auditLogger = require("../utils/AuditLogger");
+    const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
     try {
       const repo = await this.getRepository();
 
@@ -628,6 +646,8 @@ class RoomService {
    * @param {string | any[]} updates
    */
   async bulkUpdate(updates, user = "system") {
+    const auditLogger = require("../utils/AuditLogger");
+    const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
     try {
       // @ts-ignore
       const repo = await this.getRepository();

@@ -9,20 +9,19 @@ const { Booking } = require("../entities/Booking");
 
 class BookingPaymentStatusService {
   /**
-   * @param {{ id: any; updatedBy: any; paymentStatus: any; }} booking
+   * @param {{ id: any; paymentStatus: any; updatedBy: any; room: { id: any; }; }} booking
    * @param {any} oldPaymentStatus
    */
+  // @ts-ignore
   static async onPending(booking, oldPaymentStatus) {
+    // @ts-ignore
+    const { updateDb } = require("../utils/dbUtils/dbActions");
+    // @ts-ignore
     const auditLogger = require("../utils/AuditLogger");
     logger.debug(
       `[BookingPaymentStatusService] Booking ${booking.id} set to PAYMENT PENDING`,
     );
-    await auditLogger.logCreate(
-      "Booking",
-      booking.id,
-      { oldStatus: oldPaymentStatus, newStatus: booking.paymentStatus },
-      booking.updatedBy || "system",
-    );
+
     return booking;
   }
 
@@ -61,21 +60,27 @@ class BookingPaymentStatusService {
       const roomRepo = AppDataSource.getRepository(Room);
       const room = await roomRepo.findOne({ where: { id: booking.room.id } });
       if (room) {
-        const oldRoomStatus = room.status;
-        room.status = "occupied";
-        await updateDb(roomRepo, room);
-        await auditLogger.logUpdate(
-          "Room",
-          room.id,
-          { status: oldRoomStatus },
-          { status: room.status },
-          booking.updatedBy || "system",
-        );
+        if (room.status !== "occupied") {
+          const oldRoomStatus = room.status;
+          room.status = "occupied";
+          await updateDb(roomRepo, room);
+          await auditLogger.logUpdate(
+            "Room",
+            room.id,
+            { status: oldRoomStatus },
+            { status: room.status },
+            booking.updatedBy || "system",
+          );
+        }
       }
     }
     const ouput = updateDb(bookingRepo, booking);
     // @ts-ignore
-    NotificationService.sendPaymentReceived(booking);
+    try {
+      // @ts-ignore
+      NotificationService.sendPaymentReceived(booking);
+    } catch (err) {}
+
     return ouput;
   }
 
@@ -113,21 +118,27 @@ class BookingPaymentStatusService {
       const roomRepo = AppDataSource.getRepository(Room);
       const room = await roomRepo.findOne({ where: { id: booking.room.id } });
       if (room) {
-        const oldRoomStatus = room.status;
-        room.status = "available";
-        await updateDb(roomRepo, room);
-        await auditLogger.logUpdate(
-          "Room",
-          room.id,
-          { status: oldRoomStatus },
-          { status: room.status },
-          booking.updatedBy || "system",
-        );
+        if (room.status !== "available") {
+          const oldRoomStatus = room.status;
+          room.status = "available";
+          await updateDb(roomRepo, room);
+          await auditLogger.logUpdate(
+            "Room",
+            room.id,
+            { status: oldRoomStatus },
+            { status: room.status },
+            booking.updatedBy || "system",
+          );
+        }
       }
     }
 
     // @ts-ignore
-    NotificationService.sendPaymentFailed(booking);
+    try {
+      // @ts-ignore
+      NotificationService.sendPaymentFailed(booking);
+    } catch (err) {}
+
     return booking;
   }
 }

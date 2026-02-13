@@ -3,7 +3,7 @@ const { AppDataSource } = require("../main/db/datasource");
 const { Booking } = require("../entities/Booking");
 const { Room } = require("../entities/Room");
 const { Guest } = require("../entities/Guest");
-const auditLogger = require("../utils/AuditLogger");
+
 const roomService = require("./Room");
 const guestService = require("./Guest");
 const bookingService = require("./Booking");
@@ -41,6 +41,7 @@ class ReportService {
    * @returns {Promise<Object>} Dashboard data
    */
   async getDashboardData() {
+    const auditLogger = require("../utils/AuditLogger");
     try {
       const [
         bookingStats,
@@ -829,6 +830,7 @@ class ReportService {
     format = "pdf",
     user = "system",
   ) {
+    const auditLogger = require("../utils/AuditLogger");
     try {
       let reportData;
       let filename;

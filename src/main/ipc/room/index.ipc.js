@@ -5,7 +5,7 @@ const { logger } = require("../../../utils/logger");
 const { AppDataSource } = require("../../db/datasource");
 const { AuditLog } = require("../../../entities/AuditLog");
 const { withErrorHandling } = require("../../../middlewares/errorHandler");
-const { saveDb } = require("../../../utils/dbUtils/dbActions");
+
 
 class RoomHandler {
   constructor() {
@@ -176,6 +176,7 @@ class RoomHandler {
    */
   // @ts-ignore
   async logActivity(userId, action, entityId, qr = null) {
+    const { saveDb } = require("../../../utils/dbUtils/dbActions");
     try {
       const repo = qr
         ? qr.manager.getRepository(AuditLog)

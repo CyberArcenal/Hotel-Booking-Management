@@ -10,6 +10,10 @@ import Pagination from "../../components/Shared/Pagination";
 import guestAPI, { type Guest } from "../../api/guest";
 import { GuestViewDialog } from "./Dialogs/View";
 import { GuestFormDialog } from "./Dialogs/Form";
+import BookingFormDialog from "../../components/BookingForm";
+import type { Booking } from "../../api/booking";
+import { dialogs } from "../../utils/dialogs";
+import { BookingViewDialog } from "../Booking/Dialogs/View";
 
 const GuestPage: React.FC = () => {
   const navigate = useNavigate();
@@ -35,9 +39,11 @@ const GuestPage: React.FC = () => {
   const [searchInput, setSearchInput] = useState("");
 
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isBookingViewDialogOpen, setIsBookingViewDialogOpen] = useState(false);
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
   const [isBookingFormDialogOpen, setIsBookingFormDialogOpen] = useState(false);
   const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
   const handleSearchChange = (query: string) => {
     setSearchInput(query);
@@ -83,17 +89,26 @@ const GuestPage: React.FC = () => {
     setIsFormDialogOpen(true);
   };
   const handleDelete = async (id: number) => {
-    if (confirm("Are you sure you want to delete this guest?")) {
+    if (
+      await dialogs.confirm({
+        title: "Delete Guest",
+        message: "Are you sure you want to delete this guest?",
+      })
+    ) {
       try {
         await guestAPI.delete(id, "admin");
         refetch();
       } catch (err) {
-        alert("Failed to delete guest");
+        dialogs.alert({
+          title: "Failed to delete guest",
+          message: "An error occurred while deleting the guest.",
+        });
       }
     }
   };
   const handleAddBooking = (guestId: number) => {
     setIsBookingFormDialogOpen(true);
+    setSelectedGuest(guests.find((g) => g.id === guestId) || null);
   };
 
   return (
@@ -229,6 +244,41 @@ const GuestPage: React.FC = () => {
             setSelectedGuest(null);
             setIsFormDialogOpen(false);
             refetch();
+          }}
+        />
+      )}
+
+      {isBookingFormDialogOpen && selectedGuest && (
+        <BookingFormDialog
+          mode="add"
+          guestId={selectedGuest.id!}
+          onClose={() => {
+            setIsBookingFormDialogOpen(false);
+            setSelectedGuest(null);
+          }}
+          onSuccess={async (booking: Booking) => {
+            setIsBookingFormDialogOpen(false);
+            refetch();
+            if (
+              await dialogs.confirm({
+                title: "Booking created successfully!",
+                message: `Room ${booking.room.roomNumber} has been booked.\n\nDo you want to view the booking details?`,
+              })
+            ) {
+              setSelectedBooking(booking);
+              setIsBookingViewDialogOpen(true);
+            }
+          }}
+        />
+      )}
+
+      {isBookingViewDialogOpen && selectedBooking && (
+        <BookingViewDialog
+          id={selectedBooking.id!}
+          isOpen={isBookingViewDialogOpen}
+          onClose={() => {
+            setIsBookingViewDialogOpen(false);
+            setSelectedBooking(null);
           }}
         />
       )}

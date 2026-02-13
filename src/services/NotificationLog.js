@@ -1,9 +1,10 @@
 // src/services/notificationLog.service.js
+//@ts-check
 const { AppDataSource } = require("../main/db/datasource");
 const NotificationLog = require("../entities/NotificationLog");
 const emailSender = require("../channels/email.sender");
 const { logger } = require("../utils/logger");
-const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
+
 
 const LOG_STATUS = {
   QUEUED: "queued",
@@ -31,13 +32,16 @@ const ALLOWED_SORT_COLUMNS = new Set([
 /**
  * Wraps service methods to avoid repetitive try/catch blocks
  */
+// @ts-ignore
 async function withErrorHandling(fn, ...args) {
   try {
     return await fn(...args);
   } catch (error) {
+    // @ts-ignore
     logger?.error(`${fn.name || "Service"} error:`, error);
     return {
       status: false,
+      // @ts-ignore
       message: error?.message || "Unknown error",
       data: null,
     };
@@ -52,8 +56,10 @@ class NotificationLogService {
    */
   getRepository(queryRunner = null) {
     if (queryRunner?.manager) {
+      // @ts-ignore
       return queryRunner.manager.getRepository(NotificationLog);
     }
+    // @ts-ignore
     return AppDataSource.getRepository(NotificationLog);
   }
 
@@ -129,6 +135,7 @@ class NotificationLogService {
 
       const repo = this.getRepository(queryRunner);
       const notification = await repo.findOne({
+        // @ts-ignore
         where: { id },
         relations: ["booking"],
       });
@@ -163,8 +170,10 @@ class NotificationLogService {
 
       const repo = this.getRepository(queryRunner);
       const [data, total] = await repo.findAndCount({
+        // @ts-ignore
         where: { recipient_email },
         relations: ["booking"],
+        // @ts-ignore
         order: { created_at: "DESC" },
         skip: (page - 1) * limit,
         take: limit,
@@ -196,8 +205,10 @@ class NotificationLogService {
 
       const repo = this.getRepository(queryRunner);
       const [data, total] = await repo.findAndCount({
+        // @ts-ignore
         where: { booking: { id: bookingId } },
         relations: ["booking"],
+        // @ts-ignore
         order: { created_at: "DESC" },
         skip: (page - 1) * limit,
         take: limit,
@@ -262,6 +273,7 @@ class NotificationLogService {
       if (!id) return { status: false, message: "ID is required", data: null };
 
       const repo = this.getRepository(queryRunner);
+      // @ts-ignore
       const notification = await repo.findOne({ where: { id } });
 
       if (!notification) {
@@ -284,6 +296,7 @@ class NotificationLogService {
     { id, status, errorMessage = null },
     queryRunner = null,
   ) {
+    const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
     return withErrorHandling(async () => {
       if (!id || !status) {
         return {
@@ -294,21 +307,27 @@ class NotificationLogService {
       }
 
       const repo = this.getRepository(queryRunner);
+      // @ts-ignore
       const notification = await repo.findOne({ where: { id } });
 
       if (!notification) {
         return { status: false, message: "Notification not found", data: null };
       }
 
+      // @ts-ignore
       notification.status = status;
+      // @ts-ignore
       notification.error_message = errorMessage;
 
       if (status === LOG_STATUS.SENT) {
+        // @ts-ignore
         notification.sent_at = new Date();
       } else if (status === LOG_STATUS.FAILED) {
+        // @ts-ignore
         notification.last_error_at = new Date();
       }
 
+      // @ts-ignore
       notification.updated_at = new Date();
 
       const saved = await updateDb(repo, notification);
@@ -324,11 +343,13 @@ class NotificationLogService {
    * Internal method to send email and update log
    * @private
    */
+  // @ts-ignore
   async _sendAndUpdate(notification, isResend = false) {
     const sendResult = await emailSender.send(
       notification.recipient_email,
       notification.subject || "No Subject",
       notification.payload || "",
+      // @ts-ignore
       null,
       {},
       false,
@@ -343,6 +364,7 @@ class NotificationLogService {
     } else {
       notification.status = LOG_STATUS.FAILED;
       notification.last_error_at = new Date();
+      // @ts-ignore
       notification.error_message = sendResult?.error || "Unknown error";
     }
 
@@ -362,6 +384,7 @@ class NotificationLogService {
    * @param {import('typeorm').QueryRunner | null} [queryRunner]
    */
   async retryFailedNotification({ id }, queryRunner = null) {
+    const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
     return withErrorHandling(async () => {
       if (!id) {
         return {
@@ -373,6 +396,7 @@ class NotificationLogService {
 
       const repo = this.getRepository(queryRunner);
       const notification = await repo.findOne({
+        // @ts-ignore
         where: { id },
         relations: ["booking"],
       });
@@ -382,14 +406,17 @@ class NotificationLogService {
       }
 
       if (
+        // @ts-ignore
         ![LOG_STATUS.FAILED, LOG_STATUS.QUEUED].includes(notification.status)
       ) {
         return {
           status: false,
+          // @ts-ignore
           message: `Cannot retry notification with status: ${notification.status}`,
           data: null,
         };
       }
+      // @ts-ignore
       notification.resend_count = notification.resend_count + 1;
       const saved = await updateDb(repo, notification);
       let sendResult = null;
@@ -438,9 +465,11 @@ class NotificationLogService {
 
       for (const notification of failedNotifications) {
         const result = await this.retryFailedNotification(
+          // @ts-ignore
           { id: notification.id },
           queryRunner,
         );
+        // @ts-ignore
         results.push({ id: notification.id, ...result });
       }
 
@@ -461,6 +490,7 @@ class NotificationLogService {
    * @param {import('typeorm').QueryRunner | null} [queryRunner]
    */
   async resendNotification({ id }, queryRunner = null) {
+    const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
     return withErrorHandling(async () => {
       if (!id) {
         return {
@@ -472,6 +502,7 @@ class NotificationLogService {
 
       const repo = this.getRepository(queryRunner);
       const notification = await repo.findOne({
+        // @ts-ignore
         where: { id },
         relations: ["booking"],
       });
@@ -563,9 +594,11 @@ class NotificationLogService {
    * @param {import('typeorm').QueryRunner | null} [queryRunner]
    */
   async createLog(data, queryRunner = null) {
+    const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
     return withErrorHandling(async () => {
       const repo = this.getRepository(queryRunner);
       const log = repo.create({
+        // @ts-ignore
         recipient_email: data.to,
         subject: data.subject,
         payload: data.html || data.text,

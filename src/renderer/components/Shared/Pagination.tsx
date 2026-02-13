@@ -1,5 +1,10 @@
-import React from 'react';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import React, { useRef } from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "lucide-react";
 
 interface PaginationProps {
   currentPage: number;
@@ -23,6 +28,21 @@ const Pagination: React.FC<PaginationProps> = ({
   const totalPages = Math.ceil(totalItems / pageSize);
   const startItem = (currentPage - 1) * pageSize + 1;
   const endItem = Math.min(currentPage * pageSize, totalItems);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      onPageChange(page);
+
+      // Add delay (e.g., 300ms) bago mag scroll
+      setTimeout(() => {
+        containerRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 300);
+    }
+  };
 
   // Generate page numbers to display
   const getPageNumbers = () => {
@@ -35,17 +55,18 @@ const Pagination: React.FC<PaginationProps> = ({
     } else {
       if (currentPage <= half + 1) {
         for (let i = 1; i <= maxVisible - 2; i++) pages.push(i);
-        pages.push('...');
+        pages.push("...");
         pages.push(totalPages);
       } else if (currentPage >= totalPages - half) {
         pages.push(1);
-        pages.push('...');
-        for (let i = totalPages - (maxVisible - 3); i <= totalPages; i++) pages.push(i);
+        pages.push("...");
+        for (let i = totalPages - (maxVisible - 3); i <= totalPages; i++)
+          pages.push(i);
       } else {
         pages.push(1);
-        pages.push('...');
+        pages.push("...");
         for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
-        pages.push('...');
+        pages.push("...");
         pages.push(totalPages);
       }
     }
@@ -55,19 +76,32 @@ const Pagination: React.FC<PaginationProps> = ({
   if (totalPages <= 1 && !showPageSize) return null;
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 px-2 py-3 bg-[var(--card-bg)] border border-[var(--border-color)]/20 rounded-lg">
+    <div
+      ref={containerRef}
+      className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 px-2 py-3 bg-[var(--card-bg)] border border-[var(--border-color)]/20 rounded-lg"
+    >
       {/* Items info */}
       <div className="text-sm text-[var(--text-secondary)] order-2 sm:order-1">
-        Showing <span className="font-medium text-[var(--text-primary)]">{startItem}</span> to{' '}
-        <span className="font-medium text-[var(--text-primary)]">{endItem}</span> of{' '}
-        <span className="font-medium text-[var(--text-primary)]">{totalItems}</span> rooms
+        Showing{" "}
+        <span className="font-medium text-[var(--text-primary)]">
+          {startItem}
+        </span>{" "}
+        to{" "}
+        <span className="font-medium text-[var(--text-primary)]">
+          {endItem}
+        </span>{" "}
+        of{" "}
+        <span className="font-medium text-[var(--text-primary)]">
+          {totalItems}
+        </span>{" "}
+        rooms
       </div>
 
       {/* Pagination controls */}
       <div className="flex items-center gap-1 order-1 sm:order-2">
         {/* First page */}
         <button
-          onClick={() => onPageChange(1)}
+          onClick={() => handlePageChange(1)}
           disabled={currentPage === 1}
           className="p-2 rounded-lg bg-[var(--card-secondary-bg)] border border-[var(--border-color)]/20 
                      text-[var(--text-secondary)] hover:bg-[var(--card-hover-bg)] hover:text-[var(--text-primary)]
@@ -80,7 +114,7 @@ const Pagination: React.FC<PaginationProps> = ({
 
         {/* Previous page */}
         <button
-          onClick={() => onPageChange(currentPage - 1)}
+          onClick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage === 1}
           className="p-2 rounded-lg bg-[var(--card-secondary-bg)] border border-[var(--border-color)]/20 
                      text-[var(--text-secondary)] hover:bg-[var(--card-hover-bg)] hover:text-[var(--text-primary)]
@@ -94,19 +128,19 @@ const Pagination: React.FC<PaginationProps> = ({
         {/* Page numbers */}
         {getPageNumbers().map((page, index) => (
           <React.Fragment key={index}>
-            {page === '...' ? (
+            {page === "..." ? (
               <span className="px-3 py-2 text-[var(--text-tertiary)]">...</span>
             ) : (
               <button
-                onClick={() => onPageChange(page as number)}
+                onClick={() => handlePageChange(page as number)}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200
                   ${
                     currentPage === page
-                      ? 'bg-[var(--primary-color)] text-black shadow-md'
-                      : 'bg-[var(--card-secondary-bg)] text-[var(--text-secondary)] hover:bg-[var(--card-hover-bg)] hover:text-[var(--text-primary)] border border-[var(--border-color)]/20'
+                      ? "bg-[var(--primary-color)] text-black shadow-md"
+                      : "bg-[var(--card-secondary-bg)] text-[var(--text-secondary)] hover:bg-[var(--card-hover-bg)] hover:text-[var(--text-primary)] border border-[var(--border-color)]/20"
                   }`}
                 aria-label={`Page ${page}`}
-                aria-current={currentPage === page ? 'page' : undefined}
+                aria-current={currentPage === page ? "page" : undefined}
               >
                 {page}
               </button>
@@ -116,7 +150,7 @@ const Pagination: React.FC<PaginationProps> = ({
 
         {/* Next page */}
         <button
-          onClick={() => onPageChange(currentPage + 1)}
+          onClick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
           className="p-2 rounded-lg bg-[var(--card-secondary-bg)] border border-[var(--border-color)]/20 
                      text-[var(--text-secondary)] hover:bg-[var(--card-hover-bg)] hover:text-[var(--text-primary)]
@@ -129,7 +163,7 @@ const Pagination: React.FC<PaginationProps> = ({
 
         {/* Last page */}
         <button
-          onClick={() => onPageChange(totalPages)}
+          onClick={() => handlePageChange(totalPages)}
           disabled={currentPage === totalPages}
           className="p-2 rounded-lg bg-[var(--card-secondary-bg)] border border-[var(--border-color)]/20 
                      text-[var(--text-secondary)] hover:bg-[var(--card-hover-bg)] hover:text-[var(--text-primary)]

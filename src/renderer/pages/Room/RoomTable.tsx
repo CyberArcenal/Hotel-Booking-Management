@@ -14,6 +14,8 @@ import type { Booking } from "../../api/booking";
 import { dialogs } from "../../utils/dialogs";
 import { RoomViewDialog } from "./Dialogs/View";
 import roomAPI from "../../api/room";
+import { BookingViewDialog } from "../Booking/Dialogs/View";
+import type { Guest } from "../../api/guest";
 
 const RoomPage: React.FC = () => {
   const navigate = useNavigate();
@@ -36,6 +38,10 @@ const RoomPage: React.FC = () => {
   const [isBookingFormDialogOpen, setIsBookingFormDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
+
+  const [isBookingViewDialogOpen, setIsBookingViewDialogOpen] = useState(false);
+  const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
   const handleFilterChange = (newFilters: any) => {
     setFilters(newFilters);
@@ -115,7 +121,9 @@ const RoomPage: React.FC = () => {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-[var(--text-primary)]">Rooms</h2>
+            <h2 className="text-2xl font-bold text-[var(--text-primary)]">
+              Rooms
+            </h2>
             <p className="text-[var(--text-secondary)] mt-1">
               {totalRooms} room{totalRooms !== 1 ? "s" : ""} available
             </p>
@@ -214,9 +222,9 @@ const RoomPage: React.FC = () => {
             setSelectedRoom(null);
           }}
           onSuccess={() => {
+            refetch();
             setIsFormDialogOpen(false);
             setSelectedRoom(null);
-            refetch();
           }}
         />
       )}
@@ -231,11 +239,16 @@ const RoomPage: React.FC = () => {
           }}
           onSuccess={async (booking: Booking) => {
             setIsBookingFormDialogOpen(false);
-            await dialogs.success(
-              "Booking created successfully!",
-              `Room ${selectedRoom.roomNumber} has been booked.`
-            );
             refetch();
+            if (
+              await dialogs.confirm({
+                title: "Booking created successfully!",
+                message: `Room ${booking.room.roomNumber} has been booked.\n\nDo you want to view the booking details?`,
+              })
+            ) {
+              setSelectedBooking(booking);
+              setIsBookingViewDialogOpen(true);
+            }
           }}
         />
       )}
@@ -249,6 +262,17 @@ const RoomPage: React.FC = () => {
             setSelectedRoom(null);
           }}
           showBookings
+        />
+      )}
+
+      {isBookingViewDialogOpen && selectedBooking && (
+        <BookingViewDialog
+          id={selectedBooking.id!}
+          isOpen={isBookingViewDialogOpen}
+          onClose={() => {
+            setIsBookingViewDialogOpen(false);
+            setSelectedBooking(null);
+          }}
         />
       )}
     </div>

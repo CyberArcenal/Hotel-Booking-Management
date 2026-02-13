@@ -14,5 +14,8 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
-  "include": ["src/main", "src/channels", "src/services/activation.js"]
+  "include": [
+    "src/**/*",
+  ],
+  "exclude": ["node_modules", "dist", "src/renderer"]
 }

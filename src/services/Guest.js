@@ -6,8 +6,7 @@ const {
   validateGuestData,
   generateGuestReference,
 } = require("../utils/guestUtils");
-const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
-const auditLogger = require("../utils/AuditLogger");
+
 
 class GuestService {
   constructor() {
@@ -105,6 +104,8 @@ class GuestService {
    * @returns {Promise<Guest>} Updated guest
    */
   async update(id, guestData, user = "system") {
+    const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
+const auditLogger = require("../utils/AuditLogger");
     const { guest: guestRepo } = await this.getRepositories();
 
     try {
@@ -199,6 +200,8 @@ class GuestService {
    * @returns {Promise<boolean>} Success status
    */
   async delete(id, user = "system") {
+    const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
+const auditLogger = require("../utils/AuditLogger");
     // @ts-ignore
     const { guest: guestRepo, booking: bookingRepo } =
       await this.getRepositories();
@@ -343,6 +346,8 @@ class GuestService {
    */
   // @ts-ignore
   async search(criteria = {}) {
+    const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
+const auditLogger = require("../utils/AuditLogger");
     const { guest: guestRepo } = await this.getRepositories();
 
     try {
@@ -689,6 +694,8 @@ class GuestService {
    * @returns {Promise<Guest[]>} VIP guests
    */
   async getVIPGuests(criteria = {}) {
+    const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
+const auditLogger = require("../utils/AuditLogger");
     const { guest: guestRepo } = await this.getRepositories();
 
     try {
@@ -825,6 +832,8 @@ class GuestService {
    * @param {any[]} guestIds
    */
   async mergeGuests(guestIds, masterData = {}, user = "system") {
+    const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
+const auditLogger = require("../utils/AuditLogger");
     const { guest: guestRepo, booking: bookingRepo } =
       await this.getRepositories();
 

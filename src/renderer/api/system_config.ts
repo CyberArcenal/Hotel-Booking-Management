@@ -71,6 +71,7 @@ export interface SystemInfoData {
 
 // 1. GENERAL SETTINGS
 export interface GeneralSettings {
+  company_name?: string;
   currency?: string;
   language?: string;
   timezone?: string;

@@ -18,15 +18,20 @@ class BookingSubscriber {
     // defaults or validation
   }
 
-
   /**
    * @param {null | undefined} entity
    */
-  afterInsert(entity) {
+  async afterInsert(entity) {
     logger.info("[BookingSubscriber] After insert:", entity);
+    await BookingStatusHandler.handleStatusChange(
+      // @ts-ignore
+      entity,
+      "none",
+      // @ts-ignore
+      entity.status,
+    );
     // audit log, notifications
   }
-
 
   /**
    * @param {null | undefined} entity
@@ -45,21 +50,34 @@ class BookingSubscriber {
 
     // Compare booking status
     if (databaseEntity.status !== entity.status) {
-      logger.info(`[BookingSubscriber] Status changed: ${databaseEntity.status} → ${entity.status}`);
-      await BookingStatusHandler.handleStatusChange(entity, databaseEntity.status, entity.status);
+      logger.info(
+        `[BookingSubscriber] Status changed: ${databaseEntity.status} → ${entity.status}`,
+      );
+      await BookingStatusHandler.handleStatusChange(
+        entity,
+        databaseEntity.status,
+        entity.status,
+      );
     } else {
       logger.info("[BookingSubscriber] Status unchanged, skipping handler.");
     }
 
     // Compare payment status
     if (databaseEntity.paymentStatus !== entity.paymentStatus) {
-      logger.info(`[BookingSubscriber] Payment status changed: ${databaseEntity.paymentStatus} → ${entity.paymentStatus}`);
-      await BookingPaymentStatusHandler.handlePaymentChange(entity, databaseEntity.paymentStatus, entity.paymentStatus);
+      logger.info(
+        `[BookingSubscriber] Payment status changed: ${databaseEntity.paymentStatus} → ${entity.paymentStatus}`,
+      );
+      await BookingPaymentStatusHandler.handlePaymentChange(
+        entity,
+        databaseEntity.paymentStatus,
+        entity.paymentStatus,
+      );
     } else {
-      logger.info("[BookingSubscriber] Payment status unchanged, skipping handler.");
+      logger.info(
+        "[BookingSubscriber] Payment status unchanged, skipping handler.",
+      );
     }
   }
-
 
   /**
    * @param {null | undefined} entity
@@ -77,8 +95,6 @@ class BookingSubscriber {
 }
 
 module.exports = BookingSubscriber;
-
-
 
 /**
  * BookingSubscriber
@@ -103,4 +119,3 @@ module.exports = BookingSubscriber;
  * - TransitionService = orchestration of side effects
  * - Avoid double calls: never invoke handlers/transition services manually
  */
-

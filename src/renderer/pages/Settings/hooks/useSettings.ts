@@ -12,6 +12,7 @@ import systemConfigAPI, {
 
 // Defaults for every category – ensures no empty tab
 const DEFAULT_GENERAL: GeneralSettings = {
+  company_name: 'Hotel Management',
   currency: "USD",
   language: "en",
   timezone: "Asia/Manila",

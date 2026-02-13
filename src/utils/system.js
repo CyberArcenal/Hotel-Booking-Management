@@ -189,7 +189,7 @@ async function companyName() {
     "company_name",
     SettingType.GENERAL,
     // @ts-ignore
-    "Hotel Management System",
+    "Hotel Management",
   );
 }
 

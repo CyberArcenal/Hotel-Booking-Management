@@ -5,7 +5,7 @@ const { logger } = require("../../../utils/logger");
 const { AppDataSource } = require("../../db/datasource");
 const { AuditLog } = require("../../../entities/AuditLog");
 const { withErrorHandling } = require("../../../middlewares/errorHandler");
-const { saveDb } = require("../../../utils/dbUtils/dbActions");
+
 
 class BookingHandler {
   constructor() {
@@ -276,6 +276,7 @@ class BookingHandler {
    * @param {any} description
    */
   async logActivity(user_id, action, description, qr = null) {
+    const { saveDb } = require("../../../utils/dbUtils/dbActions");
     try {
       let activityRepo;
 
@@ -293,7 +294,6 @@ class BookingHandler {
         entity: "Booking",
         timestamp: new Date(),
       });
-
 
       await saveDb(activityRepo, activity);
     } catch (error) {

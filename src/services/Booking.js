@@ -4,6 +4,7 @@ const { AppDataSource } = require("../main/db/datasource");
 const { Booking } = require("../entities/Booking");
 const { Room } = require("../entities/Room");
 const { Guest } = require("../entities/Guest");
+
 // @ts-ignore
 const roomService = require("./Room");
 const {
@@ -11,8 +12,6 @@ const {
   // @ts-ignore
   calculateTotalPrice,
 } = require("../utils/bookingUtils");
-const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
-const auditLogger = require("../utils/AuditLogger");
 
 class BookingService {
   constructor() {
@@ -176,19 +175,19 @@ class BookingService {
       const savedBooking = await saveDb(bookingRepo, booking);
 
       // Update room lifecycle
-      const oldRoomData = { ...room };
-      room.status = "occupied"; // use new enum field
+      // const oldRoomData = { ...room };
+      // room.status = "occupied"; // use new enum field
       // @ts-ignore
-      const savedRoom = await updateDb(roomRepo, room);
+      // const savedRoom = await updateDb(roomRepo, room);
 
       // Log audit trail
-      await auditLogger.logUpdate(
-        "Room",
-        room.id,
-        oldRoomData,
-        savedRoom,
-        user,
-      );
+      // await auditLogger.logUpdate(
+      //   "Room",
+      //   room.id,
+      //   oldRoomData,
+      //   savedRoom,
+      //   user,
+      // );
       await auditLogger.logCreate(
         "Booking",
         // @ts-ignore
@@ -288,6 +287,8 @@ class BookingService {
    * @returns {Promise<Booking>} Updated booking
    */
   async update(id, bookingData, user = "system") {
+    const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
+    
     const {
       booking: bookingRepo,
       room: roomRepo,
@@ -464,6 +465,8 @@ class BookingService {
       }
 
       // Log audit trail
+      const auditLogger = require("../utils/AuditLogger");
+      
       await auditLogger.logUpdate("Booking", id, oldData, savedBooking, user);
 
       console.log(`Booking updated: #${id}`);
@@ -485,6 +488,8 @@ class BookingService {
    */
   // @ts-ignore
   async cancel(id, reason = null, user = "system") {
+    const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
+    const auditLogger = require("../utils/AuditLogger");
     const { booking: bookingRepo } = await this.getRepositories();
 
     try {
@@ -547,6 +552,8 @@ class BookingService {
    * @returns {Promise<Booking>} Updated booking
    */
   async checkIn(id, user = "system") {
+    const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
+    const auditLogger = require("../utils/AuditLogger");
     const { booking: bookingRepo } = await this.getRepositories();
 
     try {
@@ -602,8 +609,7 @@ class BookingService {
    */
   // @ts-ignore
   async checkOut(id, notes = null, user = "system") {
-    const { booking: bookingRepo, room: roomRepo } =
-      await this.getRepositories();
+    const { booking: bookingRepo } = await this.getRepositories();
 
     try {
       // @ts-ignore
@@ -634,7 +640,6 @@ class BookingService {
       // @ts-ignore
       const savedBooking = await updateDb(bookingRepo, booking);
       // @ts-ignore
-      await updateDb(roomRepo, booking.room);
 
       // Log audit trail
       await auditLogger.logUpdate("Booking", id, oldData, savedBooking, user);
@@ -655,6 +660,8 @@ class BookingService {
    */
   // @ts-ignore
   async markAsPaid(id, reason = null, user = "system") {
+    const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
+    const auditLogger = require("../utils/AuditLogger");
     const { booking: bookingRepo } = await this.getRepositories();
 
     try {
@@ -698,6 +705,8 @@ class BookingService {
    * @param {string | null} reason
    */
   async markAsFailed(id, reason, user = "system") {
+    const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
+    const auditLogger = require("../utils/AuditLogger");
     const { booking: bookingRepo } = await this.getRepositories();
 
     try {
@@ -774,6 +783,8 @@ class BookingService {
    * @returns {Promise<Booking[]>} Array of bookings
    */
   async findAll(options = {}) {
+    const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
+    const auditLogger = require("../utils/AuditLogger");
     const { booking: bookingRepo } = await this.getRepositories();
 
     try {
@@ -1060,6 +1071,66 @@ class BookingService {
       console.error("Failed to export bookings:", error);
       throw error;
     }
+  }
+  /**
+   * @param {{ invoiceNumber: any; date: any; guest: { name: any; email: any; phone: any; }; room: { type: any; number: any; }; stay: { checkIn: any; checkOut: any; nights: any; }; charges: any[]; subtotal: any; tax: any; total: any; }} invoice
+   */
+  async printInvoice(invoice) {
+    const escpos = require("escpos");
+    // @ts-ignore
+    escpos.USB = require("escpos-usb");
+    const { companyName } = require("../utils/system");
+
+    // Example: USB printer
+    const device = new escpos.USB();
+    const printer = new escpos.Printer(device);
+    const company_name = await companyName();
+    return new Promise((resolve, reject) => {
+      try {
+        device.open(() => {
+          printer
+            .align("CT")
+            .text(`${company_name?.toUpperCase() || "HOTEL BOOKING"} INVOICE`)
+            .text("----------------------")
+            .align("LT")
+            .text(`Invoice #: ${invoice.invoiceNumber}`)
+            .text(`Date: ${invoice.date}`)
+            .text(`Guest: ${invoice.guest.name}`)
+            .text(`Email: ${invoice.guest.email}`)
+            .text(`Phone: ${invoice.guest.phone}`)
+            .text(`Room: ${invoice.room.type} (${invoice.room.number})`)
+            .text(`Check-in: ${invoice.stay.checkIn}`)
+            .text(`Check-out: ${invoice.stay.checkOut}`)
+            .text(`Nights: ${invoice.stay.nights}`)
+            .text("----------------------");
+
+          invoice.charges.forEach((c) => {
+            printer.text(
+              `${c.description.padEnd(20)} ${c.amount.toFixed(2).padStart(10)}`,
+            );
+          });
+
+          printer
+            .text("----------------------")
+            .text(`Subtotal: ${invoice.subtotal}`)
+            .text(`Tax: ${invoice.tax}`)
+            .text(`TOTAL: ${invoice.total}`)
+            .text("----------------------")
+            .align("CT")
+            .text("Thank you for booking!")
+            .cut()
+            .close();
+
+          resolve({ status: true, message: "Invoice printed successfully" });
+        });
+      } catch (err) {
+        console.error("Failed to print invoice:", err);
+        reject({
+          status: false,
+          message: "Failed to print invoice, please check your device.",
+        });
+      }
+    });
   }
 
   /**
