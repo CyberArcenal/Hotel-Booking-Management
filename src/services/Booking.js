@@ -5,6 +5,7 @@ const { AppDataSource } = require("../main/db/datasource");
 const {
   validateBookingData,
   // @ts-ignore
+  // @ts-ignore
   calculateTotalPrice,
 } = require("../utils/bookingUtils");
 const auditLogger = require("../utils/auditLogger");
@@ -46,6 +47,7 @@ class BookingService {
    * @param {string} user - User performing the action
    */
   async create(bookingData, user = "system") {
+    // @ts-ignore
     const { updateDb, saveDb } = require("../utils/dbUtils/dbActions");
     const {
       booking: bookingRepo,
@@ -58,8 +60,9 @@ class BookingService {
       const validation = await validateBookingData(bookingData);
       // @ts-ignore
       if (!validation.valid) {
+        console.log(validation);
         // @ts-ignore
-        throw new Error(`Validation failed: ${validation.errors.join(", ")}`);
+        throw new Error(validation.errors);
       }
 
       const {
@@ -219,7 +222,9 @@ class BookingService {
   async checkRoomAvailability(
     roomId,
     // @ts-ignore
+    // @ts-ignore
     checkInDate,
+    // @ts-ignore
     // @ts-ignore
     checkOutDate,
     // @ts-ignore
@@ -285,6 +290,7 @@ class BookingService {
    * @param {string} user - User performing the action
    */
   async update(id, bookingData, user = "system") {
+    // @ts-ignore
     const { updateDb, saveDb } = require("../utils/dbUtils/dbActions");
 
     const {
@@ -484,6 +490,7 @@ class BookingService {
    */
   // @ts-ignore
   async cancel(id, reason = null, user = "system") {
+    // @ts-ignore
     const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
 
     const { booking: bookingRepo } = await this.getRepositories();
@@ -547,6 +554,7 @@ class BookingService {
    * @param {string} user - User performing the action
    */
   async checkIn(id, user = "system") {
+    // @ts-ignore
     const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
 
     const { booking: bookingRepo } = await this.getRepositories();
@@ -653,6 +661,7 @@ class BookingService {
   /**
    * @param {number} id
    */
+  // @ts-ignore
   // @ts-ignore
   async markAsPaid(id, reason = null, user = "system") {
     const { updateDb } = require("../utils/dbUtils/dbActions");
@@ -791,6 +800,14 @@ class BookingService {
         queryBuilder.andWhere("booking.status = :status", {
           // @ts-ignore
           status: options.status,
+        });
+      }
+
+      // @ts-ignore
+      if (options.statuses && options.statuses.length > 0) {
+        queryBuilder.andWhere("booking.status IN (:...statuses)", {
+          // @ts-ignore
+          statuses: options.statuses,
         });
       }
 
@@ -1068,6 +1085,7 @@ class BookingService {
    */
   async printInvoice(invoice) {
     const escpos = require("escpos");
+    // @ts-ignore
     // @ts-ignore
     escpos.USB = require("escpos-usb");
     const { companyName } = require("../utils/system");

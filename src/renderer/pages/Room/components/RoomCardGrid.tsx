@@ -21,30 +21,20 @@ import bookingAPI from "../../../api/booking";
 
 // ----------------------------------------------------------------------
 // Helper: find the active booking for a room (if any)
+// Returns the booking if there is an active one for today.
 // ----------------------------------------------------------------------
-// function findActiveBooking(room: Room): Booking | undefined {
-//   const today = new Date().toISOString().split("T")[0];
-//   return room.bookings?.find((b) => {
-//     if (b.status === "cancelled") return false;
-//     if (b.status === "checked_in") return true;
-//     if (b.status === "confirmed") {
-//       return today >= b.checkInDate && today < b.checkOutDate;
-//     }
-//     return false;
-//   });
-// }
-
 const findActiveBooking = async (room: Room) => {
   try {
-    const bookings = await bookingAPI.getByRoom(room.id);
-
+    const response = await bookingAPI.getByRoom(room.id);
+    const bookings = response.data as unknown as Booking[];
     const today = new Date().toISOString().split("T")[0];
 
-    return (bookings.data as unknown as Booking[]).find((b) => {
-      if (b.status === "checked_in") return true;
-      if (b.status === "confirmed") return true;
-      if (b.status === "pending") return true;
-      return false;
+    return bookings.find((b) => {
+      // Only consider bookings that are active (non-cancelled)
+      if (b.status !== "checked_in" && b.status !== "confirmed" && b.status !== "pending")
+        return false;
+      // Check if today is between check-in (inclusive) and check-out (exclusive)
+      return today >= b.checkInDate && today < b.checkOutDate;
     });
   } catch (error) {
     console.error("Error finding active booking:", error);
@@ -76,18 +66,16 @@ const RoomCard: React.FC<RoomCardProps> = ({
 }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const [activeBooking, setActiveBooking] = useState<Booking | undefined>(
-    undefined,
-  );
-  const [dropdownPosition, setDropdownPosition] = useState({
-    top: 0,
-    right: 0,
-  });
+  const [activeBooking, setActiveBooking] = useState<Booking | undefined>(undefined);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
 
-  const status = room.status; // ✅ trust the backend status
+  const status = room.status;
+
+  // Fetch active booking for this room
   useEffect(() => {
     findActiveBooking(room).then(setActiveBooking);
   }, [room]);
+
   // Update dropdown position when opened
   useEffect(() => {
     if (dropdownOpen && buttonRef.current) {
@@ -147,12 +135,15 @@ const RoomCard: React.FC<RoomCardProps> = ({
   const StatusIcon = statusConfig.icon;
   const canDelete = !activeBooking && onDeleteRoom;
 
+  // Determine if the room has an active booking today (for red highlight)
+  const hasActiveBookingToday = !!activeBooking;
+
   return (
     <div
-      className="
+      className={`
         group relative
         bg-[var(--card-bg)]
-        border border-[var(--border-color)]/20
+        border
         rounded-xl
         transition-all duration-300 ease-out
         hover:border-[var(--primary-color)]/40
@@ -162,7 +153,9 @@ const RoomCard: React.FC<RoomCardProps> = ({
         h-full
         p-[clamp(1rem,3vw,1.5rem)]
         gap-[clamp(0.75rem,2vw,1.25rem)]
-      "
+        ${hasActiveBookingToday ? 'border-red-500 border-2' : 'border-[var(--border-color)]/20'}
+      `}
+      style={hasActiveBookingToday ? { borderColor: 'var(--status-cancelled)' } : {}}
     >
       {/* Header: Room Number + Status Badge + More Actions */}
       <div className="flex items-start justify-between">
@@ -285,14 +278,13 @@ const RoomCard: React.FC<RoomCardProps> = ({
         )}
       </div>
 
-      {/* Booking Info – only if occupied */}
+      {/* Booking Info – only if occupied and active booking exists */}
       {status === "occupied" && activeBooking && (
         <div className="bg-[var(--card-secondary-bg)] rounded-lg p-3 text-sm border-l-4 border-[var(--primary-color)] shadow-sm">
           <div className="flex items-center gap-2 font-medium truncate">
             <Calendar className="w-4 h-4 flex-shrink-0 text-[var(--primary-color)]" />
             <span className="truncate text-[var(--text-primary)]">
-              {activeBooking?.guest?.fullName || "Guest"}{" "}
-              {/* assumes guest relation */}
+              {activeBooking?.guest?.fullName || "Guest"}
             </span>
           </div>
           <div className="flex flex-wrap justify-between gap-1 text-xs mt-1">
