@@ -337,7 +337,6 @@ async function twilioMessagingServiceSid() {
   return getValue("twilio_messaging_service_sid", SettingType.NOTIFICATION, "");
 }
 
-
 async function getSmtpConfig() {
   const [host, port, username, password, useSsl, fromEmail, fromName] =
     await Promise.all([
@@ -365,23 +364,19 @@ async function getSmtpConfig() {
 }
 
 async function getTwilioConfig() {
-  const [
-    accountSid,
-    authToken,
-    phoneNumber,
-    messagingServiceSid
-  ] = await Promise.all([
-    twilioAccountSid(),
-    twilioAuthToken(),
-    twilioPhoneNumber(),
-    twilioMessagingServiceSid()
-  ]);
+  const [accountSid, authToken, phoneNumber, messagingServiceSid] =
+    await Promise.all([
+      twilioAccountSid(),
+      twilioAuthToken(),
+      twilioPhoneNumber(),
+      twilioMessagingServiceSid(),
+    ]);
 
   return {
     accountSid,
     authToken,
     phoneNumber,
-    messagingServiceSid
+    messagingServiceSid,
   };
 }
 
@@ -404,11 +399,75 @@ async function auditTrailEnabled() {
   return getValue("audit_trail_enabled", SettingType.SYSTEM, "true");
 }
 
+async function markRoomOccupiedOnBookCreation() {
+  return getBool(
+    "mark_room_occupied_on_book_creation",
+    SettingType.BOOKING,
+    false,
+  );
+}
+
+async function markRoomOccupiedOnBookConfirmation() {
+  return getBool(
+    "mark_room_occupied_on_book_confirmation",
+    SettingType.BOOKING,
+    false,
+  );
+}
+
+async function markRoomOccupiedOnBookCheckedIn() {
+  return getBool(
+    "mark_room_occupied_on_book_checked_in",
+    SettingType.BOOKING,
+    true,
+  );
+}
+
+async function markRoomAvailableOnBookCheckedOut() {
+  return getBool(
+    "mark_room_available_on_book_checked_out",
+    SettingType.BOOKING,
+    true,
+  );
+}
+
+async function markRoomAvailableOnBookCancelled() {
+  return getBool(
+    "mark_room_available_on_book_cancelled",
+    SettingType.BOOKING,
+    true,
+  );
+}
+
+async function markRoomAvailableOnBookPaymentCancelled() {
+  return getBool(
+    "mark_room_available_on_book_payment_cancelled",
+    SettingType.BOOKING,
+    true,
+  );
+}
+
+async function markRoomOccupiedOnBookPaymentPaid() {
+  return getBool(
+    "mark_room_occupied_on_book_payment_paid",
+    SettingType.BOOKING,
+    false,
+  );
+}
+
 // ============================================================
 // 📤 EXPORT ALL FUNCTIONS
 // ============================================================
 
 module.exports = {
+  markRoomOccupiedOnBookPaymentPaid,
+  markRoomAvailableOnBookPaymentCancelled,
+  markRoomAvailableOnBookCancelled,
+  markRoomAvailableOnBookCheckedOut,
+  markRoomOccupiedOnBookCheckedIn,
+  markRoomOccupiedOnBookCreation,
+  markRoomOccupiedOnBookConfirmation,
+
   // Core getters
   getValue,
   getBool,
@@ -449,12 +508,12 @@ module.exports = {
   smtpFromName,
   getSmtpConfig, // ✅ Convenience function
 
-   // 📱 TWILIO SETTINGS (NEW)
+  // 📱 TWILIO SETTINGS (NEW)
   twilioAccountSid,
   twilioAuthToken,
   twilioPhoneNumber,
   twilioMessagingServiceSid,
-  getTwilioConfig,        // ✅ Convenience function
+  getTwilioConfig, // ✅ Convenience function
 
   // System settings
   debugMode,
