@@ -32,7 +32,7 @@ export interface Booking {
   checkOutDate: string; // YYYY-MM-DD
   numberOfGuests: number;
   totalPrice: number;
-  status: "confirmed" | "checked_in" | "checked_out" | "cancelled";
+  status: "pending" |"confirmed" | "checked_in" | "checked_out" | "cancelled";
   paymentStatus: "pending" | "paid" | "failed";
   specialRequests?: string | null;
   createdAt: string; // ISO datetime
@@ -220,7 +220,8 @@ class BookingAPI {
    * @param params - Filter, sort, pagination options
    */
   async getAll(params?: {
-    status?: string | string[];
+    status?: string;
+    statuses?: string[];
     roomId?: number;
     guestId?: number;
     checkInDate?: string;
@@ -885,7 +886,7 @@ class BookingAPI {
         roomId,
         checkInDate,
         checkOutDate,
-        status: ["confirmed", "checked_in"],
+        statuses: ["confirmed", "checked_in", "pending"],
       });
       if (excludeBookingId) {
         const filtered = (conflicting.data as Booking[]).filter(

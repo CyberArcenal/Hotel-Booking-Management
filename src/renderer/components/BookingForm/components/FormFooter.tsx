@@ -1,3 +1,4 @@
+// src/renderer/components/Booking/Form/components/FormFooter.tsx
 import React from 'react';
 import { Save, Loader, AlertCircle } from 'lucide-react';
 import { dialogs } from '../../../utils/dialogs';
@@ -7,9 +8,10 @@ interface Props {
   submitting: boolean;
   onClose: () => void;
   onSubmit: (e: React.FormEvent) => void;
+  disabled?: boolean; // new prop to disable submit button
 }
 
-const FormFooter: React.FC<Props> = ({ mode, submitting, onClose, onSubmit }) => {
+const FormFooter: React.FC<Props> = ({ mode, submitting, onClose, onSubmit, disabled }) => {
   const handleClose = async () => {
     if (
       await dialogs.confirm({
@@ -52,7 +54,7 @@ const FormFooter: React.FC<Props> = ({ mode, submitting, onClose, onSubmit }) =>
         <button
           type="button"
           onClick={onSubmit}
-          disabled={submitting}
+          disabled={submitting || disabled}
           className="px-3 py-1.5 rounded text-sm font-medium flex items-center gap-1.5 disabled:opacity-50 transition-colors"
           style={{ backgroundColor: 'var(--primary-color)', color: 'var(--secondary-color)' }}
         >

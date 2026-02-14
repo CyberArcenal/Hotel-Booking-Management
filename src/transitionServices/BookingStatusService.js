@@ -6,6 +6,13 @@ const { Room } = require("../entities/Room");
 const { logger } = require("../utils/logger");
 
 const NotificationService = require("../services/Notification");
+const {
+  markRoomOccupiedOnBookCreation,
+  markRoomOccupiedOnBookConfirmation,
+  markRoomOccupiedOnBookCheckedIn,
+  markRoomAvailableOnBookCheckedOut,
+  markRoomAvailableOnBookCancelled,
+} = require("../utils/system");
 
 class BookingStatusService {
   // @ts-ignore
@@ -14,14 +21,17 @@ class BookingStatusService {
     logger.debug(`[BookingStatusService] Booking ${booking.id} set to PENDING`);
 
     // 🔹 Effects: occupy room
+
     if (booking.room) {
-      const roomRepo = AppDataSource.getRepository(Room);
-      const room = await roomRepo.findOne({ where: { id: booking.room.id } });
-      if (room) {
-        if (room.status !== "occupied") {
-          const oldRoomStatus = room.status;
-          room.status = "occupied";
-          await updateDb(roomRepo, room);
+      if (await markRoomOccupiedOnBookCreation()) {
+        const roomRepo = AppDataSource.getRepository(Room);
+        const room = await roomRepo.findOne({ where: { id: booking.room.id } });
+        if (room) {
+          if (room.status !== "occupied") {
+            const oldRoomStatus = room.status;
+            room.status = "occupied";
+            await updateDb(roomRepo, room);
+          }
         }
       }
     }
@@ -36,12 +46,14 @@ class BookingStatusService {
 
     // 🔹 Effects: occupy room + notify
     if (booking.room) {
-      const roomRepo = AppDataSource.getRepository(Room);
-      const room = await roomRepo.findOne({ where: { id: booking.room.id } });
-      if (room) {
-        const oldRoomStatus = room.status;
-        room.status = "occupied";
-        await updateDb(roomRepo, room);
+      if (await markRoomOccupiedOnBookConfirmation()) {
+        const roomRepo = AppDataSource.getRepository(Room);
+        const room = await roomRepo.findOne({ where: { id: booking.room.id } });
+        if (room) {
+          const oldRoomStatus = room.status;
+          room.status = "occupied";
+          await updateDb(roomRepo, room);
+        }
       }
     }
     try {
@@ -53,8 +65,19 @@ class BookingStatusService {
 
   // @ts-ignore
   static async onCheckedIn(booking, oldStatus) {
+    const { updateDb } = require("../utils/dbUtils/dbActions");
     logger.debug(`[BookingStatusService] Booking ${booking.id} CHECKED IN`);
-
+    if (booking.room) {
+      if (await markRoomOccupiedOnBookCheckedIn()) {
+        const roomRepo = AppDataSource.getRepository(Room);
+        const room = await roomRepo.findOne({ where: { id: booking.room.id } });
+        if (room) {
+          const oldRoomStatus = room.status;
+          room.status = "occupied";
+          await updateDb(roomRepo, room);
+        }
+      }
+    }
     return booking;
   }
 
@@ -66,12 +89,14 @@ class BookingStatusService {
 
     // 🔹 Effects: release room + notify
     if (booking.room) {
-      const roomRepo = AppDataSource.getRepository(Room);
-      const room = await roomRepo.findOne({ where: { id: booking.room.id } });
-      if (room) {
-        const oldRoomStatus = room.status;
-        room.status = "available";
-        await updateDb(roomRepo, room);
+      if (await markRoomAvailableOnBookCheckedOut()) {
+        const roomRepo = AppDataSource.getRepository(Room);
+        const room = await roomRepo.findOne({ where: { id: booking.room.id } });
+        if (room) {
+          const oldRoomStatus = room.status;
+          room.status = "available";
+          await updateDb(roomRepo, room);
+        }
       }
     }
     try {
@@ -88,12 +113,14 @@ class BookingStatusService {
 
     // 🔹 Effects: release room + notify
     if (booking.room) {
-      const roomRepo = AppDataSource.getRepository(Room);
-      const room = await roomRepo.findOne({ where: { id: booking.room.id } });
-      if (room) {
-        const oldRoomStatus = room.status;
-        room.status = "available";
-        await updateDb(roomRepo, room);
+      if (await markRoomAvailableOnBookCancelled()) {
+        const roomRepo = AppDataSource.getRepository(Room);
+        const room = await roomRepo.findOne({ where: { id: booking.room.id } });
+        if (room) {
+          const oldRoomStatus = room.status;
+          room.status = "available";
+          await updateDb(roomRepo, room);
+        }
       }
     }
     try {

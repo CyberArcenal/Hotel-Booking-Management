@@ -1,6 +1,6 @@
 // src/renderer/components/Booking/Form/BookingFormDialog.tsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { Loader } from 'lucide-react';
+import { Loader, AlertCircle } from 'lucide-react';
 // Components
 import FormHeader from './components/FormHeader';
 import FormFooter from './components/FormFooter';
@@ -39,6 +39,8 @@ const BookingFormDialog: React.FC<BookingFormDialogProps> = ({
   const [nights, setNights] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [availabilityError, setAvailabilityError] = useState<string | null>(null);
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
 
   // Initial form state
   const [formData, setFormData] = useState<FormData>({
@@ -66,10 +68,10 @@ const BookingFormDialog: React.FC<BookingFormDialogProps> = ({
               roomId: data.room.id,
               numberOfGuests: data.numberOfGuests,
               specialRequests: data.specialRequests || '',
-              guestId: data.guest.id,   // ← gamit ang guest.id
+              guestId: data.guest.id,
             });
             setSelectedRoom(data.room as Room);
-            setSelectedGuest(data.guest); // ← i-display agad ang napiling guest
+            setSelectedGuest(data.guest);
           } else {
             showError('Booking not found');
             onClose();
@@ -143,11 +145,41 @@ const BookingFormDialog: React.FC<BookingFormDialogProps> = ({
     }
   }, [selectedRoom, nights]);
 
+  // ---------- Real‑time availability check ----------
+  useEffect(() => {
+    const checkAvailability = async () => {
+      // Only check if we have room and both dates
+      if (!formData.roomId || !formData.checkInDate || !formData.checkOutDate) {
+        setAvailabilityError(null);
+        return;
+      }
+
+      setCheckingAvailability(true);
+      try {
+        const isAvailable = await bookingAPI.checkAvailability(
+          formData.roomId,
+          formData.checkInDate,
+          formData.checkOutDate,
+          mode === 'edit' ? booking?.id : undefined
+        );
+        setAvailabilityError(isAvailable ? null : 'This room is not available for the selected dates.');
+      } catch (error) {
+        console.error('Availability check failed:', error);
+        setAvailabilityError(null); // fallback – let the final submit catch it
+      } finally {
+        setCheckingAvailability(false);
+      }
+    };
+
+    checkAvailability();
+  }, [formData.roomId, formData.checkInDate, formData.checkOutDate, mode, booking?.id]);
+
   // ---------- Handlers ----------
   const handleChange = useCallback(
     (field: keyof Omit<FormData, 'guestId'>, value: any) => {
       setFormData((prev) => ({ ...prev, [field]: value }));
       if (errors[field]) setErrors((prev) => ({ ...prev, [field]: '' }));
+      // Availability error will be cleared by the useEffect automatically
     },
     [errors],
   );
@@ -165,6 +197,7 @@ const BookingFormDialog: React.FC<BookingFormDialogProps> = ({
     (roomId: number | null) => {
       setFormData((prev) => ({ ...prev, roomId }));
       if (errors.roomId) setErrors((prev) => ({ ...prev, roomId: '' }));
+      // Availability will be rechecked by useEffect
     },
     [errors],
   );
@@ -212,6 +245,25 @@ const BookingFormDialog: React.FC<BookingFormDialogProps> = ({
       return;
     }
 
+    // Double‑check availability in case the real‑time check missed something
+    if (formData.roomId && formData.checkInDate && formData.checkOutDate) {
+      try {
+        const isAvailable = await bookingAPI.checkAvailability(
+          formData.roomId,
+          formData.checkInDate,
+          formData.checkOutDate,
+          mode === 'edit' ? booking?.id : undefined
+        );
+        if (!isAvailable) {
+          setAvailabilityError('This room is already booked for the selected dates.');
+          return;
+        }
+      } catch (error: any) {
+        showError('Failed to check room availability. Please try again.');
+        return;
+      }
+    }
+
     const confirmTitle = mode === 'add' ? 'Create Booking' : 'Update Booking';
     const confirmMsg =
       mode === 'add'
@@ -226,7 +278,6 @@ const BookingFormDialog: React.FC<BookingFormDialogProps> = ({
       const user = 'system'; // TODO: replace with real user from auth
 
       if (mode === 'add') {
-        // CREATE: gumagamit ng existing guest (guestData = { id: ... })
         response = await bookingAPI.create({
           checkInDate: formData.checkInDate,
           checkOutDate: formData.checkOutDate,
@@ -237,7 +288,6 @@ const BookingFormDialog: React.FC<BookingFormDialogProps> = ({
           user,
         });
       } else {
-        // UPDATE: pwedeng magpalit ng guest sa pamamagitan ng guestData
         response = await bookingAPI.update(
           id!,
           {
@@ -246,7 +296,7 @@ const BookingFormDialog: React.FC<BookingFormDialogProps> = ({
             numberOfGuests: formData.numberOfGuests,
             specialRequests: formData.specialRequests.trim() || null,
             roomId: formData.roomId!,
-            guestData: { id: formData.guestId! }, // ← pinapayagan ang pagpalit ng guest
+            guestData: { id: formData.guestId! },
           },
           user,
         );
@@ -277,6 +327,8 @@ const BookingFormDialog: React.FC<BookingFormDialogProps> = ({
     );
   }
 
+  const disableSubmit = submitting || !!availabilityError || checkingAvailability;
+
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
       <div
@@ -299,6 +351,8 @@ const BookingFormDialog: React.FC<BookingFormDialogProps> = ({
                   onChange={handleRoomChange}
                   disabled={submitting || initialRoomId !== undefined}
                   error={errors.roomId}
+                  isChecking={checkingAvailability}
+                  isUnavailable={!!availabilityError}
                 />
                 <StayDatesSection
                   checkInDate={formData.checkInDate}
@@ -334,10 +388,25 @@ const BookingFormDialog: React.FC<BookingFormDialogProps> = ({
                   selectedGuest={selectedGuest}
                   onChange={handleGuestChange}
                   error={errors.guestId}
-                  disabled={submitting || (mode === 'add' && !!initialGuestId)} // kung may initial guestId, i-lock
+                  disabled={submitting || (mode === 'add' && !!initialGuestId)}
                 />
               </div>
             </div>
+
+            {/* ⚠️ Availability error banner (still shown for extra clarity) */}
+            {availabilityError && (
+              <div
+                className="mb-4 p-3 rounded flex items-center gap-2 text-sm"
+                style={{
+                  backgroundColor: 'rgba(255, 76, 76, 0.1)',
+                  border: '1px solid var(--status-cancelled)',
+                  color: 'var(--status-cancelled)',
+                }}
+              >
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>{availabilityError}</span>
+              </div>
+            )}
 
             <TotalPreview selectedRoom={selectedRoom} nights={nights} totalPrice={totalPrice} />
           </form>
@@ -348,6 +417,7 @@ const BookingFormDialog: React.FC<BookingFormDialogProps> = ({
           submitting={submitting}
           onClose={onClose}
           onSubmit={handleSubmit}
+          disabled={disableSubmit} // new prop
         />
       </div>
     </div>

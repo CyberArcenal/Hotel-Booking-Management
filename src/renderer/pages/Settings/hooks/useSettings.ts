@@ -9,10 +9,11 @@ import systemConfigAPI, {
   type NotificationSettings,
   type SystemSettings,
 } from "../../../api/system_config";
+import { dialogs } from "../../../utils/dialogs";
 
 // Defaults for every category – ensures no empty tab
 const DEFAULT_GENERAL: GeneralSettings = {
-  company_name: 'Hotel Management',
+  company_name: "Hotel Management",
   currency: "USD",
   language: "en",
   timezone: "Asia/Manila",
@@ -168,9 +169,11 @@ export const useSettings = () => {
 
   const resetToDefaults = async () => {
     if (
-      !confirm(
-        "Are you sure you want to reset all settings to default values? This cannot be undone.",
-      )
+      !(await dialogs.confirm({
+        message:
+          "Are you sure you want to reset all settings to default values? This cannot be undone.",
+        title: "Reset Settings",
+      }))
     )
       return;
     setLoading(true);

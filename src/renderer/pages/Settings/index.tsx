@@ -77,7 +77,7 @@ const SettingsPage: React.FC = () => {
           </div>
         )}
 
-        {systemInfo && <SystemInfoCard info={systemInfo} />}
+  
 
         <SettingsTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
