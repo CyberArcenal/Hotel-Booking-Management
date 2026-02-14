@@ -96,7 +96,7 @@ const Dashboard: React.FC = () => {
     .slice(0, 5);
 
   return (
-    <div className="p-6 space-y-6 windows-fade-in">
+    <div className="p-2 space-y-6 windows-fade-in">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

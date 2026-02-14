@@ -160,7 +160,7 @@ const NotificationLogPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[var(--background-color)]">
-      <main className="container mx-auto px-4 py-6 md:px-6">
+      <main className="mx-auto px-2 py-2">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
