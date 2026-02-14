@@ -32,7 +32,7 @@ export interface Booking {
   checkOutDate: string; // YYYY-MM-DD
   numberOfGuests: number;
   totalPrice: number;
-  status: "confirmed" | "checked_in" | "checked_out" | "cancelled";
+  status: "pending" |"confirmed" | "checked_in" | "checked_out" | "cancelled";
   paymentStatus: "pending" | "paid" | "failed";
   specialRequests?: string | null;
   createdAt: string; // ISO datetime

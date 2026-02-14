@@ -35,7 +35,6 @@ class RoomService {
    * @returns {Promise<Room>} Created room
    */
   async create(roomData, user = "system") {
-    
     const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
     try {
       const repo = await this.getRepository();
@@ -108,7 +107,6 @@ class RoomService {
    * @returns {Promise<Room>} Updated room
    */
   async update(id, roomData, user = "system") {
-    
     const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
     try {
       const repo = await this.getRepository();
@@ -231,7 +229,6 @@ class RoomService {
    * @returns {Promise<boolean>} Success status
    */
   async delete(id, user = "system") {
-    
     const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
     try {
       const repo = await this.getRepository();
@@ -350,12 +347,12 @@ class RoomService {
    * @param {boolean} options.availableOnly - Show only available rooms
    * @param {string} options.sortBy - Sort field
    * @param {string} options.status - Filter by room status
+   *   * @param {string} options.statuses - Filter by room status
    * @param {string} options.sortOrder - 'ASC' or 'DESC'
    * @returns {Promise<Room[]>} Array of rooms
    */
   // @ts-ignore
   async findAll(options = {}) {
-    
     const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
     try {
       const repo = await this.getRepository();
@@ -384,11 +381,24 @@ class RoomService {
         });
       }
 
-      if (options.availableOnly === true) {
-        queryBuilder.andWhere("room.isAvailable = :available", {
-          available: true,
-        });
-      }
+if (options.availableOnly === true) {
+  const currentDate = new Date().toISOString().split("T")[0];
+
+  queryBuilder.andWhere(
+    "room.isAvailable = :available AND NOT EXISTS (" +
+      "SELECT 1 FROM bookings b " +
+      "WHERE b.roomId = room.id " +
+      "AND b.checkInDate <= :currentDate " +
+      "AND b.checkOutDate >= :currentDate" +
+    ")",
+    {
+      available: true,
+      currentDate: currentDate,
+    }
+  );
+}
+
+
 
       if (options.status) {
         queryBuilder.andWhere("room.status = :status", {
@@ -441,21 +451,15 @@ class RoomService {
         )
         ${
           // @ts-ignore
-          filters.type
-            ? "AND r.type = :type"
-            : ""
+          filters.type ? "AND r.type = :type" : ""
         }
         ${
           // @ts-ignore
-          filters.minCapacity
-            ? "AND r.capacity >= :minCapacity"
-            : ""
+          filters.minCapacity ? "AND r.capacity >= :minCapacity" : ""
         }
         ${
           // @ts-ignore
-          filters.maxPrice
-            ? "AND r.pricePerNight <= :maxPrice"
-            : ""
+          filters.maxPrice ? "AND r.pricePerNight <= :maxPrice" : ""
         }
         ORDER BY r.roomNumber ASC
       `;
@@ -491,7 +495,6 @@ class RoomService {
    * @returns {Promise<Room>} Updated room
    */
   async setAvailability(id, isAvailable, user = "system") {
-    
     const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
     try {
       const repo = await this.getRepository();
@@ -647,7 +650,6 @@ class RoomService {
    * @param {string | any[]} updates
    */
   async bulkUpdate(updates, user = "system") {
-    
     const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
     try {
       // @ts-ignore

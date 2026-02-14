@@ -1,10 +1,11 @@
+// src/pages/Room/components/RoomFilterPanel.tsx
 import React from "react";
 import { Filter, X } from "lucide-react";
 import type { GetAllRoomsParams } from "../../../api/room";
 
 interface RoomFilterPanelProps {
-  filters: GetAllRoomsParams;
-  onChange: (filters: GetAllRoomsParams) => void;
+  filters: GetAllRoomsParams & { availableOnly?: boolean }; // extend with local filter
+  onChange: (filters: GetAllRoomsParams & { availableOnly?: boolean }) => void;
   onClear: () => void;
   isOpen: boolean;
   onToggle: () => void;
@@ -17,7 +18,7 @@ export const RoomFilterPanel: React.FC<RoomFilterPanelProps> = ({
   isOpen,
   onToggle,
 }) => {
-  const updateFilter = (key: keyof GetAllRoomsParams, value: any) => {
+  const updateFilter = (key: keyof typeof filters, value: any) => {
     onChange({ ...filters, [key]: value });
   };
 
@@ -105,31 +106,18 @@ export const RoomFilterPanel: React.FC<RoomFilterPanelProps> = ({
           />
         </div>
 
-   
-        {/* ✅ Status Filter – uses new `status` param */}
-        <div>
-          <label className="block text-xs font-medium text-[var(--text-tertiary)] mb-1 uppercase">
-            Status
+        {/* ✅ Availability Toggle – based on real bookings */}
+        <div className="flex items-center">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={filters.availableOnly || false}
+              onChange={(e) => updateFilter("availableOnly", e.target.checked)}
+              className="w-4 h-4 rounded border-[var(--border-color)] text-[var(--primary-color)] 
+                         focus:ring-[var(--primary-color)] bg-[var(--card-secondary-bg)]"
+            />
+            <span className="text-sm text-[var(--text-primary)]">Show only available rooms</span>
           </label>
-          <select
-            value={filters.status || "all"}
-            onChange={(e) => {
-              const value = e.target.value;
-              if (value === "all") {
-                // remove status filter
-                const { status, ...rest } = filters;
-                onChange(rest);
-              } else {
-                onChange({ ...filters, status: value as "available" });
-              }
-            }}
-            className="w-full px-3 py-2 rounded-md border bg-[var(--card-secondary-bg)] border-[var(--border-color)]/20 
-                       text-[var(--text-primary)] text-sm focus:border-[var(--primary-color)]"
-          >
-            <option value="all">All rooms</option>
-            <option value="available">Available only</option>
-            {/* You can easily add "Occupied" or "Maintenance" later if needed */}
-          </select>
         </div>
       </div>
 
