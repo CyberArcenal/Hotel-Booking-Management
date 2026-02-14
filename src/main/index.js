@@ -27,7 +27,11 @@ const url = require("url");
 require("reflect-metadata");
 const { AppDataSource } = require("./db/datasource");
 const MigrationManager = require("../utils/dbUtils/migrationManager");
-
+const BookingChecker = require("../utils/BookingChecker");
+/**
+ * @type {BookingChecker | null}
+ */
+let bookingChecker = null; // <-- idagdag ito
 // ===================== TYPE DEFINITIONS =====================
 /**
  * @typedef {import('electron').BrowserWindow} BrowserWindow
@@ -850,6 +854,9 @@ async function startupSequence() {
         app.quit();
         return;
       }
+
+      bookingChecker = new BookingChecker(5 * 60 * 1000); // every 5 minutes
+      bookingChecker.start();
     }
 
     // 4. Register IPC handlers
@@ -913,6 +920,9 @@ app.on("activate", async () => {
 
 app.on("before-quit", async (event) => {
   log(LogLevel.INFO, "Application quitting...");
+  if (bookingChecker) {
+    bookingChecker.stop();
+  }
 
   if (!isShuttingDown) {
     event.preventDefault();
