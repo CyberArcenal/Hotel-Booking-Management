@@ -5,7 +5,8 @@ import bookingAPI from '../../../api/booking';
 interface UseBookingsParams {
   page?: number;
   limit?: number;
-  status?: string | string[];
+  status?: string;
+  statuses?: string[];
   search?: string;
   checkInDate?: string;
   checkOutDate?: string;

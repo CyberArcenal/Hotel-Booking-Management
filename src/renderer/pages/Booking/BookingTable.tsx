@@ -175,7 +175,12 @@ const BookingPage: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (confirm("Are you sure you want to delete this booking?")) {
+    if (
+      await dialogs.confirm({
+        title: "Delete Booking",
+        message: "Are you sure you want to delete this booking?",
+      })
+    ) {
       try {
         await bookingAPI.delete(id, "admin");
         refetch();

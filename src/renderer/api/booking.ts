@@ -220,7 +220,8 @@ class BookingAPI {
    * @param params - Filter, sort, pagination options
    */
   async getAll(params?: {
-    status?: string | string[];
+    status?: string;
+    statuses?: string[];
     roomId?: number;
     guestId?: number;
     checkInDate?: string;
@@ -885,7 +886,7 @@ class BookingAPI {
         roomId,
         checkInDate,
         checkOutDate,
-        status: ["confirmed", "checked_in"],
+        statuses: ["confirmed", "checked_in", "pending"],
       });
       if (excludeBookingId) {
         const filtered = (conflicting.data as Booking[]).filter(
