@@ -381,24 +381,23 @@ class RoomService {
         });
       }
 
-if (options.availableOnly === true) {
-  const currentDate = new Date().toISOString().split("T")[0];
+      if (options.availableOnly === true) {
+        const currentDate = new Date().toISOString().split("T")[0];
 
-  queryBuilder.andWhere(
-    "room.isAvailable = :available AND NOT EXISTS (" +
-      "SELECT 1 FROM bookings b " +
-      "WHERE b.roomId = room.id " +
-      "AND b.checkInDate <= :currentDate " +
-      "AND b.checkOutDate >= :currentDate" +
-    ")",
-    {
-      available: true,
-      currentDate: currentDate,
-    }
-  );
-}
-
-
+        queryBuilder.andWhere(
+          "room.isAvailable = :available AND NOT EXISTS (" +
+            "SELECT 1 FROM bookings b " +
+            "WHERE b.roomId = room.id " +
+            "AND b.checkInDate <= :currentDate " +
+            "AND b.checkOutDate >= :currentDate " +
+            "AND b.status != 'cancelled'" +
+            ")",
+          {
+            available: true,
+            currentDate: currentDate,
+          },
+        );
+      }
 
       if (options.status) {
         queryBuilder.andWhere("room.status = :status", {

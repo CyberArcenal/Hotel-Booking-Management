@@ -6,6 +6,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [v1.0.2-beta] - 2026-02-14
+### Fixed
+- Adjusted availability filter logic to properly exclude rooms with active bookings on the current date.
+- Implemented `NOT EXISTS` / `IS NULL` handling to ensure rooms without bookings are correctly flagged as available.
+- Resolved issue where unavailable rooms were incorrectly returned when `availableOnly` filter was applied.
+- Improved current date handling (`new Date().toISOString().split("T")[0]`) for consistent SQLite date comparisons.
+
+### Changed
+- Consolidated availability, booking date, and status checks into a single cohesive condition block for audit clarity.
+- Enhanced query readability and maintainability by aligning aliases and conditions with entity schema definitions.
+
+### Added (UI)
+- Error display in booking form when a room is unavailable.
+- Disabled **Save** button in booking form if the selected room cannot be booked, preventing invalid submissions.
+- Red border highlight on the Room Page for rooms that are not available today, giving users a clear visual indicator.
+
+---
+
+---
+
 ## [v1.0.0-beta] - 2026-02-14
 ### Added
 - Initial **Lite Release** build (.exe for Windows).
