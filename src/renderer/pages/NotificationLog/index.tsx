@@ -59,11 +59,12 @@ const NotificationLogPage: React.FC = () => {
   // 🔄 RETRY – with confirmation dialog
   // ------------------------------------------------------------------
   const handleRetry = async (id: number) => {
+    showSuccess('The notification has been queued for retry.');
     setSendingRows((prev) => new Set(prev).add(id));
     try {
       const response = await notificationLogAPI.retryFailed(id);
       if (response.status) {
-        showSuccess('The notification has been queued for retry.');
+        
         refetch();
       } else {
         throw new Error(response.message);
@@ -97,11 +98,12 @@ const NotificationLogPage: React.FC = () => {
   // 🔄 RESEND – with confirmation dialog
   // ------------------------------------------------------------------
   const handleResend = async (id: number) => {
+    showSuccess('The notification has been resent.');
     setSendingRows((prev) => new Set(prev).add(id));
     try {
       const response = await notificationLogAPI.resend(id);
       if (response.status) {
-        showSuccess('The notification has been resent.');
+        
         refetch();
       } else {
         throw new Error(response.message);

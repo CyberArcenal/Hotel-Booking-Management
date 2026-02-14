@@ -28,10 +28,8 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
       { path: "/", name: "Dashboard", category: "Main" },
       // Rooms
       { path: "/rooms", name: "Room List", category: "Rooms" },
-      { path: "/rooms/new", name: "Add Room", category: "Rooms" },
       // Bookings
       { path: "/bookings", name: "All Bookings", category: "Bookings" },
-      { path: "/bookings/new", name: "New Booking", category: "Bookings" },
       // Guests
       { path: "/guests", name: "Guests", category: "Guests" },
       // Reports
