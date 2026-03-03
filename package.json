@@ -1,7 +1,7 @@
 {
   "name": "hotel-booking-management",
   "private": true,
-  "version": "1.0.3-beta",
+  "version": "1.0.4-beta",
   "main": "src/main/index.js",
   "author": {
     "name": "CyberArcenal",
@@ -22,10 +22,15 @@
       "target": "nsis"
     },
     "mac": {
-      "icon": "build/icon.icns"
+      "icon": "build/icon.icns",
+       "target": "dmg"
     },
     "linux": {
-      "icon": "build/icon.png"
+      "icon": "build/icon.png",
+        "target": [
+        "AppImage",
+        "deb"
+      ]
     },
     "publish": [
       {

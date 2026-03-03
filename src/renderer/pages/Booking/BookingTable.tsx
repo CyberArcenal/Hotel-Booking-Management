@@ -1,3 +1,4 @@
+// src/pages/Booking/BookingTable.tsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Filter, Download, Plus } from "lucide-react";
@@ -56,7 +57,6 @@ const BookingPage: React.FC = () => {
 
   const handleExport = async () => {
     try {
-      // Gamitin ang exportCSV method mula sa bookingAPI
       const result = await bookingAPI.exportCSV("", filters, "admin");
       if (result.status && result.data?.filePath) {
         showError(`Exported to ${result.data.filePath}`);
@@ -76,7 +76,6 @@ const BookingPage: React.FC = () => {
 
   const handleEdit = (id: number) => {
     setSelectedBooking(bookings.find((b) => b.id === id) || null);
-
     setIsFormDialogOpen(true);
   };
 
@@ -109,8 +108,6 @@ const BookingPage: React.FC = () => {
       const response = await bookingAPI.generateInvoice(id);
       if (response.status) {
         const invoice = response.data;
-
-        // Example: show invoice in modal
         dialogs.alert({
           title: `Invoice #${invoice.invoiceNumber}`,
           message: `
@@ -120,9 +117,7 @@ const BookingPage: React.FC = () => {
           Total: ₱${invoice.total}
         `,
         });
-
-        // Or trigger print
-        window.print(); // basic browser print
+        window.print();
       }
     } catch (err) {
       showApiError(err);
@@ -154,7 +149,6 @@ const BookingPage: React.FC = () => {
       refetch();
       await dialogs.success("Booking marked as paid");
     } catch (err) {
-      // console.log(err)
       showApiError(err);
     }
   };
@@ -165,7 +159,7 @@ const BookingPage: React.FC = () => {
         title: "Mark Booking as Failed",
         message: "Enter reason for marking booking as failed:",
       });
-      if (!reason) return; // user cancelled or entered empty string
+      if (!reason) return;
       await bookingAPI.markAsFailed(id, reason);
       refetch();
       await dialogs.success("Booking marked as failed");
@@ -192,9 +186,10 @@ const BookingPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--background-color)]">
-      <main className="mx-auto px-2 py-2">
-        {/* Header */}
+    <div className="h-full flex flex-col bg-[var(--background-color)]">
+      {/* Fixed Header Section */}
+      <div className="flex-shrink-0 px-4 py-4 md:px-6">
+        {/* Title and buttons */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
             <h2 className="text-2xl font-bold text-[var(--text-primary)]">
@@ -206,7 +201,10 @@ const BookingPage: React.FC = () => {
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setIsFormDialogOpen(true)}
+              onClick={() => {
+                setSelectedBooking(null);
+                setIsFormDialogOpen(true);
+              }}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg
                          bg-[var(--card-secondary-bg)] hover:bg-[var(--card-hover-bg)]
                          text-[var(--text-primary)] border border-[var(--border-color)]/20
@@ -242,7 +240,7 @@ const BookingPage: React.FC = () => {
         <BookingQuickStats />
 
         {/* Search */}
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center mt-4">
           <BookingSearch value={searchInput} onChange={handleSearchChange} />
           {filters.search && (
             <span className="text-sm text-[var(--text-secondary)]">
@@ -269,25 +267,27 @@ const BookingPage: React.FC = () => {
             </button>
           </div>
         )}
+      </div>
 
-        {/* Table */}
-        <div className="mt-6">
-          <BookingTable
-            bookings={bookings}
-            onView={handleView}
-            onEdit={handleEdit}
-            onCancel={handleCancel}
-            onInvoice={handleInvoice}
-            onCheckIn={handleCheckIn}
-            onCheckOut={handleCheckOut}
-            onMarkAsPaid={handleMarkAsPaid}
-            onMarkAsFailed={handleMarkAsFailed}
-            onDelete={handleDelete}
-          />
-        </div>
+      {/* Scrollable Table Area */}
+      <div className="flex-1 overflow-y-auto px-4 md:px-6 pb-4">
+        <BookingTable
+          bookings={bookings}
+          onView={handleView}
+          onEdit={handleEdit}
+          onCancel={handleCancel}
+          onInvoice={handleInvoice}
+          onCheckIn={handleCheckIn}
+          onCheckOut={handleCheckOut}
+          onMarkAsPaid={handleMarkAsPaid}
+          onMarkAsFailed={handleMarkAsFailed}
+          onDelete={handleDelete}
+        />
+      </div>
 
-        {/* Pagination */}
-        {!loading && total > 0 && (
+      {/* Fixed Pagination */}
+      {!loading && total > 0 && (
+        <div className="flex-shrink-0 px-4 md:px-6 pb-4">
           <Pagination
             currentPage={currentPage}
             totalItems={total}
@@ -297,18 +297,19 @@ const BookingPage: React.FC = () => {
             pageSizeOptions={[10, 25, 50, 100]}
             showPageSize={true}
           />
-        )}
-      </main>
+        </div>
+      )}
 
+      {/* Dialogs */}
       {isFormDialogOpen && (
         <BookingFormDialog
           id={selectedBooking ? selectedBooking.id : undefined}
-          onClose={async () => {
+          onClose={() => {
             setIsFormDialogOpen(false);
             setSelectedBooking(null);
           }}
           mode={selectedBooking ? "edit" : "add"}
-          onSuccess={async (booking: Booking) => {
+          onSuccess={() => {
             setIsFormDialogOpen(false);
             setSelectedBooking(null);
             refetch();
