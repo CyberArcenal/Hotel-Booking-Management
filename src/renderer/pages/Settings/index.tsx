@@ -46,15 +46,16 @@ const SettingsPage: React.FC = () => {
 
   if (loading && !groupedConfig) {
     return (
-      <div className="min-h-screen bg-[var(--background-color)] flex items-center justify-center">
+      <div className="h-full bg-[var(--background-color)] flex items-center justify-center">
         <div className="text-[var(--text-primary)]">Loading settings...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[var(--background-color)]">
-      <main className="mx-auto px-2 py-2">
+    <div className="h-full flex flex-col bg-[var(--background-color)]">
+      {/* Fixed Header Section */}
+      <div className="flex-shrink-0 px-4 py-4 md:px-6">
         <SettingsHeader
           onSave={saveSettings}
           onReset={resetToDefaults}
@@ -77,10 +78,11 @@ const SettingsPage: React.FC = () => {
           </div>
         )}
 
-  
-
         <SettingsTabs activeTab={activeTab} onTabChange={setActiveTab} />
+      </div>
 
+      {/* Scrollable Content Area */}
+      <div className="flex-1 overflow-y-auto px-4 md:px-6 pb-4">
         <div className="bg-[var(--card-bg)] border border-[var(--border-color)]/20 rounded-lg p-6">
           {activeTab === 'general' && (
             <GeneralTab
@@ -115,7 +117,7 @@ const SettingsPage: React.FC = () => {
             />
           )}
         </div>
-      </main>
+      </div>
     </div>
   );
 };

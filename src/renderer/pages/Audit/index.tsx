@@ -87,9 +87,10 @@ const AuditPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--background-color)]">
-      <main className="mx-auto px-2 py-2">
-        {/* Header */}
+    <div className="h-full flex flex-col bg-[var(--background-color)]">
+      {/* Fixed Header Section */}
+      <div className="flex-shrink-0 px-4 py-4 md:px-6">
+        {/* Title and buttons */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
             <h2 className="text-2xl font-bold text-[var(--text-primary)]">
@@ -164,14 +165,16 @@ const AuditPage: React.FC = () => {
             </button>
           </div>
         )}
+      </div>
 
-        {/* Table */}
-        <div className="mt-6">
-          <AuditTable logs={logs} loading={loading} />
-        </div>
+      {/* Scrollable Table Area */}
+      <div className="flex-1 overflow-y-auto px-4 md:px-6 pb-4">
+        <AuditTable logs={logs} loading={loading} />
+      </div>
 
-        {/* Pagination */}
-        {!loading && total > 0 && (
+      {/* Fixed Pagination */}
+      {!loading && total > 0 && (
+        <div className="flex-shrink-0 px-4 md:px-6 pb-4">
           <Pagination
             currentPage={currentPage}
             totalItems={total}
@@ -181,8 +184,8 @@ const AuditPage: React.FC = () => {
             pageSizeOptions={[10, 20, 50, 100]}
             showPageSize={true}
           />
-        )}
-      </main>
+        </div>
+      )}
     </div>
   );
 };

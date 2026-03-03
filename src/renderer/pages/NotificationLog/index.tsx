@@ -1,3 +1,4 @@
+// src/pages/NotificationLog/index.tsx
 import React, { useState } from 'react';
 import { Filter, RefreshCw } from 'lucide-react';
 import { useNotificationLogs } from './hooks/useNotificationLogs';
@@ -64,7 +65,6 @@ const NotificationLogPage: React.FC = () => {
     try {
       const response = await notificationLogAPI.retryFailed(id);
       if (response.status) {
-        
         refetch();
       } else {
         throw new Error(response.message);
@@ -103,7 +103,6 @@ const NotificationLogPage: React.FC = () => {
     try {
       const response = await notificationLogAPI.resend(id);
       if (response.status) {
-        
         refetch();
       } else {
         throw new Error(response.message);
@@ -159,9 +158,10 @@ const NotificationLogPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--background-color)]">
-      <main className="mx-auto px-2 py-2">
-        {/* Header */}
+    <div className="h-full flex flex-col bg-[var(--background-color)]">
+      {/* Fixed Header Section */}
+      <div className="flex-shrink-0 px-4 py-4 md:px-6">
+        {/* Title and buttons */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
             <h2 className="text-2xl font-bold text-[var(--text-primary)]">Notification Logs</h2>
@@ -197,7 +197,7 @@ const NotificationLogPage: React.FC = () => {
         <NotificationStats stats={stats} loading={loading} />
 
         {/* Search Bar */}
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center mt-4">
           <NotificationSearch value={searchQuery} onChange={handleSearchChange} />
           {searchQuery && (
             <span className="text-sm text-[var(--text-secondary)]">
@@ -230,22 +230,24 @@ const NotificationLogPage: React.FC = () => {
             </button>
           </div>
         )}
+      </div>
 
-        {/* Table */}
-        <div className="mt-6">
-          <NotificationTable
-            logs={logs}
-            onView={handleView}
-            onRetry={confirmRetry}      // ← confirmation then action
-            onResend={confirmResend}    // ← confirmation then action
-            onDelete={confirmDelete}    // ← confirmation then action
-            isLoading={loading}
-            sendingIds={sendingRows}
-          />
-        </div>
+      {/* Scrollable Table Area */}
+      <div className="flex-1 overflow-y-auto px-4 md:px-6 pb-4">
+        <NotificationTable
+          logs={logs}
+          onView={handleView}
+          onRetry={confirmRetry}
+          onResend={confirmResend}
+          onDelete={confirmDelete}
+          isLoading={loading}
+          sendingIds={sendingRows}
+        />
+      </div>
 
-        {/* Pagination */}
-        {!loading && pagination.total > 0 && (
+      {/* Fixed Pagination */}
+      {!loading && pagination.total > 0 && (
+        <div className="flex-shrink-0 px-4 md:px-6 pb-4">
           <Pagination
             currentPage={pagination.page}
             totalItems={pagination.total}
@@ -255,10 +257,10 @@ const NotificationLogPage: React.FC = () => {
             pageSizeOptions={[10, 25, 50, 100]}
             showPageSize={true}
           />
-        )}
-      </main>
+        </div>
+      )}
 
-      {/* Only View Dialog remains */}
+      {/* Dialogs */}
       {selectedLog && (
         <NotificationViewDialog
           log={selectedLog}

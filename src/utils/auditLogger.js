@@ -133,6 +133,7 @@ class AuditLogger {
    */
   // @ts-ignore
   async logView(entity, entityId = null, user = 'system') {
+    return;
     return this.log({
       action: 'VIEW',
       entity,

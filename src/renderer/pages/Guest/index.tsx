@@ -1,3 +1,4 @@
+// src/pages/Guest/index.tsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Filter, Download, Plus } from "lucide-react";
@@ -63,7 +64,6 @@ const GuestPage: React.FC = () => {
     try {
       const result = await guestAPI.exportToCSV(filters, "admin");
       if (result.status && result.data?.data) {
-        // Simulate file download
         const blob = new Blob([result.data.data], { type: "text/csv" });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -112,9 +112,10 @@ const GuestPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--background-color)]">
-      <main className="mx-auto px-2 py-2">
-        {/* Header */}
+    <div className="h-full flex flex-col bg-[var(--background-color)]">
+      {/* Fixed Header Section */}
+      <div className="flex-shrink-0 px-4 py-4 md:px-6">
+        {/* Title and buttons */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
             <h2 className="text-2xl font-bold text-[var(--text-primary)]">
@@ -165,7 +166,7 @@ const GuestPage: React.FC = () => {
         <GuestQuickStats />
 
         {/* Search */}
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center mt-4">
           <GuestSearch value={searchInput} onChange={handleSearchChange} />
           {filters.search && (
             <span className="text-sm text-[var(--text-secondary)]">
@@ -192,21 +193,23 @@ const GuestPage: React.FC = () => {
             </button>
           </div>
         )}
+      </div>
 
-        {/* Table */}
-        <div className="mt-6">
-          <GuestTable
-            guests={guests}
-            activeGuestIds={activeGuestIds}
-            onView={handleView}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onAddBooking={handleAddBooking}
-          />
-        </div>
+      {/* Scrollable Table Area */}
+      <div className="flex-1 overflow-y-auto px-4 md:px-6 pb-4">
+        <GuestTable
+          guests={guests}
+          activeGuestIds={activeGuestIds}
+          onView={handleView}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onAddBooking={handleAddBooking}
+        />
+      </div>
 
-        {/* Pagination */}
-        {!loading && total > 0 && (
+      {/* Fixed Pagination */}
+      {!loading && total > 0 && (
+        <div className="flex-shrink-0 px-4 md:px-6 pb-4">
           <Pagination
             currentPage={currentPage}
             totalItems={total}
@@ -216,9 +219,10 @@ const GuestPage: React.FC = () => {
             pageSizeOptions={[10, 25, 50, 100]}
             showPageSize={true}
           />
-        )}
-      </main>
+        </div>
+      )}
 
+      {/* Dialogs */}
       {isViewDialogOpen && selectedGuest && (
         <GuestViewDialog
           id={selectedGuest.id!}
