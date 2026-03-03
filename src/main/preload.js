@@ -27,6 +27,8 @@ contextBridge.exposeInMainWorld("backendAPI", {
     return () => ipcRenderer.removeListener(event, callback);
   },
 
+  updater: (payload) => ipcRenderer.invoke('updater', payload),
+
   minimizeApp: () => ipcRenderer.send("window-minimize"),
   maximizeApp: () => ipcRenderer.send("window-maximize"),
   closeApp: () => ipcRenderer.send("window-close"),

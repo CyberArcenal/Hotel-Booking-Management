@@ -406,3 +406,20 @@
 tr.expanded-row {
   animation: expandRow 0.3s ease-out;
 }
+
+
+/* Windows fade-in animation */
+@keyframes windowsFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.windows-fade-in {
+  animation: windowsFadeIn 0.3s ease-out;
+}

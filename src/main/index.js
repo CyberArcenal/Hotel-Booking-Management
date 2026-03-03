@@ -553,6 +553,14 @@ async function createMainWindow() {
       throw new Error(errorMessage);
     }
 
+    try {
+      const updaterModule = require("./ipc/updater/index.ipc.js");
+      updaterModule.setMainWindow(mainWindow);
+      log(LogLevel.INFO, "Updater handler attached to main window");
+    } catch (e) {
+      log(LogLevel.WARN, "Failed to set updater main window", e);
+    }
+
     return mainWindow;
   } catch (error) {
     throw new WindowError(
@@ -785,6 +793,7 @@ function registerIpcHandlers() {
       "./ipc/guest/index.ipc.js",
       "./ipc/room/index.ipc.js",
       "./ipc/notification_log/index.ipc.js",
+      "./ipc/updater/index.ipc.js",
     ];
 
     ipcModules.forEach((modulePath) => {

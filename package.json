@@ -1,8 +1,16 @@
 {
   "name": "hotel-booking-management",
   "private": true,
-  "version": "1.0.2-beta",
+  "version": "1.0.3-beta",
   "main": "src/main/index.js",
+  "author": {
+    "name": "CyberArcenal",
+    "email": "cyberarcenal1@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CyberArcenal/Hotel-Booking-Management.git"
+  },
   "build": {
     "appId": "com.CyberArcenal.hotelbooking.app",
     "productName": "HotelBookingManagement Lite",
@@ -50,6 +58,7 @@
   "dependencies": {
     "csv-parse": "^6.1.0",
     "decimal.js": "^10.6.0",
+    "electron-updater": "^6.8.3",
     "escpos": "^3.0.0-alpha.6",
     "escpos-usb": "^3.0.0-alpha.4",
     "lucide-react": "^0.563.0",

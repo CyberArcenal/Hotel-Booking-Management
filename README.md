@@ -117,6 +117,7 @@ src/
     services/
       roomService.ts
       bookingService.ts
+    
     styles/
       index.css
 
@@ -135,6 +136,21 @@ src/
 
   middlewares/
     errorHandler.ts
+  transitionServices/
+    Room.ts
+    Booking.ts
+    Guest.ts
+    AuditLog.ts
+  handlers/
+    Room.ts
+    Booking.ts
+    Guest.ts
+    AuditLog.ts
+  subscribers/
+    Room.ts
+    Booking.ts
+    Guest.ts
+    AuditLog.ts
 ```
 
 ---

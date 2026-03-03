@@ -439,7 +439,7 @@
             
             // Set version from query params or default
             const urlParams = new URLSearchParams(window.location.search);
-            const version = urlParams.get('version') || '0.0.0';
+            const version = urlParams.get('version') || 'v0.0.3-beta';
             document.getElementById('version-info').textContent = `v${version}`;
         });
 
