@@ -1,7 +1,7 @@
 {
   "name": "roomify",
   "private": true,
-  "version": "v1.0.7-beta",
+  "version": "v1.0.8-beta",
   "main": "src/main/index.js",
   "author": {
     "name": "CyberArcenal",
@@ -19,18 +19,21 @@
     },
     "win": {
       "icon": "build/icon.ico",
-      "target": "nsis"
+      "target": "nsis",
+      "artifactName": "${productName}-Setup-${version}.${ext}"
     },
     "mac": {
       "icon": "build/icon.icns",
-      "target": "dmg"
+      "target": "dmg",
+      "artifactName": "${productName}-${version}.${ext}"
     },
     "linux": {
       "icon": "build/icon.png",
       "target": [
         "AppImage",
         "deb"
-      ]
+      ],
+      "artifactName": "${productName}-${version}.${ext}"
     },
     "publish": {
       "provider": "github",
