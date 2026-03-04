@@ -296,6 +296,7 @@ class NotificationLogService {
     { id, status, errorMessage = null },
     queryRunner = null,
   ) {
+    // @ts-ignore
     const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
     return withErrorHandling(async () => {
       if (!id || !status) {
@@ -330,6 +331,7 @@ class NotificationLogService {
       // @ts-ignore
       notification.updated_at = new Date();
 
+      // @ts-ignore
       const saved = await updateDb(repo, notification);
       return { status: true, data: saved };
     });
@@ -384,6 +386,7 @@ class NotificationLogService {
    * @param {import('typeorm').QueryRunner | null} [queryRunner]
    */
   async retryFailedNotification({ id }, queryRunner = null) {
+    // @ts-ignore
     const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
     return withErrorHandling(async () => {
       if (!id) {
@@ -418,6 +421,7 @@ class NotificationLogService {
       }
       // @ts-ignore
       notification.resend_count = notification.resend_count + 1;
+      // @ts-ignore
       const saved = await updateDb(repo, notification);
       let sendResult = null;
       try{
@@ -490,6 +494,7 @@ class NotificationLogService {
    * @param {import('typeorm').QueryRunner | null} [queryRunner]
    */
   async resendNotification({ id }, queryRunner = null) {
+    // @ts-ignore
     const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
     return withErrorHandling(async () => {
       if (!id) {
@@ -512,6 +517,7 @@ class NotificationLogService {
       }
 
       const sendResult = await this._sendAndUpdate(notification, true);
+      // @ts-ignore
       const saved = await updateDb(repo, notification);
 
       return {
@@ -594,6 +600,7 @@ class NotificationLogService {
    * @param {import('typeorm').QueryRunner | null} [queryRunner]
    */
   async createLog(data, queryRunner = null) {
+    // @ts-ignore
     const { saveDb, updateDb } = require("../utils/dbUtils/dbActions");
     return withErrorHandling(async () => {
       const repo = this.getRepository(queryRunner);
@@ -608,6 +615,7 @@ class NotificationLogService {
         booking: data.bookingId ? { id: data.bookingId } : null,
       });
 
+      // @ts-ignore
       const saved = await saveDb(repo, log);
       return { status: true, data: saved };
     });

@@ -1,7 +1,7 @@
 {
-  "name": "hotel-booking-management",
+  "name": "roomify",
   "private": true,
-  "version": "1.0.4-beta",
+  "version": "v1.0.5-beta",
   "main": "src/main/index.js",
   "author": {
     "name": "CyberArcenal",
@@ -13,7 +13,7 @@
   },
   "build": {
     "appId": "com.CyberArcenal.hotelbooking.app",
-    "productName": "HotelBookingManagement Lite",
+    "productName": "Roomify",
     "directories": {
       "output": "release"
     },

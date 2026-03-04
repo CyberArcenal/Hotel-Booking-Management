@@ -190,7 +190,13 @@ const BookingTable: React.FC<BookingTableProps> = ({
                         e.stopPropagation();
                         onEdit(booking.id);
                       }}
-                      className="p-1.5 rounded-lg hover:bg-[var(--card-hover-bg)] text-[var(--text-secondary)] hover:text-[var(--primary-color)] transition-colors"
+                      disabled={booking.status !== "pending"}
+                      className={`p-1.5 rounded-lg transition-colors
+                      ${
+                        booking.status === "pending"
+                          ? "hover:bg-[var(--card-hover-bg)] text-[var(--text-secondary)] hover:text-[var(--primary-color)]"
+                          : "opacity-50 cursor-not-allowed text-[var(--text-secondary)]"
+                      }`}
                       title="Edit"
                     >
                       <Edit2 className="w-4 h-4" />
@@ -200,17 +206,30 @@ const BookingTable: React.FC<BookingTableProps> = ({
                         e.stopPropagation();
                         onCancel(booking.id);
                       }}
-                      className="p-1.5 rounded-lg hover:bg-[var(--card-hover-bg)] text-[var(--text-secondary)] hover:text-red-500 transition-colors"
+                      disabled={booking.status === "checked_out"}
+                      className={`p-1.5 rounded-lg transition-colors
+                      ${
+                        booking.status === "checked_out"
+                          ? "opacity-50 cursor-not-allowed text-[var(--text-secondary)]"
+                          : "hover:bg-[var(--card-hover-bg)] text-[var(--text-secondary)] hover:text-red-500"
+                      }`}
                       title="Cancel"
                     >
                       <XCircle className="w-4 h-4" />
                     </button>
+
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         onInvoice(booking.id);
                       }}
-                      className="p-1.5 rounded-lg hover:bg-[var(--card-hover-bg)] text-[var(--text-secondary)] hover:text-[var(--primary-color)] transition-colors"
+                      disabled={booking.status === "cancelled"}
+                      className={`p-1.5 rounded-lg transition-colors
+                      ${
+                        booking.status === "cancelled"
+                          ? "opacity-50 cursor-not-allowed text-[var(--text-secondary)]"
+                          : "hover:bg-[var(--card-hover-bg)] text-[var(--text-secondary)] hover:text-[var(--primary-color)]"
+                      }`}
                       title="Invoice"
                     >
                       <FileText className="w-4 h-4" />

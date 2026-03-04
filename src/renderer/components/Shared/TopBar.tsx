@@ -13,13 +13,15 @@ import {
 } from "lucide-react";
 import type { DownloadProgress, UpdateInfo } from "../../api/updater";
 import updaterAPI from "../../api/updater";
-
+import { version, name } from "../../../../package.json"; // adjust path as needed
+import { toTitleCase } from "./SideBar";
 interface TopBarProps {
   toggleSidebar: () => void;
 }
 
 const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
   const navigate = useNavigate();
+    const title = toTitleCase(name);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearchResults, setShowSearchResults] = useState(false);
 
@@ -158,7 +160,7 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
             <Hotel className="w-5 h-5" style={{ color: "var(--primary-color)" }} />
             <div className="flex flex-col">
               <span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-                HotelBooking Lite
+                HotelBooking Management
               </span>
               <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
                 {formattedDate}

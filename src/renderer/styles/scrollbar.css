@@ -34,13 +34,13 @@
 
 *::-webkit-scrollbar-thumb {
   border-radius: 2px;
-  background-color: #397524;
+  background-color: #b8860b;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background-color: #62a34b;
+  background-color: #d4af37;
 }
 
 *::-webkit-scrollbar-thumb:active {
-  background-color: #62a34b;
+  background-color: #e6c85f;
 }

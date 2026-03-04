@@ -96,7 +96,7 @@ const BookingActionsDropdown: React.FC<BookingActionsDropdownProps> = ({
         ref={buttonRef}
         onClick={handleToggle}
         className="p-1.5 rounded-lg hover:bg-[var(--card-hover-bg)] text-[var(--text-secondary)] 
-                   hover:text-[var(--primary-color)] transition-colors relative z-50"
+                 hover:text-[var(--primary-color)] transition-colors relative z-50"
         title="More actions"
       >
         <MoreVertical className="w-4 h-4" />
@@ -105,26 +105,19 @@ const BookingActionsDropdown: React.FC<BookingActionsDropdownProps> = ({
       {isOpen && (
         <div
           className="bg-[var(--card-bg)] rounded-lg shadow-xl border border-[var(--border-color)]/30 
-                     min-w-[200px] py-1 windows-fade-in"
+                   min-w-[200px] py-1 windows-fade-in"
           style={getDropdownPosition()}
         >
           {/* Check In */}
           {canCheckIn && (
             <button
-              onClick={async (e) => {
-                e.stopPropagation();
-                if (
-                  !(await dialogs.confirm({
-                    title: "Confirm Check In",
-                    message: "Are you sure you want to check in this booking?",
-                  }))
-                )
-                  return;
-                handleAction(() => onCheckIn(booking.id));
-              }}
-              className="w-full flex items-center gap-3 px-4 py-2 text-sm 
-                       text-[var(--text-primary)] hover:bg-[var(--card-hover-bg)] 
-                       transition-colors"
+              disabled={booking.status !== "confirmed"}
+              className={`w-full flex items-center gap-3 px-4 py-2 text-sm transition-colors
+              ${
+                booking.status === "confirmed"
+                  ? "text-[var(--text-primary)] hover:bg-[var(--card-hover-bg)]"
+                  : "opacity-50 cursor-not-allowed text-[var(--text-secondary)]"
+              }`}
             >
               <CheckCircle className="w-4 h-4 text-[var(--status-confirmed)]" />
               <span>Check In</span>
@@ -134,20 +127,13 @@ const BookingActionsDropdown: React.FC<BookingActionsDropdownProps> = ({
           {/* Check Out */}
           {canCheckOut && (
             <button
-              onClick={async (e) => {
-                e.stopPropagation();
-                if (
-                  !(await dialogs.confirm({
-                    title: "Confirm Check Out",
-                    message: "Are you sure you want to check out this booking?",
-                  }))
-                )
-                  return;
-                handleAction(() => onCheckOut(booking.id));
-              }}
-              className="w-full flex items-center gap-3 px-4 py-2 text-sm 
-                       text-[var(--text-primary)] hover:bg-[var(--card-hover-bg)] 
-                       transition-colors"
+              disabled={booking.status !== "checked_in"}
+              className={`w-full flex items-center gap-3 px-4 py-2 text-sm transition-colors
+              ${
+                booking.status === "checked_in"
+                  ? "text-[var(--text-primary)] hover:bg-[var(--card-hover-bg)]"
+                  : "opacity-50 cursor-not-allowed text-[var(--text-secondary)]"
+              }`}
             >
               <XCircle className="w-4 h-4 text-[var(--status-completed)]" />
               <span>Check Out</span>
@@ -157,20 +143,16 @@ const BookingActionsDropdown: React.FC<BookingActionsDropdownProps> = ({
           {/* Cancel */}
           {canCancel && (
             <button
-              onClick={async (e) => {
-                e.stopPropagation();
-                if (
-                  !(await dialogs.confirm({
-                    title: "Confirm Cancel",
-                    message: "Are you sure you want to cancel this booking?",
-                  }))
-                )
-                  return;
-                handleAction(() => onCancel(booking.id));
-              }}
-              className="w-full flex items-center gap-3 px-4 py-2 text-sm 
-                       text-[var(--text-primary)] hover:bg-[var(--card-hover-bg)] 
-                       transition-colors"
+              disabled={
+                booking.status === "checked_out" ||
+                booking.status === "cancelled"
+              }
+              className={`w-full flex items-center gap-3 px-4 py-2 text-sm transition-colors
+            ${
+              ["pending", "confirmed", "checked_in"].includes(booking.status)
+                ? "text-[var(--text-primary)] hover:bg-[var(--card-hover-bg)]"
+                : "opacity-50 cursor-not-allowed text-[var(--text-secondary)]"
+            }`}
             >
               <XCircle className="w-4 h-4 text-[var(--status-cancelled)]" />
               <span>Cancel</span>
@@ -182,7 +164,7 @@ const BookingActionsDropdown: React.FC<BookingActionsDropdownProps> = ({
             <div className="border-t border-[var(--border-color)]/20 my-1" />
           )}
 
-          {/* Mark as Paid (placeholder) */}
+          {/* Mark as Paid */}
           {booking.paymentStatus === "pending" && (
             <button
               onClick={async (e) => {
@@ -198,8 +180,7 @@ const BookingActionsDropdown: React.FC<BookingActionsDropdownProps> = ({
                 handleAction(() => onMarkAsPaid(booking.id));
               }}
               className="w-full flex items-center gap-3 px-4 py-2 text-sm 
-                     text-[var(--text-primary)] hover:bg-[var(--card-hover-bg)] 
-                     transition-colors"
+                       text-[var(--text-primary)] hover:bg-[var(--card-hover-bg)] transition-colors"
             >
               <DollarSign className="w-4 h-4 text-[var(--primary-color)]" />
               <span>Mark as Paid</span>
@@ -222,8 +203,7 @@ const BookingActionsDropdown: React.FC<BookingActionsDropdownProps> = ({
                 handleAction(() => onMarkAsFailed(booking.id));
               }}
               className="w-full flex items-center gap-3 px-4 py-2 text-sm 
-                     text-[var(--text-primary)] hover:bg-[var(--card-hover-bg)] 
-                     transition-colors"
+                       text-[var(--text-primary)] hover:bg-[var(--card-hover-bg)] transition-colors"
             >
               <XCircle className="w-4 h-4 text-red-500" />
               <span>Mark as Failed</span>
@@ -232,6 +212,7 @@ const BookingActionsDropdown: React.FC<BookingActionsDropdownProps> = ({
 
           {/* Generate Invoice */}
           <button
+            disabled={booking.status === "cancelled"}
             onClick={async (e) => {
               e.stopPropagation();
               if (
@@ -243,9 +224,12 @@ const BookingActionsDropdown: React.FC<BookingActionsDropdownProps> = ({
                 return;
               handleAction(() => onGenerateInvoice(booking.id));
             }}
-            className="w-full flex items-center gap-3 px-4 py-2 text-sm 
-                     text-[var(--text-primary)] hover:bg-[var(--card-hover-bg)] 
-                     transition-colors"
+            className={`w-full flex items-center gap-3 px-4 py-2 text-sm transition-colors
+            ${
+              booking.status !== "cancelled"
+                ? "text-[var(--text-primary)] hover:bg-[var(--card-hover-bg)]"
+                : "opacity-50 cursor-not-allowed text-[var(--text-secondary)]"
+            }`}
           >
             <FileText className="w-4 h-4 text-[var(--primary-color)]" />
             <span>Generate Invoice</span>
@@ -254,7 +238,7 @@ const BookingActionsDropdown: React.FC<BookingActionsDropdownProps> = ({
           {/* Divider before delete */}
           <div className="border-t border-[var(--border-color)]/20 my-1" />
 
-          {/* Delete – shown for cancelled or inactive bookings, or always with caution */}
+          {/* Delete */}
           {!isActive && (
             <button
               onClick={async (e) => {

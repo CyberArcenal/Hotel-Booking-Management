@@ -24,7 +24,7 @@ import {
   Home,
   Mail,
 } from "lucide-react";
-import { version } from "../../../../package.json"; // adjust path as needed
+import { version, name } from "../../../../package.json"; // adjust path as needed
 import dashboardAPI from "../../api/dashboard";
 
 interface SidebarProps {
@@ -45,11 +45,20 @@ interface HotelStats {
   departuresToday: number;
   availableRooms: number;
   inHouse: number;
+};
+export function toTitleCase(str: string) {
+  return str.replace(
+    /\w\S*/g,
+    (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase(),
+  );
 }
 
 const SideBar: React.FC<SidebarProps> = ({ isOpen }) => {
+  const title = toTitleCase(name);
   const location = useLocation();
-  const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>({});
+  const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>(
+    {},
+  );
   const [stats, setStats] = useState<HotelStats>({
     occupancyRate: 0,
     arrivalsToday: 0,
@@ -176,7 +185,9 @@ const SideBar: React.FC<SidebarProps> = ({ isOpen }) => {
                       : "text-[var(--sidebar-text)] hover:bg-[var(--card-hover-bg)]"
                   }
                 `}
-                style={isActive ? { backgroundColor: "var(--primary-color)" } : {}}
+                style={
+                  isActive ? { backgroundColor: "var(--primary-color)" } : {}
+                }
               >
                 <div className="flex items-center gap-3">
                   <item.icon
@@ -228,7 +239,9 @@ const SideBar: React.FC<SidebarProps> = ({ isOpen }) => {
                     : "text-[var(--sidebar-text)] hover:bg-[var(--card-hover-bg)]"
                 }
               `}
-              style={isActive ? { backgroundColor: "var(--primary-color)" } : {}}
+              style={
+                isActive ? { backgroundColor: "var(--primary-color)" } : {}
+              }
             >
               <div className="flex items-center gap-3">
                 <item.icon
@@ -287,8 +300,11 @@ const SideBar: React.FC<SidebarProps> = ({ isOpen }) => {
             <Hotel className="w-7 h-7" />
           </div>
           <div className="min-w-0">
-            <h2 className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>
-              HotelBooking
+            <h2
+              className="text-lg font-bold"
+              style={{ color: "var(--text-primary)" }}
+            >
+              {title}
             </h2>
             <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
               Management Lite
@@ -301,7 +317,7 @@ const SideBar: React.FC<SidebarProps> = ({ isOpen }) => {
       <nav className="flex-1 overflow-y-auto p-4">
         {categories.map((category) => {
           const categoryItems = menuItems.filter(
-            (item) => item.category === category.id
+            (item) => item.category === category.id,
           );
           if (categoryItems.length === 0) return null;
           return (
@@ -323,7 +339,10 @@ const SideBar: React.FC<SidebarProps> = ({ isOpen }) => {
         className="p-4 border-t"
         style={{ borderColor: "var(--sidebar-border)" }}
       >
-        <h4 className="text-sm font-semibold mb-3" style={{ color: "var(--text-primary)" }}>
+        <h4
+          className="text-sm font-semibold mb-3"
+          style={{ color: "var(--text-primary)" }}
+        >
           {loading ? "Loading stats..." : "Today's Snapshot"}
         </h4>
         <div className="grid grid-cols-2 gap-3 mb-4">
@@ -334,8 +353,14 @@ const SideBar: React.FC<SidebarProps> = ({ isOpen }) => {
               border: "1px solid var(--border-color)",
             }}
           >
-            <TrendingUp className="w-4 h-4 mx-auto mb-1" style={{ color: "var(--primary-color)" }} />
-            <div className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>
+            <TrendingUp
+              className="w-4 h-4 mx-auto mb-1"
+              style={{ color: "var(--primary-color)" }}
+            />
+            <div
+              className="text-lg font-bold"
+              style={{ color: "var(--text-primary)" }}
+            >
               {loading ? "..." : `${stats.occupancyRate}%`}
             </div>
             <div className="text-xs" style={{ color: "var(--text-secondary)" }}>
@@ -349,8 +374,14 @@ const SideBar: React.FC<SidebarProps> = ({ isOpen }) => {
               border: "1px solid var(--border-color)",
             }}
           >
-            <CalendarDays className="w-4 h-4 mx-auto mb-1" style={{ color: "var(--primary-color)" }} />
-            <div className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>
+            <CalendarDays
+              className="w-4 h-4 mx-auto mb-1"
+              style={{ color: "var(--primary-color)" }}
+            />
+            <div
+              className="text-lg font-bold"
+              style={{ color: "var(--text-primary)" }}
+            >
               {loading ? "..." : stats.arrivalsToday}
             </div>
             <div className="text-xs" style={{ color: "var(--text-secondary)" }}>
@@ -364,8 +395,14 @@ const SideBar: React.FC<SidebarProps> = ({ isOpen }) => {
               border: "1px solid var(--border-color)",
             }}
           >
-            <Activity className="w-4 h-4 mx-auto mb-1" style={{ color: "var(--primary-color)" }} />
-            <div className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>
+            <Activity
+              className="w-4 h-4 mx-auto mb-1"
+              style={{ color: "var(--primary-color)" }}
+            />
+            <div
+              className="text-lg font-bold"
+              style={{ color: "var(--text-primary)" }}
+            >
               {loading ? "..." : stats.departuresToday}
             </div>
             <div className="text-xs" style={{ color: "var(--text-secondary)" }}>
@@ -379,8 +416,14 @@ const SideBar: React.FC<SidebarProps> = ({ isOpen }) => {
               border: "1px solid var(--border-color)",
             }}
           >
-            <BedDouble className="w-4 h-4 mx-auto mb-1" style={{ color: "var(--primary-color)" }} />
-            <div className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>
+            <BedDouble
+              className="w-4 h-4 mx-auto mb-1"
+              style={{ color: "var(--primary-color)" }}
+            />
+            <div
+              className="text-lg font-bold"
+              style={{ color: "var(--text-primary)" }}
+            >
               {loading ? "..." : stats.availableRooms}
             </div>
             <div className="text-xs" style={{ color: "var(--text-secondary)" }}>
@@ -412,8 +455,11 @@ const SideBar: React.FC<SidebarProps> = ({ isOpen }) => {
             <Settings className="w-5 h-5" />
           </Link>
         </div>
-        <p className="text-xs text-center" style={{ color: "var(--text-tertiary)" }}>
-          v{version} · HotelBookingManagement Lite
+        <p
+          className="text-xs text-center"
+          style={{ color: "var(--text-tertiary)" }}
+        >
+          {version} · {title}
         </p>
       </div>
     </div>

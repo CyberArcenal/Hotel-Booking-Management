@@ -116,13 +116,13 @@ class ReportService {
       };
 
       // Log dashboard view
-      await auditLogger.log({
-        action: "VIEW_DASHBOARD",
-        entity: "Dashboard",
-        // @ts-ignore
-        entityId: null,
-        user: "system",
-      });
+      // await auditLogger.log({
+      //   action: "VIEW_DASHBOARD",
+      //   entity: "Dashboard",
+      //   // @ts-ignore
+      //   entityId: null,
+      //   user: "system",
+      // });
 
       return dashboard;
     } catch (error) {
