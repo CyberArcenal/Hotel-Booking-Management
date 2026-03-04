@@ -23,22 +23,20 @@
     },
     "mac": {
       "icon": "build/icon.icns",
-       "target": "dmg"
+      "target": "dmg"
     },
     "linux": {
       "icon": "build/icon.png",
-        "target": [
+      "target": [
         "AppImage",
         "deb"
       ]
     },
-    "publish": [
-      {
-        "provider": "github",
-        "owner": "CyberArcenal",
-        "repo": "Hotel-Booking-Management"
-      }
-    ]
+    "publish": {
+      "provider": "github",
+      "owner": "CyberArcenal",
+      "repo": "Hotel-Booking-Management"
+    }
   },
   "scripts": {
     "build:main": "tsc -p tsconfig.main.json",
