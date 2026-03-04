@@ -16,6 +16,6 @@
 
     "strict": true
   },
-  "include": ["src/renderer/**/*"],
+  "include": ["src/renderer/**/*", "public/**/*"],
   "exclude": ["node_modules", "dist", "src/main", "src/config"]
 }
