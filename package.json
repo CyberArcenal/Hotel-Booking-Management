@@ -1,7 +1,7 @@
 {
   "name": "roomify",
   "private": true,
-  "version": "v1.0.9-beta",
+  "version": "v1.1.0-beta",
   "main": "src/main/index.js",
   "author": {
     "name": "CyberArcenal",
