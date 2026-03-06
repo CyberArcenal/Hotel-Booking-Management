@@ -1,7 +1,7 @@
 {
   "name": "roomify",
   "private": true,
-  "version": "v1.1.0-beta",
+  "version": "v1.1.1-beta",
   "main": "src/main/index.js",
   "author": {
     "name": "CyberArcenal",
@@ -38,7 +38,8 @@
     "publish": {
       "provider": "github",
       "owner": "CyberArcenal",
-      "repo": "Hotel-Booking-Management"
+      "repo": "Hotel-Booking-Management",
+      "releaseType": "release"
     }
   },
   "scripts": {
