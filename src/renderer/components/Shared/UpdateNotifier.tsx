@@ -167,7 +167,7 @@ const UpdateNotifier: React.FC = () => {
                     // Keep modal open to show progress
                   }}
                   disabled={loading}
-                  className={`btn-primary btn-sm px-4 py-2 ${loading ? "opacity-75" : ""}`}
+                  className={`windows-btn windows-btn-primary text-sm py-1 px-3 ${loading ? "opacity-75" : ""}`}
                 >
                   {loading ? `Downloading...` : `Download Update`}
                 </button>
