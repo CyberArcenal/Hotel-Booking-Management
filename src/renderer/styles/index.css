@@ -2,9 +2,7 @@
 @import "tailwindcss";
 
 :root {
-
-  --background-color: #0a0a0a;   /* even darker than before */
-
+  --background-color: #0a0a0a; /* even darker than before */
 
   /* Primary Color Palette - Elegant & Premium */
   --primary-color: #d4af37; /* Gold */
@@ -75,7 +73,6 @@
   --notification-confirmation: rgba(212, 175, 55, 0.1);
 }
 
-
 /* Sa index.css o windows-friendly.css */
 .windows-card {
   background: var(--card-bg) !important;
@@ -89,8 +86,12 @@
 }
 
 @keyframes shimmer {
-  0% { background-position: -1000px 0; }
-  100% { background-position: 1000px 0; }
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
 }
 .shimmer {
   animation: shimmer 2s infinite linear;
@@ -102,7 +103,8 @@
 
 /* Sending row animation – gold pulse */
 @keyframes sending-pulse {
-  0%, 100% {
+  0%,
+  100% {
     background-color: rgba(212, 175, 55, 0.05);
   }
   50% {
@@ -111,4 +113,8 @@
 }
 .sending-row {
   animation: sending-pulse 1.5s infinite;
+}
+.text-2xs {
+  font-size: 0.65rem; /* 10px */
+  line-height: 1rem;
 }

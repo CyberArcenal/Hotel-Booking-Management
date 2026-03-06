@@ -4,15 +4,15 @@ import { LogIn, CalendarDays, FileText } from 'lucide-react';
 
 export const QuickActions: React.FC = () => {
   return (
-    <div className="flex flex-wrap gap-3">
-      <button className="windows-btn windows-btn-primary flex items-center gap-2 px-4 py-2">
-        <LogIn className="w-4 h-4" /> Check‑in
+    <div className="flex flex-wrap gap-2">
+      <button className="windows-btn windows-btn-primary flex items-center gap-1.5 px-3 py-1.5 text-xs">
+        <LogIn className="w-3.5 h-3.5" /> Check‑in
       </button>
-      <button className="windows-btn windows-btn-secondary flex items-center gap-2 px-4 py-2">
-        <CalendarDays className="w-4 h-4" /> New Booking
+      <button className="windows-btn windows-btn-secondary flex items-center gap-1.5 px-3 py-1.5 text-xs">
+        <CalendarDays className="w-3.5 h-3.5" /> New Booking
       </button>
-      <button className="windows-btn windows-btn-secondary flex items-center gap-2 px-4 py-2">
-        <FileText className="w-4 h-4" /> Export Report
+      <button className="windows-btn windows-btn-secondary flex items-center gap-1.5 px-3 py-1.5 text-xs">
+        <FileText className="w-3.5 h-3.5" /> Export Report
       </button>
     </div>
   );

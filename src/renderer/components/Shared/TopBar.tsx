@@ -15,6 +15,7 @@ import type { DownloadProgress, UpdateInfo } from "../../api/updater";
 import updaterAPI from "../../api/updater";
 import { version, name } from "../../../../package.json"; // adjust path as needed
 import { toTitleCase } from "./SideBar";
+import UpdateNotifier from "./UpdateNotifier";
 interface TopBarProps {
   toggleSidebar: () => void;
 }
@@ -272,48 +273,11 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
           </div>
         </div>
 
-        {/* ---------- RIGHT SECTION (with update icons) ---------- */}
+
+         {/* Right section – now with UpdateNotifier and notification bell */}
         <div className="flex items-center gap-3">
-          {/* Update available indicator */}
-          {updateAvailable && !downloading && (
-            <button
-              onClick={() => setShowUpdateModal(true)}
-              className="relative p-2 rounded-lg transition-colors animate-pulse"
-              style={{
-                background: "rgba(212, 175, 55, 0.2)",
-                border: "1px solid var(--primary-color)",
-                color: "var(--primary-color)",
-              }}
-              title="Update available"
-            >
-              <Download className="w-5 h-5" />
-              <span
-                className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[var(--primary-color)] animate-ping"
-              />
-            </button>
-          )}
-
-          {/* Downloading progress indicator */}
-          {downloading && (
-            <button
-              className="relative p-2 rounded-lg"
-              style={{
-                background: "rgba(212, 175, 55, 0.1)",
-                border: "1px solid var(--border-color)",
-                color: "var(--primary-color)",
-              }}
-              disabled
-            >
-              <RefreshCw className="w-5 h-5 animate-spin" />
-              {downloadProgress && (
-                <span className="absolute -bottom-1 -right-1 text-xs bg-[var(--primary-color)] text-black rounded-full w-5 h-5 flex items-center justify-center">
-                  {Math.round(downloadProgress.percent)}%
-                </span>
-              )}
-            </button>
-          )}
-
-          {/* Notification bell (existing) */}
+          <UpdateNotifier />
+          {/* Notification bell (optional) */}
           {/* <button
             className="relative p-2 rounded-lg transition-colors"
             style={{
@@ -323,81 +287,9 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
             }}
           >
             <Bell className="w-5 h-5" />
-            <span
-              className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
-              style={{ background: "var(--status-cancelled)" }}
-            />
           </button> */}
         </div>
       </div>
-
-      {/* Update Modal */}
-      {showUpdateModal && updateInfo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-            onClick={() => setShowUpdateModal(false)}
-          />
-          {/* Modal content */}
-          <div
-            className="relative windows-modal p-6 max-w-md w-full mx-4 rounded-lg shadow-2xl"
-            style={{ background: "var(--card-bg)", border: "2px solid var(--primary-color)" }}
-          >
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-xl font-bold" style={{ color: "var(--primary-color)" }}>
-                🚀 Update Available
-              </h3>
-              <button onClick={() => setShowUpdateModal(false)}>
-                <X className="w-5 h-5" style={{ color: "var(--text-tertiary)" }} />
-              </button>
-            </div>
-
-            <p className="mb-4" style={{ color: "var(--text-primary)" }}>
-              Version <span className="font-bold">{updateInfo.version}</span> is ready to download.
-            </p>
-
-            {updateInfo.releaseNotes && (
-              <div
-                className="mb-4 p-3 rounded max-h-40 overflow-y-auto"
-                style={{ background: "var(--card-secondary-bg)" }}
-              >
-                <h4 className="font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
-                  Release Notes:
-                </h4>
-                <p className="text-sm whitespace-pre-wrap" style={{ color: "var(--text-secondary)" }}>
-                  {updateInfo.releaseNotes}
-                </p>
-              </div>
-            )}
-
-            <div className="flex gap-3 justify-end">
-              <button
-                onClick={() => setShowUpdateModal(false)}
-                className="windows-btn windows-btn-secondary"
-                style={{
-                  background: "var(--card-secondary-bg)",
-                  border: "1px solid var(--border-color)",
-                  color: "var(--text-primary)",
-                }}
-              >
-                Later
-              </button>
-              <button
-                onClick={handleDownload}
-                className="windows-btn windows-btn-primary"
-                style={{
-                  background: "var(--primary-color)",
-                  border: "1px solid var(--primary-hover)",
-                  color: "black",
-                }}
-              >
-                Download Now
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </header>
   );
 };

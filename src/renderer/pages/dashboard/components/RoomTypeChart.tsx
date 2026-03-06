@@ -17,10 +17,10 @@ export const RoomTypeChart: React.FC<Props> = ({ data }) => {
   const maxCount = Math.max(...data.map(d => d.count));
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {data.map((item) => (
         <div key={item.type}>
-          <div className="flex justify-between text-sm mb-1">
+          <div className="flex justify-between text-xs mb-0.5">
             <span style={{ color: 'var(--text-primary)' }} className="capitalize">
               {item.type}
             </span>
@@ -28,13 +28,13 @@ export const RoomTypeChart: React.FC<Props> = ({ data }) => {
               {item.count} ({item.percentage}%)
             </span>
           </div>
-          <div className="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
+          <div className="w-full h-1.5 bg-gray-700 rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-700 ease-out"
               style={{
                 width: `${(item.count / maxCount) * 100}%`,
                 background: 'linear-gradient(90deg, var(--primary-color), #f1c40f)',
-                boxShadow: '0 0 8px var(--primary-color)',
+                boxShadow: '0 0 6px var(--primary-color)',
               }}
             />
           </div>
